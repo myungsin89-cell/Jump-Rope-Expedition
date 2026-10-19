@@ -1,0 +1,716 @@
+/* ==========================================================================
+   줄넘기 원정대 · 병력 및 영웅 카드 UI 스타일시트
+   접두사: .jre-card-* (독립 모듈 스코프)
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Jua';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../../../assets/fonts/Jua-Regular.ttf') format('truetype');
+}
+
+/* --------------------------------------------------------------------------
+   공통 카드 기본 구조 (보드게임 클래식 카드 스타일)
+   -------------------------------------------------------------------------- */
+.jre-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 280px;
+  min-height: 440px;
+  height: 100%;
+  background: #fdfaf3;
+  border: 2.5px solid #3c2918;
+  border-radius: 18px;
+  box-shadow: 2px 4px 0 rgba(44, 28, 14, 0.28);
+  overflow: hidden;
+  box-sizing: border-box;
+  color: #2b1b0e;
+  font-family: var(--font-ui, system-ui, sans-serif);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.jre-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 3px 6px 0 rgba(44, 28, 14, 0.35);
+}
+
+/* --------------------------------------------------------------------------
+   카드 내부 장식 2중 프레임 (실물 카드 인쇄 테두리 디테일)
+   -------------------------------------------------------------------------- */
+.jre-card::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  border: 1px solid rgba(120, 84, 52, 0.25);
+  border-radius: 14px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* --------------------------------------------------------------------------
+   카드 헤더 (이름, 뱃지)
+   -------------------------------------------------------------------------- */
+.jre-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 10px;
+  gap: 8px;
+  border-bottom: 1.5px solid #d8caa8;
+  background: #f7f1e3;
+  z-index: 1;
+}
+
+.jre-card-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.jre-card-name {
+  margin: 0;
+  font-family: var(--font-display, 'Jua', sans-serif);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #2b1b0e;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.jre-card-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-family: var(--font-display, 'Jua', sans-serif);
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   카드 이미지 프레임 (전신 캐릭터 보존)
+   -------------------------------------------------------------------------- */
+.jre-card-media {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  background: radial-gradient(circle at 50% 50%, #ffffff 0%, #f6f1e6 100%);
+  overflow: hidden;
+}
+
+.jre-card-image {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  margin: auto;
+  filter: drop-shadow(0 4px 6px rgba(44, 28, 14, 0.15));
+}
+
+.jre-card-image-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  background: rgba(107, 78, 51, 0.05);
+  border: 1.5px dashed rgba(107, 78, 51, 0.3);
+  border-radius: 12px;
+  color: #6b4e33;
+  font-size: 0.82rem;
+  text-align: center;
+  padding: 10px;
+}
+
+/* --------------------------------------------------------------------------
+   이미지 하단 명확한 구분선 (Divider)
+   -------------------------------------------------------------------------- */
+.jre-card-divider {
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #d4b896 0%, #6e4726 50%, #d4b896 100%);
+  box-shadow: 0 1px 2px rgba(44, 28, 14, 0.15);
+  z-index: 1;
+}
+
+/* --------------------------------------------------------------------------
+   카드 바디 (따뜻한 갈색 양피지 구역)
+   -------------------------------------------------------------------------- */
+.jre-card-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 96px;
+  padding: 14px 16px;
+  background: #ede2cd;
+  background-image: linear-gradient(180deg, #f0e6d2 0%, #e6d7bc 100%);
+  box-shadow: inset 0 2px 4px rgba(44, 28, 14, 0.06);
+  z-index: 1;
+}
+
+.jre-card-description {
+  margin: 0;
+  font-family: var(--font-display, 'Jua', sans-serif);
+  font-size: 1.02rem;
+  line-height: 1.52;
+  color: #342114;
+  text-align: center;
+  word-break: keep-all;
+  letter-spacing: -0.01em;
+}
+
+/* --------------------------------------------------------------------------
+   카드 푸터 (가격, 보유 수량 - 양피지 구역에 안착)
+   -------------------------------------------------------------------------- */
+.jre-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px 12px;
+  background: #e6d7bc;
+  border-top: 1px dashed rgba(107, 78, 51, 0.3);
+  z-index: 1;
+}
+
+.jre-card-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-display, 'Jua', sans-serif);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #825316;
+}
+
+.jre-card-owned {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: rgba(80, 52, 28, 0.12);
+  border-radius: 6px;
+  font-family: var(--font-display, 'Jua', sans-serif);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #342114;
+}
+
+/* --------------------------------------------------------------------------
+   등급별 테두리 및 프레임 차별화 (희귀 · 전설 획득 시 시각적 환호 연출)
+   -------------------------------------------------------------------------- */
+
+/* [일반 · Common & 정예 병력] 단정하고 기품 있는 클래식 월넛 우드 프레임 */
+.jre-card-unit,
+.jre-card-hero.rarity-common {
+  border-color: #3c2918;
+}
+.jre-card-unit::after,
+.jre-card-hero.rarity-common::after {
+  border-color: rgba(120, 84, 52, 0.25);
+}
+.jre-card-unit .jre-card-tag,
+.jre-card-hero.rarity-common .jre-card-tag {
+  background: #e2ede5;
+  color: #1e452e;
+  border: 1px solid #7ea88d;
+}
+
+/* [희귀 · Rare] 신비로운 마법 사파이어/청록 테두리 & 크리스탈 구분선 */
+.jre-card-hero.rarity-rare {
+  border-color: #16536e;
+  box-shadow: 2px 4px 0 rgba(22, 83, 110, 0.35), 0 0 12px rgba(75, 160, 195, 0.2);
+}
+.jre-card-hero.rarity-rare::after {
+  border-color: rgba(75, 160, 195, 0.45);
+}
+.jre-card-hero.rarity-rare .jre-card-header {
+  background: #edf5f8;
+  border-bottom-color: #adcdd9;
+}
+.jre-card-hero.rarity-rare .jre-card-name {
+  color: #0d384c;
+}
+.jre-card-hero.rarity-rare .jre-card-divider {
+  background: linear-gradient(90deg, #b8e2f2 0%, #16536e 50%, #b8e2f2 100%);
+}
+.jre-card-hero.rarity-rare .jre-card-tag {
+  background: #d8e9f0;
+  color: #0e4459;
+  border: 1.5px solid #4b94b0;
+  box-shadow: 0 1px 3px rgba(30, 92, 128, 0.22);
+}
+
+/* [전설 · Legendary] 영예로운 황금 금박(Gold Foil) 테두리 & 보석 구분선 */
+.jre-card-hero.rarity-legendary {
+  border-color: #b87c10;
+  border-width: 3px;
+  box-shadow: 3px 5px 0 rgba(140, 92, 10, 0.4), 0 0 16px rgba(245, 185, 45, 0.3);
+}
+.jre-card-hero.rarity-legendary::after {
+  top: 3px;
+  left: 3px;
+  right: 3px;
+  bottom: 3px;
+  border: 1.5px solid #f3c358;
+  box-shadow: inset 0 0 6px rgba(255, 215, 0, 0.35);
+}
+.jre-card-hero.rarity-legendary .jre-card-header {
+  background: linear-gradient(90deg, #fcedcb 0%, #fae2ab 100%);
+  border-bottom-color: #d49511;
+}
+.jre-card-hero.rarity-legendary .jre-card-name {
+  color: #5c3800;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.7);
+}
+.jre-card-hero.rarity-legendary .jre-card-divider {
+  height: 4px;
+  background: linear-gradient(90deg, #fceecb 0%, #c48a1b 25%, #ffd700 50%, #c48a1b 75%, #fceecb 100%);
+  box-shadow: 0 1px 3px rgba(184, 124, 16, 0.35);
+}
+.jre-card-hero.rarity-legendary .jre-card-tag {
+  background: linear-gradient(180deg, #fff2d1 0%, #faebd0 100%);
+  color: #5c3800;
+  border: 1.5px solid #c99335;
+  box-shadow: 0 1px 4px rgba(201, 147, 53, 0.35);
+}
+
+/* --------------------------------------------------------------------------
+   미공개 카드 (Sealed Card Back)
+   -------------------------------------------------------------------------- */
+.jre-card-sealed {
+  background: #203328;
+  border: 2.5px solid #3c5e4b;
+  box-shadow: 3px 5px 0 rgba(10, 24, 17, 0.4);
+  color: #e5f0ea;
+  justify-content: center;
+  align-items: center;
+}
+
+.jre-card-sealed-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% - 16px);
+  height: calc(100% - 16px);
+  border: 1.5px dashed rgba(200, 230, 210, 0.3);
+  border-radius: 14px;
+  background: radial-gradient(circle at 50% 45%, #2a4536 0%, #17281f 100%);
+  padding: 20px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.jre-card-sealed-symbol {
+  font-size: 3.2rem;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+  opacity: 0.9;
+}
+
+.jre-card-sealed-title {
+  margin: 0 0 6px;
+  font-family: var(--font-display, 'Jua', sans-serif);
+  font-size: 1.35rem;
+  color: #d1eadb;
+  letter-spacing: 0.05em;
+}
+
+.jre-card-sealed-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #8dae9b;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+/* --------------------------------------------------------------------------
+   보스 카드 (BossCard) - 위압감 있는 다크 앤틱 & 시즌 테마
+   -------------------------------------------------------------------------- */
+.jre-card-boss {
+  border-color: #4a2118;
+  background: #fdfaf5;
+}
+
+.jre-card-boss.is-selected {
+  border-color: #d49511;
+  box-shadow: 0 0 0 3px rgba(212, 149, 17, 0.4), 2px 4px 8px rgba(44, 28, 14, 0.35);
+}
+
+.jre-card-boss .jre-card-header {
+  background: #f5ebe1;
+  border-bottom-color: #d1bda7;
+}
+
+.jre-tag-boss {
+  background: #faebd0;
+  color: #6e4307;
+  border: 1px solid #c99335;
+}
+
+.jre-tag-boss-secret {
+  background: #3e322b;
+  color: #f0e2d1;
+  border: 1px solid #6b5548;
+}
+
+/* 1. 보스 실루엣 미공개 상태 (학생용) */
+.jre-card-boss-hidden {
+  border-color: #382d27;
+  background: #241e1a;
+  color: #f0e6da;
+}
+
+.jre-card-boss-hidden .jre-card-header {
+  background: #2e2621;
+  border-bottom-color: #4a3e36;
+}
+
+.jre-card-boss-hidden .jre-card-name {
+  color: #f5ede4;
+}
+
+.jre-card-media-boss-hidden {
+  background: radial-gradient(circle at 50% 50%, #3a3029 0%, #1a1512 100%);
+}
+
+.jre-boss-silhouette-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.jre-boss-silhouette-icon {
+  font-size: 3.5rem;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6));
+  opacity: 0.85;
+}
+
+.jre-boss-silhouette-symbol {
+  font-family: var(--font-display, 'Jua', sans-serif);
+  font-size: 2.8rem;
+  color: #ffd27d;
+  filter: drop-shadow(0 2px 8px rgba(255, 210, 125, 0.4));
+}
+
+.jre-card-divider-boss {
+  height: 3.5px;
+  background: linear-gradient(90deg, #d4a36e 0%, #7d3c1b 50%, #d4a36e 100%);
+}
+
+.jre-card-body-boss {
+  padding: 12px 14px;
+}
+
+.jre-boss-hints-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 100%;
+}
+
+.jre-boss-hints-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.jre-boss-hints-title {
+  font-family: var(--font-display, 'Jua', sans-serif);
+  font-size: 0.9rem;
+  color: #ffd27d;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.jre-boss-hints-counter {
+  font-family: var(--font-display, 'Jua', sans-serif);
+  font-size: 0.75rem;
+  background: #3a2c22;
+  color: #f7d38e;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #73543d;
+}
+
+.jre-boss-hint-slot {
+  border-radius: 8px;
+  padding: 7px 10px;
+  box-sizing: border-box;
+  transition: all 140ms ease;
+}
+
+.jre-boss-hint-slot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+/* 해금된 단서 슬롯 (밝은 양피지 + 고급 금빛 테두리) */
+.jre-boss-hint-slot.is-unlocked {
+  background: #fbf5ea;
+  border: 1.5px solid #d49a37;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.jre-boss-hint-slot.is-unlocked .jre-boss-hint-badge {
+  font-family: var(--font-display, 'Jua', sans-serif);
+  font-size: 0.72rem;
+  background: #874e0d;
+  color: #ffffff;
+  padding: 1px 7px;
+  border-radius: 4px;
+}
+
+.jre-boss-hint-slot.is-unlocked .jre-boss-hint-status {
+  font-family: var(--font-display, 'Jua', sans-serif);
+  font-size: 0.72rem;
+  color: #8c5914;
+  font-weight: 700;
+}
+
+.jre-boss-hint-slot.is-unlocked .jre-boss-hint-text {
+  margin: 0;
+  font-family: var(--font-ui, system-ui, sans-serif);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #2e1e12;
+  font-weight: 600;
+  word-break: keep-all;
+}
+
+/* 미해금 잠긴 단서 슬롯 (어두운 양피지 + 점선 테두리 + 잠금 안내) */
+.jre-boss-hint-slot.is-locked {
+  background: rgba(43, 34, 28, 0.75);
+  border: 1.5px dashed #5e493b;
+  color: #9c8a7b;
+}
+
+.jre-boss-hint-slot.is-locked .jre-boss-hint-badge {
+  font-family: var(--font-display, 'Jua', sans-serif);
+  font-size: 0.72rem;
+  background: #382b22;
+  color: #a89584;
+  padding: 1px 7px;
+  border-radius: 4px;
+}
+
+.jre-boss-hint-slot.is-locked .jre-boss-hint-status {
+  font-family: var(--font-display, 'Jua', sans-serif);
+  font-size: 0.72rem;
+  color: #7d6b5e;
+}
+
+.jre-boss-hint-slot.is-locked .jre-boss-hint-locked-text {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #998372;
+  word-break: keep-all;
+}
+
+/* 2. 보스 공개 상태 (대결일 / 교사용) */
+.jre-boss-stat-badge,
+.jre-boss-weakness-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-family: var(--font-display, 'Jua', sans-serif);
+  font-size: 0.82rem;
+  margin-bottom: 5px;
+  box-sizing: border-box;
+}
+
+.jre-boss-stat-badge {
+  background: rgba(184, 50, 20, 0.08);
+  border: 1px solid rgba(184, 50, 20, 0.2);
+  color: #8c260f;
+}
+
+.jre-boss-weakness-badge {
+  background: rgba(22, 100, 140, 0.08);
+  border: 1px solid rgba(22, 100, 140, 0.2);
+  color: #0f4f70;
+}
+
+.jre-card-description-boss {
+  font-size: 0.88rem;
+  line-height: 1.42;
+  margin-top: 4px;
+}
+
+.jre-card-footer-boss {
+  padding: 8px 12px;
+}
+
+.jre-boss-select-btn {
+  width: 100%;
+  padding: 8px;
+  border: 1.5px solid #3c2918;
+  border-radius: 8px;
+  background: #fdfaf3;
+  color: #3c2918;
+  font-family: var(--font-display, 'Jua', sans-serif);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.jre-boss-select-btn:hover {
+  background: #f0e4cc;
+}
+
+.jre-boss-select-btn.is-active {
+  background: #8c5914;
+  color: #ffffff;
+  border-color: #633f0e;
+}
+
+/* --------------------------------------------------------------------------
+   카드 미리보기 대시보드 (.jre-preview-*)
+   -------------------------------------------------------------------------- */
+.jre-preview-root {
+  min-height: 100vh;
+  background: #f4f5f0;
+  color: #1b4332;
+  font-family: var(--font-ui, system-ui, sans-serif);
+  padding: 32px 24px 64px;
+  box-sizing: border-box;
+}
+
+.jre-preview-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.jre-preview-banner {
+  background: #fbfbf9;
+  border: 2px solid #1b4332;
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 28px;
+  box-shadow: 2px 4px 0 rgba(18, 46, 34, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.jre-preview-banner-text strong {
+  display: block;
+  font-size: 1.15rem;
+  color: #1b4332;
+}
+
+.jre-preview-banner-text span {
+  font-size: 0.85rem;
+  color: #556c5e;
+}
+
+.jre-preview-section {
+  margin-bottom: 44px;
+}
+
+.jre-preview-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.jre-preview-section-title {
+  margin: 0;
+  font-family: var(--font-display, 'Jua', sans-serif);
+  font-size: 1.6rem;
+  color: #1b4332;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.jre-preview-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.jre-preview-filter-btn {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1.5px solid #1b4332;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1b4332;
+  font-family: var(--font-display, 'Jua', sans-serif);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.jre-preview-filter-btn:hover {
+  background: #eef5f0;
+}
+
+.jre-preview-filter-btn[aria-pressed="true"] {
+  background: #1b4332;
+  color: #ffffff;
+  box-shadow: 1px 2px 0 rgba(18, 46, 34, 0.3);
+}
+
+.jre-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 24px;
+  justify-items: center;
+}
+
+@media (max-width: 600px) {
+  .jre-preview-root {
+    padding: 20px 14px 48px;
+  }
+  .jre-preview-grid {
+    grid-template-columns: 1fr;
+  }
+  .jre-card {
+    max-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jre-card {
+    transition: none !important;
+  }
+}

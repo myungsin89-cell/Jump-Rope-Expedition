@@ -1,0 +1,6 @@
+dist
+node_modules
+playwright-report
+test-results
+package-lock.json
+줄넘기_원정대_개발_마스터_명세서_v1.0.md

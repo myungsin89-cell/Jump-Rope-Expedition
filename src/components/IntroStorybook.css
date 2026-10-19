@@ -1,0 +1,486 @@
+/* ==========================================================================
+   인트로 이야기책 — 전체화면 시네마틱 스토리북
+   옛날 이야기 할아버지가 읽어 주는 애니메이션 영화 느낌
+   ========================================================================== */
+.sb-root {
+  --ink: #3b2412;
+  --paper: #f3e3bd;
+  --paper-deep: #d9b97a;
+  --wood: #6b4220;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  overflow: hidden;
+  background: #0e0905;
+  color: #fff4dc;
+  font-family: 'Gowun Batang', 'Nanum Myeongjo', 'Noto Serif KR', 'Batang', 'Georgia', serif;
+  user-select: none;
+  animation: sb-fade-in 700ms ease-out both;
+}
+
+@keyframes sb-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---------- 무대 ---------- */
+.sb-stage {
+  position: absolute;
+  inset: 0;
+  perspective: 2400px;
+  transition: filter 700ms ease;
+}
+
+.sb-stage.is-dim {
+  filter: brightness(0.5) saturate(0.85) blur(1.5px);
+}
+
+.sb-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+/* 켄 번즈(천천히 움직이는 카메라) */
+.sb-pan-0 { animation: sb-pan-a 26s ease-in-out infinite alternate; }
+.sb-pan-1 { animation: sb-pan-b 28s ease-in-out infinite alternate; }
+.sb-pan-2 { animation: sb-pan-c 24s ease-in-out infinite alternate; }
+
+@keyframes sb-pan-a {
+  from { transform: scale(1.04) translate(0, 0); }
+  to { transform: scale(1.16) translate(-2.2%, -1.2%); }
+}
+@keyframes sb-pan-b {
+  from { transform: scale(1.15) translate(2%, 1%); }
+  to { transform: scale(1.05) translate(-1%, 0); }
+}
+@keyframes sb-pan-c {
+  from { transform: scale(1.05) translate(-1.5%, 1.2%); }
+  to { transform: scale(1.17) translate(1.8%, -1%); }
+}
+
+/* ---------- 페이지 넘김 ---------- */
+.sb-page {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  transform-origin: 0% 50%;
+  backface-visibility: hidden;
+  background: #0e0905;
+  box-shadow: 0 0 80px rgba(0, 0, 0, 0.6);
+}
+
+.sb-page-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(40, 22, 8, 0) 40%, rgba(40, 22, 8, 0.55) 100%);
+  opacity: 0;
+}
+
+.sb-turn-out {
+  animation: sb-turn-out 1000ms cubic-bezier(0.55, 0.05, 0.35, 1) both;
+}
+.sb-turn-out .sb-page-shade { animation: sb-shade 1000ms ease-in-out both; }
+
+.sb-turn-in {
+  animation: sb-turn-in 1000ms cubic-bezier(0.55, 0.05, 0.35, 1) both;
+}
+.sb-turn-in .sb-page-shade { animation: sb-shade 1000ms ease-in-out reverse both; }
+
+@keyframes sb-turn-out {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(-108deg); }
+}
+@keyframes sb-turn-in {
+  0% { transform: rotateY(-108deg); }
+  100% { transform: rotateY(0deg); }
+}
+@keyframes sb-shade {
+  0% { opacity: 0; }
+  60% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+/* ---------- 옛 책 분위기 오버레이 ---------- */
+.sb-warm {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 40%, rgba(255, 214, 140, 0.16), rgba(120, 60, 10, 0.18));
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+
+.sb-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(18, 9, 2, 0.62) 100%),
+    linear-gradient(to top, rgba(14, 8, 3, 0.78) 0%, rgba(14, 8, 3, 0) 38%);
+  pointer-events: none;
+}
+
+.sb-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.35  0 0 0 0 0.22  0 0 0 0 0.1  0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* ---------- 시네마 레터박스 ---------- */
+.sb-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 5.5vh;
+  background: #0e0905;
+  z-index: 4;
+  pointer-events: none;
+}
+.sb-bar-top { top: 0; }
+.sb-bar-bottom { bottom: 0; }
+
+/* ---------- 장 제목 ---------- */
+.sb-chapter {
+  position: absolute;
+  top: 12vh;
+  left: 50%;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 34px;
+  transform: translateX(-50%);
+  color: #ffe9b8;
+  font-size: clamp(1.1rem, 2.1vw, 1.7rem);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85), 0 0 24px rgba(255, 190, 90, 0.45);
+  pointer-events: none;
+  opacity: 0;
+  animation: sb-chapter 4.6s ease-in-out 0.5s both;
+}
+
+.sb-chapter-orn {
+  color: #f0b94d;
+  font-size: 1.3em;
+}
+
+@keyframes sb-chapter {
+  0% { opacity: 0; transform: translate(-50%, 10px); letter-spacing: 0.3em; }
+  18% { opacity: 1; transform: translate(-50%, 0); letter-spacing: 0.12em; }
+  78% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -6px); }
+}
+
+/* ---------- 클릭 영역 ---------- */
+.sb-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 5;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.sb-zone-prev { left: 0; width: 18%; cursor: w-resize; }
+.sb-zone-prev:disabled { cursor: default; }
+.sb-zone-next { left: 18%; right: 0; }
+
+/* ---------- 자막 ---------- */
+.sb-subtitle {
+  position: absolute;
+  left: 50%;
+  bottom: 12vh;
+  z-index: 6;
+  width: min(86vw, 1080px);
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+  animation: sb-sub-in 520ms ease-out both;
+}
+
+.sb-subtitle p {
+  margin: 0;
+  font-size: clamp(1.45rem, 3vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.62;
+  color: #fff3d6;
+  word-break: keep-all;
+  text-wrap: balance;
+  text-shadow:
+    0 2px 3px rgba(20, 8, 0, 0.95),
+    0 0 18px rgba(20, 8, 0, 0.9),
+    0 0 42px rgba(255, 170, 60, 0.25);
+}
+
+.sb-ghost {
+  color: transparent;
+  text-shadow: none;
+}
+
+@keyframes sb-sub-in {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* ---------- 양피지 ---------- */
+.sb-scroll-wrap {
+  position: absolute;
+  inset: 5.5vh 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  padding: 3vh 5vw;
+  pointer-events: none;
+}
+
+.sb-scroll {
+  position: relative;
+  width: min(92vw, 640px);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.6));
+  animation: sb-unroll 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes sb-unroll {
+  from { opacity: 0; transform: translateY(24px) scaleY(0.3); transform-origin: 50% 0; }
+  to { opacity: 1; transform: translateY(0) scaleY(1); transform-origin: 50% 0; }
+}
+
+.sb-parchment {
+  position: relative;
+  margin: -6px 14px;
+  padding: clamp(26px, 5vh, 48px) clamp(24px, 4vw, 52px);
+  color: var(--ink);
+  text-align: center;
+  background:
+    radial-gradient(ellipse at 20% 15%, rgba(255, 246, 214, 0.95), transparent 55%),
+    radial-gradient(ellipse at 85% 90%, rgba(190, 140, 70, 0.45), transparent 60%),
+    linear-gradient(180deg, #f6e8c4, #ead3a0 55%, #e0c088);
+  box-shadow:
+    inset 0 0 60px rgba(120, 70, 20, 0.5),
+    inset 0 0 8px rgba(90, 50, 10, 0.6);
+  overflow: hidden;
+  animation: sb-parch-open 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  clip-path: polygon(
+    0 3%, 3% 0, 12% 2%, 25% 0, 40% 2%, 58% 0, 72% 2%, 88% 0, 97% 2%, 100% 4%,
+    99% 20%, 100% 40%, 98% 62%, 100% 82%, 99% 97%,
+    94% 100%, 80% 98%, 62% 100%, 45% 98%, 28% 100%, 12% 98%, 3% 100%, 0 96%,
+    1% 78%, 0 55%, 2% 32%, 0 14%
+  );
+}
+
+@keyframes sb-parch-open {
+  from { max-height: 0; padding-top: 0; padding-bottom: 0; }
+  to { max-height: 80vh; }
+}
+
+.sb-parchment::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.035 0.06' numOctaves='4' seed='4'/><feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.28  0 0 0 0 0.1  0 0 0 0.8 0'/></filter><rect width='100%' height='100%' filter='url(%23p)'/></svg>");
+}
+
+.sb-parchment h2 {
+  position: relative;
+  margin: 0;
+  font-size: clamp(1.6rem, 3.2vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #4a2a10;
+}
+
+.sb-flourish {
+  position: relative;
+  display: block;
+  margin: 6px 0 clamp(14px, 2.6vh, 24px);
+  color: #9b6a2a;
+  font-size: 1rem;
+  letter-spacing: 0.5em;
+}
+
+.sb-parchment ul {
+  position: relative;
+  display: grid;
+  gap: clamp(10px, 1.8vh, 16px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.sb-parchment li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: clamp(1.02rem, 1.9vw, 1.35rem);
+  font-weight: 700;
+  line-height: 1.5;
+  word-break: keep-all;
+  opacity: 0;
+  animation: sb-ink 600ms ease-out both;
+  animation-delay: calc(650ms + var(--i, 0) * 420ms);
+}
+
+.sb-parchment li strong {
+  display: block;
+  color: #7a3b12;
+  font-size: 0.98em;
+}
+
+@keyframes sb-ink {
+  from { opacity: 0; transform: translateX(-10px); filter: blur(3px); }
+  to { opacity: 1; transform: translateX(0); filter: blur(0); }
+}
+
+.sb-seal {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: clamp(38px, 5vw, 50px);
+  height: clamp(38px, 5vw, 50px);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #c85a3c, #8d2f1c 70%);
+  box-shadow: inset 0 -3px 5px rgba(60, 10, 0, 0.5), 0 2px 4px rgba(60, 20, 0, 0.4);
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+}
+
+.sb-rod {
+  position: relative;
+  z-index: 1;
+  display: block;
+  height: 22px;
+  margin: 0 -6px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #a77038, #6b4220 55%, #3f2410);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5), inset 0 2px 2px rgba(255, 220, 160, 0.4);
+}
+.sb-rod::before,
+.sb-rod::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  width: 18px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #8d5a2a, #4d2d14);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+.sb-rod::before { left: -10px; }
+.sb-rod::after { right: -10px; }
+
+/* ---------- 하단 안내 / 컨트롤 ---------- */
+.sb-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 7vh;
+  z-index: 6;
+  transform: translateX(-50%);
+  color: rgba(255, 233, 184, 0.82);
+  font-size: clamp(0.85rem, 1.4vw, 1.05rem);
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+  transition: opacity 300ms ease;
+  animation: sb-blink 2.4s ease-in-out infinite;
+}
+.sb-hint.is-hidden { opacity: 0 !important; animation: none; }
+
+@keyframes sb-blink {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+.sb-controls {
+  position: absolute;
+  top: calc(5.5vh + 12px);
+  left: 18px;
+  right: 18px;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.sb-progress {
+  display: flex;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(14, 8, 3, 0.45);
+}
+
+.sb-pip {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 224, 160, 0.7);
+  transition: all 300ms ease;
+}
+.sb-pip.is-done { background: rgba(255, 224, 160, 0.7); }
+.sb-pip.is-current {
+  width: 26px;
+  border-radius: 8px;
+  background: #f0b94d;
+  border-color: #f0b94d;
+}
+
+.sb-buttons {
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.sb-ctl {
+  min-width: 42px;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 224, 160, 0.5);
+  border-radius: 999px;
+  background: rgba(14, 8, 3, 0.55);
+  color: #ffe9b8;
+  font: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 160ms ease, transform 160ms ease;
+}
+.sb-ctl:hover { background: rgba(120, 70, 20, 0.8); transform: translateY(-1px); }
+.sb-ctl:focus-visible { outline: 2px solid #f0b94d; outline-offset: 2px; }
+
+.sb-pageno {
+  position: absolute;
+  right: 28px;
+  bottom: calc(5.5vh + 12px);
+  z-index: 6;
+  color: rgba(255, 233, 184, 0.55);
+  font-size: 0.95rem;
+  letter-spacing: 0.2em;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .sb-subtitle { bottom: 11vh; }
+  .sb-pageno { display: none; }
+  .sb-skip { padding: 0 10px; }
+  .sb-zone-prev { width: 24%; }
+  .sb-zone-next { left: 24%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-pan-0, .sb-pan-1, .sb-pan-2 { animation: none; transform: scale(1.06); }
+}

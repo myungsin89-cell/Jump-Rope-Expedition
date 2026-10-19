@@ -1,0 +1,123 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createPreparation } from '../preparation/model';
+import {
+  createPractice,
+  parseCount,
+  practiceKey,
+  readPracticeStore,
+  savePractice,
+  validatePractice,
+  writePracticeDraft,
+} from './practiceModel';
+
+function draft() {
+  const plan = createPreparation();
+  plan.students = [1, 2, 3, 4].map((number) => ({
+    id: `s-${number}`,
+    name: number < 3 ? '김민준' : `가상학생 ${number}`,
+  }));
+  plan.teams.forEach((team, index) => {
+    team.studentIds = [`s-${index + 1}`];
+  });
+  plan.teams[0].studentIds.push('s-4');
+  return createPractice(plan);
+}
+function completeDraft() {
+  const value = draft();
+  value.locked = true;
+  value.teams.forEach((team) => {
+    team.raw = '100';
+    team.jumpers[0] = { studentId: team.members[0].id, multiplier: 2, actual: '20' };
+  });
+  return value;
+}
+beforeEach(() => localStorage.clear());
+afterEach(() => vi.restoreAllMocks());
+
+describe('연습 기록판 입력과 저장', () => {
+  it('copies preparation jumpers into a new record and opens directly on counts', () => {
+    const plan = createPreparation();
+    plan.students = [1, 2, 3].map((id) => ({ id: `s-${id}`, name: `학생${id}` }));
+    plan.teams.forEach((team, index) => {
+      team.studentIds = [plan.students[index].id];
+    });
+    plan.seasonCount = 5;
+    plan.seasons[0] = {
+      bossId: 'BOSS_01',
+      startDate: '2026-10-20',
+      endDate: '2026-11-20',
+    };
+    plan.jumpers = plan.teams.map((team) => [
+      { studentId: team.studentIds[0], multiplier: 2 },
+    ]);
+    const value = createPractice(plan);
+    expect(value.locked).toBe(true);
+    expect(value.seasonIndex).toBe(0);
+    expect(value.teams[0].jumpers[0]).toEqual({
+      studentId: 's-1',
+      multiplier: 2,
+      actual: '',
+    });
+    value.teams[0].jumpers[0].multiplier = 3;
+    expect(plan.jumpers[0][0].multiplier).toBe(2);
+  });
+  it('does not silently turn a blank, decimal, negative, or unsafe input into a count', () => {
+    for (const input of ['', ' ', '-1', '1.5', '1e3', '9007199254740992'])
+      expect(parseCount(input)).toBeNull();
+    expect(parseCount('0')).toBe(0);
+    expect(parseCount('150')).toBe(150);
+  });
+  it('requires one or two distinct jumpers who belong to the team', () => {
+    const value = draft();
+    expect(validatePractice(value)['jumper-0-0']).toBeTruthy();
+    value.teams[0].jumpers = [
+      { studentId: 's-1', multiplier: 1, actual: '' },
+      { studentId: 's-1', multiplier: 3, actual: '' },
+    ];
+    expect(validatePractice(value)['jumper-0-1']).toBeTruthy();
+    value.teams[0].jumpers[1].studentId = 's-2';
+    expect(validatePractice(value)['jumper-0-1']).toBeTruthy();
+    value.teams[0].jumpers[1].studentId = 's-4';
+    expect(validatePractice(value)['jumper-0-1']).toBeUndefined();
+  });
+  it('retains a draft across reads, including locked jumpers and zero counts', () => {
+    const value = completeDraft();
+    value.teams[0].raw = '0';
+    value.teams[0].jumpers[0].actual = '0';
+    writePracticeDraft(value);
+    expect(readPracticeStore(value.classId).draft).toEqual(value);
+  });
+  it('saves only input snapshots and avoids duplicate saves or deleting a newer draft', () => {
+    const value = completeDraft();
+    writePracticeDraft(value);
+    savePractice(value);
+    savePractice(value);
+    const next = { ...value, id: 'next-match' };
+    writePracticeDraft(next);
+    savePractice(value);
+    const stored = readPracticeStore(value.classId);
+    expect(stored.history).toHaveLength(1);
+    expect(stored.draft?.id).toBe('next-match');
+    expect(stored.history[0]).not.toHaveProperty('estimatedPoints');
+    expect(Object.keys(localStorage)).toEqual([practiceKey(value.classId)]);
+  });
+  it('preserves stored data on corruption and keeps the draft when saving fails', () => {
+    const value = completeDraft();
+    localStorage.setItem(practiceKey(value.classId), '{bad json');
+    expect(() => writePracticeDraft(value)).toThrow();
+    expect(localStorage.getItem(practiceKey(value.classId))).toBe('{bad json');
+    localStorage.removeItem(practiceKey(value.classId));
+    writePracticeDraft(value);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceeded');
+    });
+    expect(() => savePractice(value)).toThrow();
+    expect(readPracticeStore(value.classId).draft?.id).toBe(value.id);
+  });
+  it('rejects an individual count that is larger than its containing team count', () => {
+    const value = completeDraft();
+    value.teams[0].jumpers[0].actual = '101';
+    expect(validatePractice(value, true)['actual-0-0']).toBeTruthy();
+    expect(() => savePractice(value)).toThrow();
+  });
+});

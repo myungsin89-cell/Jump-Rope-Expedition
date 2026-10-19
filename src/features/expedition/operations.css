@@ -1,0 +1,710 @@
+.operation-nav {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 24px;
+  padding: 0;
+  border-bottom: 1px solid var(--prep-line);
+}
+.operation-nav a {
+  padding: 12px 20px;
+  min-height: 44px;
+  text-align: center;
+  font: 600 15px var(--font-ui);
+  text-decoration: none;
+  border: 0;
+  border-radius: 6px;
+  color: var(--text-muted);
+}
+.operation-nav a[aria-current='page'] {
+  color: var(--forest-primary);
+  background: #e7eee8;
+}
+.operation-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0 12px;
+}
+.operation-section-heading h2 {
+  margin: 0;
+  font: 22px var(--font-display);
+}
+.operation-section-heading p {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.operation-section-heading small {
+  margin-left: 6px;
+  font: 13px var(--font-ui);
+  color: var(--text-muted);
+}
+.operation-text-link {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  text-underline-offset: 5px;
+}
+.operation-season-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 20px 24px;
+  border: 1px solid var(--prep-line);
+  border-radius: 12px;
+  background: var(--prep-paper);
+}
+.operation-eyebrow {
+  display: block;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  color: var(--sage-secondary);
+}
+.operation-season-banner h2 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 0 0 6px;
+  font: 30px var(--font-display);
+}
+.operation-season-banner h2 small {
+  padding: 5px 9px;
+  border: 1px solid var(--mint-border);
+  border-radius: 6px;
+  background: var(--prep-paper);
+  font: 12px var(--font-ui);
+}
+.operation-season-banner p {
+  font-size: 15px;
+  line-height: 1.7;
+  margin: 0 0 8px;
+}
+.operation-season-count {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.operation-record-action {
+  display: grid;
+  gap: 8px;
+  text-align: center;
+}
+.operation-record-action .preparation-primary {
+  min-width: 210px;
+  box-shadow: none;
+}
+.operation-record-action > span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.operation-teams {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+.operation-teams[data-count='2'],
+.operation-teams[data-count='4'] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.team-color-3 {
+  --team-color: #704a89;
+  --team-tint: #f1e9f8;
+}
+.operation-team {
+  min-width: 0;
+  padding: 18px 14px 14px;
+  border: 1px solid color-mix(in srgb, var(--team-color) 38%, var(--prep-paper));
+  border-radius: 10px;
+  background: var(--prep-paper);
+}
+.operation-team > header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 4px 12px;
+}
+.operation-team > header > div {
+  min-width: 0;
+}
+.operation-team h3 {
+  margin: 0 0 5px;
+  color: var(--team-color);
+  font: 22px/1.35 var(--font-display);
+  overflow-wrap: anywhere;
+}
+.operation-team-number {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 1px solid color-mix(in srgb, var(--team-color) 40%, var(--prep-paper));
+  border-radius: 9px;
+  color: var(--team-color);
+  background: var(--team-tint);
+  font: 18px var(--font-display);
+}
+.operation-team-meta {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.operation-roster-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.operation-roster-list > li {
+  min-width: 0;
+}
+.operation-student-name {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  gap: 8px;
+  margin: 0;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--forest-deep);
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+.operation-student-name:hover {
+  background: var(--bg-cream);
+}
+.operation-student-name.is-jumper {
+  border-color: var(--team-color, var(--forest-primary));
+}
+.operation-student-number {
+  flex-shrink: 0;
+  width: 22px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.operation-member-name {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.operation-captain-tag,
+.operation-jumper-mark {
+  flex-shrink: 0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.operation-captain-tag {
+  color: var(--team-color, var(--forest-primary));
+  font-weight: 700;
+}
+.operation-jumper-mark {
+  color: var(--text-muted);
+}
+.operation-roster-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.operation-roster-legend > span {
+  width: 16px;
+  height: 12px;
+  flex-shrink: 0;
+  border: 1px solid var(--forest-primary);
+  border-radius: 3px;
+}
+.operation-empty-roster {
+  min-height: 88px;
+  padding: 12px 8px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.8;
+}
+.operation-team-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 8px 4px 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--prep-line);
+}
+.operation-team-stats dt {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.operation-team-stats dd {
+  margin: 7px 0 0;
+  font: 25px var(--font-display);
+  color: var(--team-color);
+}
+.operation-local-note,
+.operation-fine-print {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text-muted);
+}
+.operation-local-note {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--prep-line);
+}
+.operation-empty {
+  padding: 24px;
+  background: var(--bg-cream);
+  border: 1px solid var(--prep-line);
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.8;
+}
+.operation-history ol,
+.operation-history ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.operation-history ol > li {
+  border-bottom: 1px solid var(--prep-line);
+}
+.operation-history summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 18px 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.operation-history summary > span:last-child {
+  margin-left: auto;
+  color: var(--sage-secondary);
+  font-size: 12px;
+}
+.operation-history time {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.operation-history ul li {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  background: var(--mint-tint);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.operation-team-settings {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 24px 0 16px;
+}
+.operation-team-settings > p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.operation-team-count {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  margin: 0 !important;
+  font-size: 14px !important;
+}
+.preparation-paper .operation-team-count select {
+  width: 80px;
+}
+.operation-team-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px 16px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--prep-line);
+}
+.operation-outline-button,
+.operation-quiet-button {
+  padding: 8px 12px;
+  min-height: 44px;
+  border: 1px solid var(--prep-line);
+  border-radius: 8px;
+  background: var(--prep-paper);
+  color: var(--forest-primary);
+  font-size: 13px;
+  cursor: pointer;
+}
+.operation-outline-button {
+  border-color: var(--team-color);
+  color: var(--team-color);
+}
+.operation-quiet-button {
+  border-color: transparent;
+  padding-inline: 8px;
+  color: var(--text-muted);
+}
+.operation-outline-button:hover,
+.operation-quiet-button:hover {
+  background: var(--team-tint);
+}
+.operation-waiting {
+  padding: 16px;
+  border: 1px solid var(--prep-line);
+  border-radius: 12px;
+  margin-bottom: 24px;
+  background: var(--bg-cream);
+}
+.operation-waiting .operation-section-heading {
+  margin: 0 0 12px;
+}
+.operation-waiting h3 {
+  margin: 0;
+  font: 20px var(--font-display);
+}
+.operation-waiting .operation-section-heading > span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.operation-waiting .operation-roster-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 16px;
+}
+.operation-assignment-list {
+  min-width: 0;
+  padding: 0;
+  margin: 20px 0;
+  border: 0;
+}
+.operation-assignment-list legend {
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+.operation-assignment-list legend strong {
+  margin-left: 8px;
+  color: var(--forest-primary);
+}
+.operation-assignment-options {
+  max-height: min(360px, 40dvh);
+  overflow-y: auto;
+  padding: 2px;
+  scrollbar-gutter: stable;
+}
+.operation-modal .operation-assignment-list label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin: 0 0 4px;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.operation-modal .operation-assignment-list label.is-selected {
+  border-color: var(--mint-border);
+  background: var(--mint-tint);
+}
+.operation-modal .operation-assignment-list input,
+.operation-modal .operation-jumper-toggle input {
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  flex-shrink: 0;
+  accent-color: var(--forest-primary);
+}
+.operation-assignment-list label > span:not(.operation-student-number) {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.operation-modal .operation-assignment-list label > span {
+  margin-left: 0;
+  color: var(--forest-deep);
+  font-size: inherit;
+  font-weight: 400;
+}
+.operation-modal .operation-assignment-list label > .operation-student-number {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.operation-assignment-list small {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-align: right;
+  overflow-wrap: anywhere;
+  max-width: 36%;
+}
+.operation-modal {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  height: fit-content;
+  width: min(520px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 26px;
+  border: 1px solid var(--prep-line);
+  border-radius: 16px;
+  background: var(--bg-cream);
+  color: var(--forest-deep);
+  box-shadow: 0 16px 64px #122e2230;
+}
+.operation-modal::backdrop {
+  background: #122e2280;
+  backdrop-filter: blur(3px);
+}
+.operation-modal > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.operation-modal h2 {
+  margin: 0;
+  font: 26px var(--font-display);
+  overflow-wrap: anywhere;
+}
+.operation-close {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--prep-line);
+  background: var(--prep-paper);
+  color: var(--forest-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 28px;
+}
+.operation-jumper-settings {
+  margin: 24px 0 8px;
+  padding: 16px;
+  border: 1px solid var(--prep-line);
+  border-radius: 10px;
+}
+.operation-modal .operation-jumper-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin: 0;
+  font-size: 14px;
+  cursor: pointer;
+}
+.operation-jumper-settings > div {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.operation-jumper-settings > div label {
+  margin: 0;
+  font-size: 14px;
+}
+.operation-jumper-settings > div select {
+  width: 90px;
+}
+.operation-detail-section {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--prep-line);
+}
+.operation-detail-section h3 {
+  display: inline;
+  margin: 0;
+  font: 20px var(--font-display);
+}
+.operation-detail-section summary {
+  cursor: pointer;
+  min-height: 32px;
+}
+.operation-detail-section small {
+  font: 12px var(--font-ui);
+}
+.operation-detail-section p {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.8;
+}
+.operation-student-records {
+  padding: 0;
+  list-style: none;
+}
+.operation-student-records li {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 10px 0;
+  font-size: 14px;
+}
+.operation-save-note {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-muted);
+  margin: 28px 0 0;
+  text-align: right;
+}
+.preparation-library-list.operation-library {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+.preparation-library-list.operation-library .operation-library-entry {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-height: 116px;
+  border: 1px solid var(--prep-line);
+  border-radius: 12px;
+  padding: 20px 24px;
+  background: var(--prep-paper);
+  box-shadow: none;
+}
+.operation-library-entry > div {
+  flex: 1;
+  min-width: 0;
+}
+.operation-library-entry h2 {
+  font-size: 23px;
+  margin: 0 0 8px;
+}
+.operation-library-emblem {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #eef3ec;
+  color: var(--forest-primary);
+}
+.operation-library-emblem svg {
+  width: 36px;
+  height: 36px;
+}
+.operation-library-season {
+  padding: 6px 10px;
+  background: #f3f5f1;
+  border-radius: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.operation-library-open {
+  font-size: 14px;
+  color: var(--sage-secondary);
+  white-space: nowrap;
+}
+.operation-optional-name {
+  margin-bottom: 24px;
+}
+.operation-optional-name summary {
+  cursor: pointer;
+  font-size: 14px;
+  min-height: 44px;
+  padding: 12px 0;
+  color: var(--sage-secondary);
+}
+@media (max-width: 1000px) {
+  .operation-teams {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .operation-waiting .operation-roster-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .operation-nav {
+    gap: 4px;
+    padding: 4px;
+  }
+  .operation-nav a {
+    flex: 1;
+    font-size: 15px;
+    padding: 12px 8px;
+  }
+  .operation-season-banner {
+    padding: 20px 16px;
+    gap: 20px;
+  }
+  .operation-season-banner h2 {
+    font-size: 28px;
+  }
+  .operation-record-action,
+  .operation-record-action button {
+    width: 100%;
+  }
+  .operation-teams,
+  .operation-teams[data-count='2'],
+  .operation-teams[data-count='4'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .operation-team {
+    padding: 16px 12px 12px;
+  }
+  .operation-student-name {
+    font-size: 16px;
+  }
+  .operation-section-heading h2 {
+    font-size: 23px;
+  }
+  .operation-team-count {
+    width: 100%;
+  }
+  .operation-waiting .operation-roster-list,
+  .preparation-library-list.operation-library {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .operation-modal {
+    padding: 20px;
+  }
+  .operation-modal .operation-assignment-list label {
+    font-size: 16px;
+    gap: 8px;
+  }
+  .preparation-library-list.operation-library .operation-library-entry {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    padding: 18px 16px;
+    gap: 12px;
+  }
+  .operation-library-entry > div {
+    grid-column: 2 / -1;
+  }
+  .operation-library-entry h2 {
+    font-size: 21px;
+  }
+  .operation-library-emblem {
+    width: 42px;
+    height: 42px;
+  }
+  .operation-library-season {
+    grid-column: 2;
+    justify-self: start;
+  }
+  .operation-library-open {
+    margin-left: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .operation-student-name {
+    transition: none;
+  }
+}

@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>줄넘기 원정대 · 최종 대전(전투) 오디오 전체 검토 플레이어</title>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <style>
+    :root {
+      --forest: #173E2C;
+      --forest-guide: #3D7A55;
+      --leaf-young: #8BBF93;
+      --paper: #FBFBF7;
+      --mist: #E4EADF;
+      --torch: #E4A83A;
+      --card-bg: #FFFFFF;
+      --text-muted: #5A6B5F;
+      --battle-red: #A33B3B;
+      --battle-gold: #C08A27;
+      --battle-blue: #2B6CB0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--paper);
+      color: var(--forest);
+      padding: 40px 20px 80px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--mist);
+      padding-bottom: 16px;
+    }
+
+    .badge {
+      display: inline-block;
+      background-color: #F8EFE4;
+      color: var(--battle-red);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--forest);
+      margin-bottom: 6px;
+    }
+
+    p.subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--forest);
+      margin: 32px 0 16px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* BGM 카드 */
+    .bgm-banner {
+      background: #FFFFFF;
+      border: 2px solid var(--battle-red);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 14px rgba(163, 59, 59, 0.08);
+    }
+
+    .banner-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .tag-red {
+      background: #F8EFE4;
+      color: var(--battle-red);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .progress-bar-wrap {
+      width: 100%;
+      height: 8px;
+      background: var(--mist);
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 14px 0 8px 0;
+      cursor: pointer;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--battle-red);
+      transition: width 0.1s linear;
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-red {
+      background: var(--battle-red);
+      color: #fff;
+    }
+    .btn-red:hover {
+      background: #872c2c;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid var(--forest-guide);
+      color: var(--forest-guide);
+    }
+    .btn-outline.active {
+      background: var(--forest-guide);
+      color: #fff;
+    }
+
+    .btn-gold {
+      background: var(--torch);
+      color: #1a1202;
+    }
+    .btn-gold:hover {
+      background: #cca030;
+    }
+
+    /* 그리드 */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1.5px solid var(--mist);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .card:hover {
+      border-color: var(--forest-guide);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(23, 62, 44, 0.08);
+    }
+
+    .card:active, .card.active {
+      transform: scale(0.98);
+      background: #F5FAF6;
+      border-color: var(--torch);
+    }
+
+    .card-id {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--forest-guide);
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .card-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--forest);
+      margin-bottom: 6px;
+      word-break: break-all;
+    }
+
+    .card-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.45;
+      margin-bottom: 12px;
+      flex-grow: 1;
+    }
+
+    .card-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #7A8E7E;
+    }
+
+    .play-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--forest);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      transition: background 0.15s ease;
+    }
+
+    .card:hover .play-icon {
+      background: var(--torch);
+      color: #1a1202;
+    }
+
+    /* 최종 대전 전체 연출 시뮬레이터 */
+    .battle-simulator {
+      background: linear-gradient(135deg, #FFF8F5 0%, #F5F7F2 100%);
+      border: 2px solid var(--battle-red);
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 36px;
+    }
+
+    .battle-simulator h3 {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--battle-red);
+      margin-bottom: 6px;
+    }
+
+    .battle-simulator p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    .timeline-display {
+      background: #FFFFFF;
+      border: 1px solid var(--mist);
+      border-radius: 12px;
+      padding: 16px;
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--forest);
+      margin-bottom: 16px;
+    }
+
+    .sub-timeline {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">줄넘기 원정대 · 5단계 최종 대전 오디오</div>
+      <h1>최종 대전(전투) 전체 오디오 검토 플레이어</h1>
+      <p class="subtitle">지시서(audio-agent-production-brief.md) 5단계 기준: 전투 본곡(BGM-02), 스팅어 4종, 전투 효과음 15종</p>
+    </header>
+
+    <!-- BGM-02 전투 본곡 -->
+    <div class="bgm-banner">
+      <div class="banner-header">
+        <div style="font-size: 18px; font-weight: 800; color: var(--forest);">
+          ⚔️ BGM-02 : bgm_final_battle_main_loop
+        </div>
+        <span class="tag-red">50.91초 · BPM 132 · 완전 무한 루프</span>
+      </div>
+      <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 12px;">
+        D Minor / Dorian · 긴장감 넘치는 워드럼 비트, 스타카토 베이스라인, 친구들의 용기를 북돋우는 웅장한 호른 & 플루트 영웅 앙상블 (연결부 무한 루프 랩어라운드 믹싱).
+      </p>
+
+      <div class="progress-bar-wrap" onclick="seekBgm(event)">
+        <div class="progress-bar" id="bgm-progress"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums;">
+        <span id="bgm-current">0:00</span>
+        <span id="bgm-total">0:50</span>
+      </div>
+
+      <div class="controls-row">
+        <button class="btn btn-red" id="bgm-btn" onclick="toggleBgm()">
+          ▶ 전투 BGM 재생
+        </button>
+        <button class="btn btn-outline active" id="loop-btn" onclick="toggleLoop()">
+          🔁 무한 반복 활성화
+        </button>
+        <span style="font-size: 13px; color: var(--text-muted); margin-left: auto;">
+          볼륨: <input type="range" min="0" max="1" step="0.05" value="0.70" oninput="setBgmVolume(this.value)">
+        </span>
+      </div>
+      <audio id="battle-bgm" src="bgm/bgm_final_battle_main_loop.wav" loop preload="auto"></audio>
+    </div>
+
+    <!-- 전환 및 결과 스팅어 4종 -->
+    <div class="section-title">🎺 전투 전환 & 결과 스팅어 (4종)</div>
+    <div class="grid">
+      <div class="card" onclick="playSfx('st-02', this)">
+        <div>
+          <div class="card-id">ST-02</div>
+          <div class="card-name">st_boss_reveal</div>
+          <div class="card-desc">비밀 보스 첫 공개 (고대 보스 각성 지면 럼블 & 호른 팡파르)</div>
+        </div>
+        <div class="card-bottom"><span>3.80초</span><div class="play-icon">▶</div></div>
+        <audio id="st-02" src="stingers/st_boss_reveal.wav" preload="auto"></audio>
+      </div>
+
+      <div class="card" onclick="playSfx('st-03', this)">
+        <div>
+          <div class="card-id">ST-03</div>
+          <div class="card-name">st_class_finish</div>
+          <div class="card-desc">학급 협동 마무리 (초록·황금·파랑 3팀 힘 결집 ➔ 합동 일격 임팩트)</div>
+        </div>
+        <div class="card-bottom"><span>5.50초</span><div class="play-icon">▶</div></div>
+        <audio id="st-03" src="stingers/st_class_finish.wav" preload="auto"></audio>
+      </div>
+
+      <div class="card" onclick="playSfx('st-04', this)">
+        <div>
+          <div class="card-id">ST-04</div>
+          <div class="card-name">st_boss_defeat</div>
+          <div class="card-desc">보스 격파 확정 (숲의 정령으로 정화되며 평화롭게 잠드는 따뜻한 감동의 종소리)</div>
+        </div>
+        <div class="card-bottom"><span>3.80초</span><div class="play-icon">▶</div></div>
+        <audio id="st-04" src="stingers/st_boss_defeat.wav" preload="auto"></audio>
+      </div>
+
+      <div class="card" onclick="playSfx('st-05', this)">
+        <div>
+          <div class="card-id">ST-05</div>
+          <div class="card-name">st_result_reveal</div>
+          <div class="card-desc">최종 결과·승점 공개 (3팀 모두의 성취를 축하하는 성대한 승리 행진 팡파르)</div>
+        </div>
+        <div class="card-bottom"><span>6.20초</span><div class="play-icon">▶</div></div>
+        <audio id="st-05" src="stingers/st_result_reveal.wav" preload="auto"></audio>
+      </div>
+    </div>
+
+    <!-- 전투 핵심 효과음 15종 -->
+    <div class="section-title">🛡️ 전투 핵심 효과음 (15종)</div>
+    <div class="grid">
+      <div class="card" onclick="playSfx('bt-01', this)">
+        <div>
+          <div class="card-id">BT-01</div>
+          <div class="card-name">sfx_unit_enter</div>
+          <div class="card-desc">팀별 병력 등장 (경쾌한 발걸음과 대열 결속)</div>
+        </div>
+        <div class="card-bottom"><span>0.75초</span><div class="play-icon">▶</div></div>
+        <audio id="bt-01" src="sfx/battle/sfx_unit_enter.wav" preload="auto"></audio>
+      </div>
+
+      <div class="card" onclick="playSfx('bt-02', this)">
+        <div>
+          <div class="card-id">BT-02</div>
+          <div class="card-name">sfx_acorn_ranged_attack</div>
+          <div class="card-desc">도토리 탐험가 원거리 공격 (탄성 새총 팽- + 도토리 날아가는 푱)</div>
+        </div>
+        <div class="card-bottom"><span>0.65초</span><div class="play-icon">▶</div></div>
+        <audio id="bt-02" src="sfx/battle/sfx_acorn_ranged_attack.wav" preload="auto"></audio>
+      </div>
+
+      <div class="card" onclick="playSfx('bt-03', this)">
+        <div>
+          <div class="card-id">BT-03</div>
+          <div class="card-name">sfx_hammer_melee_attack</div>
+          <div class="card-desc">숲속 해머단 근거리 공격 (묵직한 해머 스윙 + 쿵 타격)</div>
+        </div>
+        <div class="card-bottom"><span>0.65초</span><div class="play-icon">▶</div></div>
+        <audio id="bt-03" src="sfx/battle/sfx_hammer_melee_attack.wav" preload="auto"></audio>
+      </div>
+
+      <div class="card" onclick="playSfx('bt-04', this)">
+        <div>
+          <div class="card-id">BT-04</div>
+          <div class="card-name">sfx_leaf_guard_raise</div>
+          <div class="card-desc">잎사귀 수호자 방패 올리기 (거대 잎사귀 방패 촥 전개)</div>
+        </div>
+        <div class="card-bottom"><span>0.75초</span><div class="play-icon">▶</div></div>
+        <audio id="bt-04" src="sfx/battle/sfx_leaf_guard_raise.wav" preload="auto"></audio>
+      </div>
+
+      <div class="card" onclick="playSfx('bt-05', this)">
+        <div>
+          <div class="card-id">BT-05</div>
+          <div class="card-name">sfx_leaf_guard_hit</div>
+          <div class="card-desc">물리 공격 방어 (잎사귀/나무 방패에 턱- 안전하게 방어)</div>
+        </div>
+        <div class="card-bottom"><span>0.55초</span><div class="play-icon">▶</div></div>
+        <audio id="bt-05" src="sfx/battle/sfx_leaf_guard_hit.wav" preload="auto"></audio>
+      </div>
+
+      <div class="card" onclick="playSfx('bt-06', this)">
+        <div>
+          <div class="card-id">BT-06</div>
+          <div class="card-name">sfx_star_barrier_cast</div>
+          <div class="card-desc">별빛 요정 장벽 생성 (별빛 보호막 촤르륵 전개)</div>
+        </div>
+        <div class="card-bottom"><span>0.95초</span><div class="play-icon">▶</div></div>
+        <audio id="bt-06" src="sfx/battle/sfx_star_barrier_cast.wav" preload="auto"></audio>
+      </div>
+
+      <div class="card" onclick="playSfx('bt-07', this)">
+        <div>
+          <div class="card-id">BT-07</div>
+          <div class="card-name">sfx_star_barrier_hit</div>
+          <div class="card-desc">마법 공격 방어 (수정 방패에 마법이 팅- 흡수·반사)</div>
+        </div>
+        <div class="card-bottom"><span>0.60초</span><div class="play-icon">▶</div></div>
+        <audio id="bt-07" src="sfx/battle/sfx_star_barrier_hit.wav" preload="auto"></audio>
+      </div>
+
+      <div class="card" onclick="playSfx('bt-08', this)">
+        <div>
+          <div class="card-id">BT-08</div>
+          <div class="card-name">sfx_boss_physical_telegraph</div>
+          <div class="card-desc">보스 물리 공격 예고 (쿵- 지면 진동과 힘 모음)</div>
+        </div>
+        <div class="card-bottom"><span>1.10초</span><div class="play-icon">▶</div></div>
+        <audio id="bt-08" src="sfx/battle/sfx_boss_physical_telegraph.wav" preload="auto"></audio>
+      </div>
+
+      <div class="card" onclick="playSfx('bt-09', this)">
+        <div>
+          <div class="card-id">BT-09</div>
+          <div class="card-name">sfx_boss_magic_telegraph</div>
+          <div class="card-desc">보스 마법 공격 예고 (자연 마력 입자 휘몰아침)</div>
+        </div>
+        <div class="card-bottom"><span>1.10초</span><div class="play-icon">▶</div></div>
+        <audio id="bt-09" src="sfx/battle/sfx_boss_magic_telegraph.wav" preload="auto"></audio>
+      </div>
+
+      <div class="card" onclick="playSfx('bt-10', this)">
+        <div>
+          <div class="card-id">BT-10</div>
+          <div class="card-name">sfx_boss_physical_attack</div>
+          <div class="card-desc">보스 물리 공격 (거대한 바위/나무줄기 충격파)</div>
+        </div>
+        <div class="card-bottom"><span>1.20초</span><div class="play-icon">▶</div></div>
+        <audio id="bt-10" src="sfx/battle/sfx_boss_physical_attack.wav" preload="auto"></audio>
+      </div>
+
+      <div class="card" onclick="playSfx('bt-11', this)">
+        <div>
+          <div class="card-id">BT-11</div>
+          <div class="card-name">sfx_boss_magic_attack</div>
+          <div class="card-desc">보스 마법 공격 (바람과 자연 에너지의 웅장한 방출)</div>
+        </div>
+        <div class="card-bottom"><span>1.20초</span><div class="play-icon">▶</div></div>
+        <audio id="bt-11" src="sfx/battle/sfx_boss_magic_attack.wav" preload="auto"></audio>
+      </div>
+
+      <div class="card" onclick="playSfx('bt-12', this)">
+        <div>
+          <div class="card-id">BT-12</div>
+          <div class="card-name">sfx_boss_hit</div>
+          <div class="card-desc">보스 피격 (단단한 표면에 통쾌하게 꽂히는 타격)</div>
+        </div>
+        <div class="card-bottom"><span>0.45초</span><div class="play-icon">▶</div></div>
+        <audio id="bt-12" src="sfx/battle/sfx_boss_hit.wav" preload="auto"></audio>
+      </div>
+
+      <div class="card" onclick="playSfx('bt-13', this)">
+        <div>
+          <div class="card-id">BT-13</div>
+          <div class="card-name">sfx_boss_stagger</div>
+          <div class="card-desc">보스 휘청임 (거목이 삐걱이듯 비틀거리는 충격)</div>
+        </div>
+        <div class="card-bottom"><span>1.10초</span><div class="play-icon">▶</div></div>
+        <audio id="bt-13" src="sfx/battle/sfx_boss_stagger.wav" preload="auto"></audio>
+      </div>
+
+      <div class="card" onclick="playSfx('bt-14', this)">
+        <div>
+          <div class="card-id">BT-14</div>
+          <div class="card-name">sfx_hero_cutin</div>
+          <div class="card-desc">영웅 컷인 (시간 정지 플래시 & 심장 박동 임팩트)</div>
+        </div>
+        <div class="card-bottom"><span>1.00초</span><div class="play-icon">▶</div></div>
+        <audio id="bt-14" src="sfx/battle/sfx_hero_cutin.wav" preload="auto"></audio>
+      </div>
+
+      <div class="card" onclick="playSfx('bt-15', this)">
+        <div>
+          <div class="card-id">BT-15</div>
+          <div class="card-name">sfx_hero_ultimate</div>
+          <div class="card-desc">영웅 궁극기 (웅장한 도약 상승 스윕 + 마법 대폭발)</div>
+        </div>
+        <div class="card-bottom"><span>2.00초</span><div class="play-icon">▶</div></div>
+        <audio id="bt-15" src="sfx/battle/sfx_hero_ultimate.wav" preload="auto"></audio>
+      </div>
+    </div>
+
+    <!-- 최종 대전 풀 시퀀스 시뮬레이터 -->
+    <div class="battle-simulator">
+      <h3>🎬 최종 대전 풀 오디오 연출 시뮬레이터</h3>
+      <p>
+        지시서에 정의된 전투 흐름: <strong>보스 등장(ST-02) ➔ 전투 BGM(BGM-02) ➔ 병력 공방전(BT) ➔ 영웅 궁극기(BT-14/15) ➔ 학급 협동 마무리(ST-03) ➔ 보스 격파(ST-04) ➔ 결과 발표(ST-05)</strong>의
+        전과정을 한 번의 클릭으로 실감 나게 시뮬레이션해 보세요!
+      </p>
+
+      <div class="timeline-display" id="sim-display">
+        <div>[최종 대전 시뮬레이션 대기 중]</div>
+        <div class="sub-timeline">아래 버튼을 누르면 인게임 전투 오디오 시퀀스가 시작됩니다.</div>
+      </div>
+
+      <button class="btn btn-red" style="font-size: 15px; padding: 12px 24px;" onclick="startBattleSimulation()">
+        🔥 최종 대전 전체 연출 시뮬레이션 시작!
+      </button>
+      <button class="btn btn-outline" style="margin-left: 10px;" onclick="stopBattleSimulation()">
+        ⏹ 정지
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const bgm = document.getElementById('battle-bgm');
+    const bgmBtn = document.getElementById('bgm-btn');
+    const loopBtn = document.getElementById('loop-btn');
+    const bgmProgress = document.getElementById('bgm-progress');
+    const bgmCurrent = document.getElementById('bgm-current');
+    const simDisplay = document.getElementById('sim-display');
+
+    bgm.volume = 0.70;
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    function toggleBgm() {
+      if (bgm.paused) {
+        bgm.play();
+        bgmBtn.innerText = '⏸ 전투 BGM 일시정지';
+      } else {
+        bgm.pause();
+        bgmBtn.innerText = '▶ 전투 BGM 재생';
+      }
+    }
+
+    function toggleLoop() {
+      bgm.loop = !bgm.loop;
+      if (bgm.loop) {
+        loopBtn.classList.add('active');
+        loopBtn.innerText = '🔁 무한 반복 활성화';
+      } else {
+        loopBtn.classList.remove('active');
+        loopBtn.innerText = '➡️ 1회만 재생';
+      }
+    }
+
+    function setBgmVolume(val) {
+      bgm.volume = parseFloat(val);
+    }
+
+    function seekBgm(e) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const pos = (e.clientX - rect.left) / rect.width;
+      bgm.currentTime = pos * (bgm.duration || 50.91);
+    }
+
+    bgm.addEventListener('timeupdate', () => {
+      if (bgm.duration) {
+        const pct = (bgm.currentTime / bgm.duration) * 100;
+        bgmProgress.style.width = pct + '%';
+        bgmCurrent.innerText = formatTime(bgm.currentTime);
+      }
+    });
+
+    function playSfx(id, cardEl) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.currentTime = 0;
+        el.play();
+        if (cardEl) {
+          cardEl.classList.add('active');
+          setTimeout(() => cardEl.classList.remove('active'), 250);
+        }
+      }
+    }
+
+    // 전투 시뮬레이션
+    let simTimers = [];
+
+    function stopBattleSimulation() {
+      simTimers.forEach(t => clearTimeout(t));
+      simTimers = [];
+      bgm.pause();
+      bgm.currentTime = 0;
+      bgmBtn.innerText = '▶ 전투 BGM 재생';
+      simDisplay.innerHTML = `<div>[시뮬레이션 정지됨]</div><div class="sub-timeline">언제든 다시 시작할 수 있습니다.</div>`;
+    }
+
+    function startBattleSimulation() {
+      stopBattleSimulation();
+
+      function updateText(main, sub) {
+        simDisplay.innerHTML = `<div>${main}</div><div class="sub-timeline">${sub}</div>`;
+      }
+
+      // 0.0s: 비밀 보스 첫 등장 (ST-02)
+      updateText('🚨 1단계: 비밀 보스 등장!', '지면이 흔들리며 고대 보스가 모습을 드러냅니다 (st_boss_reveal)');
+      playSfx('st-02');
+
+      // 3.5s: BGM-02 전투 본곡 돌입
+      simTimers.push(setTimeout(() => {
+        updateText('⚔️ 2단계: 최종 대전 개시!', '전투 BGM이 울려 퍼지며 3개 팀이 전장에 돌입합니다 (bgm_final_battle_main_loop)');
+        bgm.volume = 0.70;
+        bgm.currentTime = 0;
+        bgm.play();
+        bgmBtn.innerText = '⏸ 전투 BGM 일시정지';
+      }, 3500));
+
+      // 4.5s: 병력 진입
+      simTimers.push(setTimeout(() => {
+        updateText('🌲 병력 배치 완료!', '초록·황금·파랑 세 팀의 병력이 진열을 갖춥니다 (sfx_unit_enter)');
+        playSfx('bt-01');
+      }, 4500));
+
+      // 6.0s: 도토리 탐험가 공격 & 보스 피격
+      simTimers.push(setTimeout(() => {
+        updateText('🏹 도토리 탐험가 집중 사격!', '원거리 도토리 포탄이 보스에게 꽂힙니다 (sfx_acorn_attack ➔ sfx_boss_hit)');
+        playSfx('bt-02');
+        setTimeout(() => playSfx('bt-12'), 250);
+      }, 6000));
+
+      // 8.0s: 보스 물리 공격 예고 & 잎사귀 수호자 방어!
+      simTimers.push(setTimeout(() => {
+        updateText('⚠️ 보스 물리 공격 예고 ➔ 잎사귀 방패 방어!', '보스의 바위 휘두르기를 잎사귀 수호자가 단단히 막아냅니다 (sfx_boss_physical ➔ sfx_leaf_guard_hit)');
+        playSfx('bt-08');
+        setTimeout(() => playSfx('bt-10'), 900);
+        setTimeout(() => playSfx('bt-05'), 1200);
+      }, 8000));
+
+      // 11.5s: 숲속 해머단 돌격!
+      simTimers.push(setTimeout(() => {
+        updateText('🔨 숲속 해머단 강타!', '단풍나무 해머가 보스를 강타하여 비틀거리게 만듭니다 (sfx_hammer_attack ➔ sfx_boss_stagger)');
+        playSfx('bt-03');
+        setTimeout(() => playSfx('bt-13'), 300);
+      }, 11500));
+
+      // 14.0s: 보스 마법 공격 예고 ➔ 별빛 요정 장벽 방어!
+      simTimers.push(setTimeout(() => {
+        updateText('✨ 보스 마법 공격 ➔ 별빛 장벽 방어!', '휘몰아치는 자연 마력을 별빛 장벽이 팅- 하고 튕겨냅니다 (sfx_star_barrier_hit)');
+        playSfx('bt-09');
+        setTimeout(() => playSfx('bt-06'), 500);
+        setTimeout(() => playSfx('bt-11'), 1000);
+        setTimeout(() => playSfx('bt-07'), 1300);
+      }, 14000));
+
+      // 17.5s: 영웅 컷인 & 궁극기 발동!
+      simTimers.push(setTimeout(() => {
+        updateText('🌟 영웅 컷인 & 궁극기 발동!', '전장을 가르는 영웅의 도약과 마법 대폭발! (sfx_hero_cutin ➔ sfx_hero_ultimate)');
+        playSfx('bt-14');
+        setTimeout(() => playSfx('bt-15'), 800);
+      }, 17500));
+
+      // 21.0s: BGM 페이드아웃 및 학급 협동 마무리 (ST-03)
+      simTimers.push(setTimeout(() => {
+        updateText('🤝 3단계: 학급 협동 마무리 (클라이맥스)', '세 팀이 하나의 줄로 엮여 보스에게 마지막 협동 일격을 날립니다! (st_class_finish)');
+        // BGM 0.6초 페이드아웃
+        let vol = bgm.volume;
+        const fade = setInterval(() => {
+          vol = Math.max(0, vol - 0.1);
+          bgm.volume = vol;
+          if (vol <= 0) {
+            clearInterval(fade);
+            bgm.pause();
+            bgmBtn.innerText = '▶ 전투 BGM 재생';
+          }
+        }, 60);
+        playSfx('st-03');
+      }, 21000));
+
+      // 26.5s: 보스 정화 격파 (ST-04)
+      simTimers.push(setTimeout(() => {
+        updateText('🕊️ 4단계: 보스 정화 격파 성공!', '보스가 평화로운 숲의 정령으로 정화되며 잠듭니다 (st_boss_defeat)');
+        playSfx('st-04');
+      }, 26500));
+
+      // 30.5s: 최종 결과 & 승점 발표 (ST-05)
+      simTimers.push(setTimeout(() => {
+        updateText('🏆 5단계: 최종 결과 발표 & 승점 수여!', '세 팀 모두 승리를 자축하는 성대한 트로피 팡파르가 울려 퍼집니다! (st_result_reveal)');
+        playSfx('st-05');
+      }, 30500));
+
+      // 37.0s: 완료
+      simTimers.push(setTimeout(() => {
+        updateText('🎉 최종 대전 시뮬레이션 완주 완료!', '세 팀 모두 함께 완수한 멋진 원정이었습니다.');
+      }, 37000));
+    }
+  </script>
+</body>
+</html>

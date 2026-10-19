@@ -1,0 +1,88 @@
+/* Functional additions only; the existing operating-screen design is unchanged. */
+.medal-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  flex-shrink: 0;
+  color: var(--forest-primary);
+}
+.medal-roster-actions,
+.medal-award-actions,
+.medal-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.operation-member-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.operation-member-name > span {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.medal-name-icons {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.medal-name-icons .medal-icon {
+  width: 20px;
+  height: 20px;
+}
+.medal-definition-list,
+.medal-student-list {
+  margin: 16px 0;
+  padding: 0;
+  list-style: none;
+}
+.medal-definition-list > li,
+.medal-student-list > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: 10px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--prep-line);
+}
+.medal-definition-list > li > div,
+.medal-student-list > li > div {
+  flex: 1;
+  min-width: 120px;
+  overflow-wrap: anywhere;
+}
+.medal-definition-list p,
+.medal-student-list p {
+  margin: 6px 0;
+}
+.medal-definition-list small,
+.medal-team-note {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+.medal-student-list details {
+  font-size: 13px;
+  line-height: 1.8;
+}
+.medal-student-list details ul {
+  padding-left: 18px;
+}
+.medal-preview {
+  margin-top: 16px;
+}
+.operation-modal input[type='file'] {
+  max-width: 100%;
+  font-size: 13px;
+}
+.medal-award-actions {
+  margin: 12px 0;
+}
+.medal-award-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
