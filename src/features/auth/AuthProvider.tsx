@@ -45,14 +45,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = useCallback(async (email: string, password: string) => {
     if (!supabase) throw new Error('Supabase 로그인이 아직 연결되지 않았어요.');
-    const redirect = `${window.location.origin}${window.location.pathname}#/preparations`;
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: redirect },
     });
     if (error) throw error;
-    return data.session ? 'signed-in' : 'confirmation-sent';
+    if (!data.session)
+      throw new Error('가입은 됐지만 바로 로그인되지 않았어요. 잠시 후 로그인해 주세요.');
   }, []);
 
   const signOut = useCallback(async () => {

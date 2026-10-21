@@ -7,7 +7,7 @@ export interface AuthContextValue {
   status: AuthStatus;
   user: User | null;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<'signed-in' | 'confirmation-sent'>;
+  signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 

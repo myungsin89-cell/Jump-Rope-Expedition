@@ -44,12 +44,8 @@ export default function TeacherLogin() {
       if (mode === 'signin') {
         await signIn(email.trim(), password);
       } else {
-        const result = await signUp(email.trim(), password);
-        if (result === 'confirmation-sent') {
-          setNotice('확인 메일을 보냈어요. 메일의 링크를 누른 뒤 로그인해 주세요.');
-          setMode('signin');
-          setPassword('');
-        }
+        await signUp(email.trim(), password);
+        setNotice('가입됐어요. 바로 원정실을 열고 있어요…');
       }
     } catch (reason) {
       setError(friendlyMessage(reason));
@@ -98,7 +94,7 @@ export default function TeacherLogin() {
         <p>
           {mode === 'signin'
             ? '학생 명단과 원정 기록을 안전하게 이어서 관리해요.'
-            : '교사 데이터는 계정별로 분리해 저장할 예정이에요.'}
+            : '이메일 확인 없이 계정을 만들고 바로 시작해요.'}
         </p>
 
         <div className="auth-tabs" role="tablist" aria-label="로그인 방식">
@@ -126,7 +122,7 @@ export default function TeacherLogin() {
             role="tab"
             type="button"
           >
-            처음 가입
+            처음 한 번만 가입
           </button>
         </div>
 
@@ -169,7 +165,7 @@ export default function TeacherLogin() {
               ? '확인 중…'
               : mode === 'signin'
                 ? '원정실 들어가기'
-                : '교사 계정 만들기'}
+                : '가입하고 바로 시작'}
           </button>
         </form>
         <p className="auth-student-note">
