@@ -12,6 +12,30 @@ test('uses outlined rosters, hides multipliers until student detail, and limits 
   ).toHaveText('경기 기록하기');
   await expect(page.getByText('2배', { exact: true })).toHaveCount(0);
   await expect(page.locator('.operation-student-name.is-jumper')).toHaveCount(3);
+  const firstTeam = page.locator('.operation-team').first();
+  await expect(firstTeam.locator('.operation-captain-feature')).toContainText('원정대장');
+  await expect(firstTeam.locator('.operation-captain-feature')).toContainText(
+    '가상학생 1',
+  );
+  await expect(
+    firstTeam.locator('.operation-roster-list').getByText('가상학생 1', { exact: true }),
+  ).toHaveCount(0);
+  expect(
+    await firstTeam
+      .locator('.operation-captain-feature')
+      .evaluate((element) =>
+        element.nextElementSibling?.matches('ol.operation-roster-list'),
+      ),
+  ).toBe(true);
+  expect(
+    await firstTeam
+      .locator('.operation-student-name.is-jumper')
+      .first()
+      .evaluate((element) => getComputedStyle(element).borderTopColor),
+  ).toBe('rgba(0, 0, 0, 0)');
+  await expect(firstTeam.locator('.operation-jumper-mark').first()).toHaveText(
+    '도전점퍼',
+  );
   expect(
     await page
       .locator('.operation-team')

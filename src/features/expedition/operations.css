@@ -186,9 +186,6 @@
 .operation-student-name:hover {
   background: var(--bg-cream);
 }
-.operation-student-name.is-jumper {
-  border-color: var(--team-color, var(--forest-primary));
-}
 .operation-student-number {
   flex-shrink: 0;
   width: 22px;
@@ -196,10 +193,19 @@
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
-.operation-member-name {
+.operation-student-name .operation-member-name {
+  display: grid;
   min-width: 0;
   flex: 1;
+  gap: 2px;
   overflow-wrap: anywhere;
+}
+.operation-member-name-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 .operation-captain-tag,
 .operation-jumper-mark {
@@ -212,7 +218,55 @@
   font-weight: 700;
 }
 .operation-jumper-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: max-content;
+  color: #8a6513;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+.operation-jumper-mark::before {
+  width: 19px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #d29a20, #f2d277);
+  content: '';
+}
+.operation-captain-feature {
+  margin: 4px 4px 12px;
+  padding: 10px 10px 8px;
+  border-top: 1px solid #d8be72;
+  border-bottom: 1px solid #eadfbd;
+  background: linear-gradient(90deg, rgba(249, 236, 190, 0.48), transparent 88%);
+}
+.operation-captain-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #806016;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+.operation-captain-heading::before {
+  color: #c58d14;
+  content: '★';
+  font-size: 10px;
+}
+.operation-captain-feature .operation-captain-student {
+  min-height: 40px;
+  padding: 5px 0 0;
+}
+.operation-captain-feature .operation-captain-student:hover {
+  background: rgba(255, 255, 255, 0.55);
+}
+.operation-captain-empty {
+  margin: 7px 0 1px;
   color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.6;
 }
 .operation-roster-legend {
   display: flex;
@@ -224,11 +278,11 @@
   line-height: 1.7;
 }
 .operation-roster-legend > span {
-  width: 16px;
-  height: 12px;
+  width: 19px;
+  height: 2px;
   flex-shrink: 0;
-  border: 1px solid var(--forest-primary);
-  border-radius: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #d29a20, #f2d277);
 }
 .operation-empty-roster {
   min-height: 88px;

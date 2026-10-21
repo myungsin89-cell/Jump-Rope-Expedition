@@ -138,6 +138,7 @@ export default function ExpeditionOverview({
                 teamIndex={index}
                 onStudent={onStudent}
                 medals={medals}
+                featureCaptain
               />
               {!team.studentIds.length && (
                 <p className="operation-empty-roster">
