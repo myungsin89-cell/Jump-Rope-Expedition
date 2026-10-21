@@ -6,8 +6,8 @@ export type AuthStatus = 'loading' | 'authenticated' | 'anonymous' | 'unconfigur
 export interface AuthContextValue {
   status: AuthStatus;
   user: User | null;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signIn: (teacherId: string, password: string) => Promise<void>;
+  signUp: (teacherId: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 

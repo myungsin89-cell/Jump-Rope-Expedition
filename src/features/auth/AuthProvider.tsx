@@ -5,6 +5,7 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../shared/lib/supabase';
 import { AuthContext } from './AuthContext';
 import type { AuthStatus } from './AuthContext';
+import { normalizeTeacherId, teacherIdToEmail } from './teacherCredentials';
 
 const testBypass =
   import.meta.env.DEV && import.meta.env.VITE_AUTH_TEST_BYPASS === 'true';
@@ -37,17 +38,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const signIn = useCallback(async (email: string, password: string) => {
+  const signIn = useCallback(async (teacherId: string, password: string) => {
     if (!supabase) throw new Error('Supabase 로그인이 아직 연결되지 않았어요.');
+    const email = teacherIdToEmail(teacherId);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   }, []);
 
-  const signUp = useCallback(async (email: string, password: string) => {
+  const signUp = useCallback(async (teacherId: string, password: string) => {
     if (!supabase) throw new Error('Supabase 로그인이 아직 연결되지 않았어요.');
+    const normalizedTeacherId = normalizeTeacherId(teacherId);
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: teacherIdToEmail(normalizedTeacherId),
       password,
+      options: {
+        data: { teacher_id: normalizedTeacherId },
+      },
     });
     if (error) throw error;
     if (!data.session)

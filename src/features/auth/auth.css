@@ -107,6 +107,12 @@
   outline: 3px solid rgba(82, 183, 136, 0.22);
 }
 
+.auth-field-hint {
+  color: #687970;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
 .auth-primary,
 .auth-secondary {
   display: inline-flex;
