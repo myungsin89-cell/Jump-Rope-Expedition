@@ -66,11 +66,11 @@ describe('경기 예상 계산', () => {
     expect(result.map((team) => team.rank)).toEqual([1, 2]);
     expect(result.map((team) => team.estimatedPoints)).toEqual([60, 50]);
   });
-  it('supports four ranks without inventing a fourth-place point bonus', () => {
+  it('gives fourth place no ranking bonus while keeping participation points', () => {
     const result = calculateMatchPreview(records([500, 400, 300, 200]));
     expect(result.map((team) => team.rank)).toEqual([1, 2, 3, 4]);
-    expect(result.map((team) => team.estimatedPoints)).toEqual([60, 50, 40, null]);
-    expect(result[3].rankingPoints).toBeNull();
+    expect(result.map((team) => team.estimatedPoints)).toEqual([60, 50, 40, 30]);
+    expect(result[3].rankingPoints).toBe(0);
     expect(result[3].participationPoints).toBe(30);
   });
 });

@@ -21,13 +21,18 @@ describe('official match awards', () => {
     ]);
   });
 
-  it('blocks confirmation when a fourth-place point rule is still undecided', () => {
+  it('turns a four-team result into awards including 30P for fourth place', () => {
     const results = calculateMatchPreview([
       team(0, 400),
       team(1, 300),
       team(2, 200),
       team(3, 100),
     ]);
-    expect(() => officialAwards(results)).toThrow('4위 순위 포인트');
+    expect(officialAwards(results)).toEqual([
+      { teamKey: 'team-0', points: 60 },
+      { teamKey: 'team-1', points: 50 },
+      { teamKey: 'team-2', points: 40 },
+      { teamKey: 'team-3', points: 30 },
+    ]);
   });
 });

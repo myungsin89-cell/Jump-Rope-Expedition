@@ -1,0 +1,254 @@
+import { useMemo, useState } from 'react';
+import HeroCard from '../card-ui/HeroCard';
+import { HEROES_CATALOG, RARITY_LABELS } from '../card-ui/catalog';
+import OperationModal from '../expedition/OperationModal';
+import { currentSeasonIndex } from '../expedition/operations';
+import type { Preparation } from '../preparation/model';
+import { HERO_MISSIONS, heroMissionIds, revealHero, teamHeroRewards } from './model';
+import type { HeroReward, HeroStore } from './model';
+import './heroes.css';
+
+function contributorLabel(reward: HeroReward): string {
+  return reward.contributorNames.length
+    ? `함께 만든 기록: ${reward.contributorNames.join(', ')}`
+    : '원정대가 함께 만든 기록';
+}
+
+export default function HeroVaultModal({
+  plan,
+  store,
+  teamIndex,
+  onChange,
+  onClose,
+}: {
+  plan: Preparation;
+  store: HeroStore;
+  teamIndex: number;
+  onChange: (store: HeroStore) => void;
+  onClose: () => void;
+}) {
+  const seasonIndex = currentSeasonIndex(plan);
+  const team = plan.teams[teamIndex];
+  const current = teamHeroRewards(store, teamIndex, seasonIndex);
+  const past = teamHeroRewards(store, teamIndex).filter(
+    (reward) => reward.seasonIndex !== seasonIndex,
+  );
+  const sealed = current.filter((reward) => reward.heroId && !reward.revealedAt);
+  const revealed = current.filter((reward) => reward.heroId && reward.revealedAt);
+  const exhausted = current.filter((reward) => !reward.heroId);
+  const [pending, setPending] = useState<string | null>(null);
+  const [revealedReward, setRevealedReward] = useState<HeroReward | null>(null);
+  const [error, setError] = useState('');
+  const achievementCounts = useMemo(
+    () =>
+      Object.fromEntries(
+        heroMissionIds.map((missionId) => [
+          missionId,
+          teamHeroRewards(store, teamIndex).filter(
+            (reward) => reward.missionId === missionId,
+          ).length,
+        ]),
+      ),
+    [store, teamIndex],
+  );
+  const reveal = () => {
+    if (!pending) return;
+    try {
+      const next = revealHero(plan.id, pending);
+      const reward = next.rewards.find((item) => item.id === pending);
+      if (!reward?.heroId) throw new Error('공개할 영웅을 찾지 못했어요.');
+      onChange(next);
+      setRevealedReward(reward);
+      setPending(null);
+      setError('');
+    } catch (reason) {
+      setError(
+        reason instanceof Error ? reason.message : '영웅 카드를 공개하지 못했어요.',
+      );
+    }
+  };
+  const revealedHero = revealedReward
+    ? HEROES_CATALOG.find((hero) => hero.id === revealedReward.heroId)
+    : null;
+
+  return (
+    <OperationModal
+      title={`${team.name} · 영웅 보관함`}
+      className="hero-vault-modal"
+      onClose={onClose}
+    >
+      {revealedReward && revealedHero ? (
+        <section
+          className={`hero-reveal-stage rarity-${revealedHero.rarity}`}
+          aria-live="assertive"
+          aria-label="새 영웅 공개"
+        >
+          <div className="hero-reveal-light" aria-hidden="true" />
+          <p>새로운 영웅이 원정대에 합류했습니다</p>
+          <HeroCard hero={revealedHero} state="revealed" className="hero-reveal-card" />
+          <strong>
+            {RARITY_LABELS[revealedHero.rarity]} 영웅 ·{' '}
+            {HERO_MISSIONS[revealedReward.missionId].name}
+          </strong>
+          <span>{contributorLabel(revealedReward)}</span>
+          <button
+            type="button"
+            className="preparation-primary"
+            onClick={() => setRevealedReward(null)}
+          >
+            영웅 보관함으로
+          </button>
+        </section>
+      ) : (
+        <>
+          <section className="hero-vault-summary" aria-label="현재 시즌 영웅 현황">
+            <div>
+              <span>시즌 {seasonIndex + 1}</span>
+              <strong>{current.filter((reward) => reward.heroId).length}장</strong>
+            </div>
+            <div>
+              <span>함께 공개할 카드</span>
+              <strong>{sealed.length}장</strong>
+            </div>
+            <p>획득한 영웅은 선택하지 않아도 이번 시즌 최종 대전에 모두 참여해요.</p>
+          </section>
+
+          {error && (
+            <p className="preparation-field-error" role="alert">
+              {error}
+            </p>
+          )}
+
+          {pending && (
+            <section className="hero-reveal-confirm" aria-labelledby="hero-confirm-title">
+              <HeroCard state="sealed" />
+              <div>
+                <h3 id="hero-confirm-title">팀원들이 모두 함께 보고 있나요?</h3>
+                <p>
+                  영웅 카드는 한 번 공개하면 다시 닫을 수 없습니다. 모든 팀원이 화면을 볼
+                  준비가 되었는지 확인해 주세요.
+                </p>
+                <div className="preparation-actions">
+                  <button
+                    type="button"
+                    className="preparation-secondary"
+                    onClick={() => setPending(null)}
+                  >
+                    아직이에요
+                  </button>
+                  <button type="button" className="preparation-primary" onClick={reveal}>
+                    모두 함께 공개하기
+                  </button>
+                </div>
+              </div>
+            </section>
+          )}
+
+          <section className="hero-vault-section" aria-labelledby="sealed-heroes-title">
+            <div className="hero-vault-heading">
+              <h3 id="sealed-heroes-title">미공개 영웅</h3>
+              <span>{sealed.length}장</span>
+            </div>
+            {sealed.length ? (
+              <ul className="hero-sealed-list">
+                {sealed.map((reward) => (
+                  <li key={reward.id}>
+                    <div>
+                      <strong>{HERO_MISSIONS[reward.missionId].name}</strong>
+                      <span>시즌 {reward.seasonIndex + 1} 임무 달성</span>
+                      <small>{contributorLabel(reward)}</small>
+                    </div>
+                    <button
+                      type="button"
+                      className="preparation-primary"
+                      disabled={Boolean(pending)}
+                      onClick={() => {
+                        setPending(reward.id);
+                        setError('');
+                      }}
+                    >
+                      팀원과 공개하기
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="hero-empty">공개를 기다리는 영웅 카드가 없어요.</p>
+            )}
+          </section>
+
+          <section className="hero-vault-section" aria-labelledby="revealed-heroes-title">
+            <div className="hero-vault-heading">
+              <h3 id="revealed-heroes-title">이번 시즌 영웅</h3>
+              <span>{revealed.length}장</span>
+            </div>
+            {revealed.length ? (
+              <div className="hero-owned-grid">
+                {revealed.map((reward) => {
+                  const hero = HEROES_CATALOG.find((item) => item.id === reward.heroId);
+                  return hero ? (
+                    <div key={reward.id}>
+                      <HeroCard hero={hero} state="revealed" />
+                      <small>{HERO_MISSIONS[reward.missionId].name}</small>
+                    </div>
+                  ) : null;
+                })}
+              </div>
+            ) : (
+              <p className="hero-empty">아직 공개한 영웅이 없어요.</p>
+            )}
+            {exhausted.length > 0 && (
+              <p className="hero-empty">
+                영웅 15종을 모두 모은 뒤 추가로 달성한 임무 {exhausted.length}회도
+                기록했어요.
+              </p>
+            )}
+          </section>
+
+          <details className="hero-mission-details">
+            <summary>영웅 임무 6개와 달성 기록</summary>
+            <ul>
+              {heroMissionIds.map((missionId) => (
+                <li key={missionId}>
+                  <div>
+                    <strong>{HERO_MISSIONS[missionId].name}</strong>
+                    <span>{HERO_MISSIONS[missionId].description}</span>
+                  </div>
+                  <b>{achievementCounts[missionId]}회</b>
+                </li>
+              ))}
+            </ul>
+          </details>
+
+          {past.length > 0 && (
+            <details className="hero-mission-details">
+              <summary>
+                지난 시즌 도감 · {past.filter((reward) => reward.heroId).length}장
+              </summary>
+              <ol className="hero-archive-list">
+                {past
+                  .filter((reward) => reward.heroId)
+                  .map((reward) => {
+                    const hero = HEROES_CATALOG.find((item) => item.id === reward.heroId);
+                    return hero ? (
+                      <li key={reward.id}>
+                        <strong>{hero.name}</strong>
+                        <span>
+                          시즌 {reward.seasonIndex + 1} ·{' '}
+                          {HERO_MISSIONS[reward.missionId].name}
+                        </span>
+                      </li>
+                    ) : null;
+                  })}
+              </ol>
+            </details>
+          )}
+
+          <p className="operation-save-note">
+            임무 판정과 추첨 결과는 교사 원정 자료에 함께 저장됩니다.
+          </p>
+        </>
+      )}
+    </OperationModal>
+  );
+}

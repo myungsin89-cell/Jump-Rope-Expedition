@@ -80,10 +80,10 @@ Vite 변수는 빌드에 들어가므로 변경 후 새 배포가 필요하다. 
 
 ## 현재 확인 상태
 
-- 로컬 타입 검사·배포 빌드, 단위/API 경계 테스트 94개, 브라우저 테스트 28개 통과.
+- 로컬 타입 검사·배포 빌드, 단위/API 경계 테스트 108개, 브라우저 테스트 29개 통과.
 - 실제 배포 번들을 별도 로컬 서버로 열어 카드 19종 이미지와 주아 글꼴 로딩을 확인했다. QR 생성·게시/재발급 요청·별도 브라우저의 공개 읽기·명단 새로고침은 모의 API로 검증했다. 이것을 실제 Supabase 연결 완료로 해석하면 안 된다.
 - 전체 ESLint와 Prettier 검사를 통과했다. 인트로 타자기 효과는 React Hooks 규칙에 맞게 정리했다.
-- SQL 마이그레이션과 Edge Function이 실제 Supabase 프로젝트에 적용되어 있으며 `student-board` 함수 버전 4가 `ACTIVE` 상태다. 실제 교사 키로 명단 저장·복원하는 수업 기기 확인은 한 번 더 진행한다.
+- 기존 SQL 마이그레이션과 Edge Function은 Supabase 프로젝트에 적용된 기록이 있다. 4위 보너스 0P를 반영한 `202610210004_fourth_place_bonus.sql`은 배포 연결 후 추가 적용하고, 실제 교사 키로 명단 저장·복원과 4팀 공식 경기 확정을 수업 기기에서 다시 확인한다.
 - GitHub 업로드와 Vercel 배포 성공 여부는 작업 완료 메시지 및 실제 서비스 화면에서 따로 확인한다.
 
 공식 참고: [Vercel의 Vite 배포](https://vercel.com/docs/frameworks/frontend/vite), [Supabase 함수 구성](https://supabase.com/docs/guides/functions/function-configuration), [DB 함수와 실행 권한](https://supabase.com/docs/guides/database/functions), [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security).

@@ -13,9 +13,9 @@ export interface MatchPreview {
   rankingCount: number;
   rank: number;
   participationPoints: number;
-  rankingPoints: number | null;
+  rankingPoints: number;
   growthPoints: number;
-  estimatedPoints: number | null;
+  estimatedPoints: number;
   previousRawCount: number | null;
 }
 
@@ -72,9 +72,7 @@ export function calculateMatchPreview(
       previous.find((entry) => entry.teamKey === team.teamKey)?.rawCount ?? null;
     if (previousRawCount !== null && !isCount(previousRawCount))
       throw new Error('직전 기록을 확인해 주세요.');
-    // The user has not decided the fourth-place bonus. Do not invent a value.
-    const rankingPoints =
-      ({ 1: 30, 2: 20, 3: 10 } as Record<number, number>)[rank] ?? null;
+    const rankingPoints = ({ 1: 30, 2: 20, 3: 10, 4: 0 } as Record<number, number>)[rank];
     const growthPoints =
       previousRawCount !== null && team.rawCount > previousRawCount ? 20 : 0;
     return {
@@ -85,7 +83,7 @@ export function calculateMatchPreview(
       participationPoints: 30,
       rankingPoints,
       growthPoints,
-      estimatedPoints: rankingPoints === null ? null : 30 + rankingPoints + growthPoints,
+      estimatedPoints: 30 + rankingPoints + growthPoints,
       previousRawCount,
     };
   });

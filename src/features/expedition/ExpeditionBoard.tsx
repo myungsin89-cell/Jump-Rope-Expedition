@@ -31,6 +31,9 @@ import type { EconomyStore } from '../economy/model';
 import TeamEconomyModal from '../economy/TeamEconomyModal';
 import TeacherServerModal from '../backup/TeacherServerModal';
 import { saveTeacherBackup } from '../backup/teacherBackup';
+import { readHeroes, reconcileHeroRewards } from '../heroes/model';
+import type { HeroStore } from '../heroes/model';
+import HeroVaultModal from '../heroes/HeroVaultModal';
 
 export default function ExpeditionBoard({
   initial,
@@ -70,6 +73,7 @@ export default function ExpeditionBoard({
   const [backingUp, setBackingUp] = useState(false);
   const [serverStatus, setServerStatus] = useState('서버 동기화 준비 중…');
   const [economyTeam, setEconomyTeam] = useState<number | null>(null);
+  const [heroTeam, setHeroTeam] = useState<number | null>(null);
   const [economy, setEconomy] = useState(() => {
     try {
       return { store: readEconomy(initial.id) as EconomyStore | null, error: '' };
@@ -83,14 +87,60 @@ export default function ExpeditionBoard({
       };
     }
   });
-  const updateMedals = (store: MedalStore) => setMedals({ store, error: '' });
-  const updateEconomy = (store: EconomyStore) => setEconomy({ store, error: '' });
+  const [heroes, setHeroes] = useState(() => {
+    try {
+      const store =
+        loaded.store && medals.store && economy.store
+          ? reconcileHeroRewards(initial, {
+              practice: loaded.store,
+              medals: medals.store,
+              economy: economy.store,
+            })
+          : readHeroes(initial.id);
+      return { store: store as HeroStore | null, error: '' };
+    } catch (reason) {
+      return {
+        store: null,
+        error:
+          reason instanceof Error
+            ? reason.message
+            : '영웅 기록을 읽지 못했어요. 원본은 보존했어요.',
+      };
+    }
+  });
+  const updateHeroes = (store: HeroStore) => setHeroes({ store, error: '' });
+  const reconcileHeroes = (medalStore: MedalStore, economyStore: EconomyStore) => {
+    if (!loaded.store) return;
+    try {
+      updateHeroes(
+        reconcileHeroRewards(plan, {
+          practice: loaded.store,
+          medals: medalStore,
+          economy: economyStore,
+        }),
+      );
+    } catch (reason) {
+      setHeroes({
+        store: null,
+        error:
+          reason instanceof Error ? reason.message : '영웅 임무를 계산하지 못했어요.',
+      });
+    }
+  };
+  const updateMedals = (store: MedalStore) => {
+    setMedals({ store, error: '' });
+    if (economy.store) reconcileHeroes(store, economy.store);
+  };
+  const updateEconomy = (store: EconomyStore) => {
+    setEconomy({ store, error: '' });
+    if (medals.store) reconcileHeroes(medals.store, store);
+  };
   const [errors, setErrors] = useState<FieldErrors>({});
   const [notice, setNotice] = useState('');
   const [student, setStudent] = useState<StudentPlan | null>(null);
   const [seasonEditor, setSeasonEditor] = useState(() => currentSeasonIndex(initial));
   useEffect(() => {
-    if (loaded.error || medals.error || economy.error) return;
+    if (loaded.error || medals.error || economy.error || heroes.error) return;
     let active = true;
     const timeout = window.setTimeout(() => {
       if (active) setServerStatus('변경 내용을 서버에 저장하는 중…');
@@ -107,7 +157,16 @@ export default function ExpeditionBoard({
       active = false;
       window.clearTimeout(timeout);
     };
-  }, [plan, loaded.error, medals.error, medals.store, economy.error, economy.store]);
+  }, [
+    plan,
+    loaded.error,
+    medals.error,
+    medals.store,
+    economy.error,
+    economy.store,
+    heroes.error,
+    heroes.store,
+  ]);
   const save = (next: Preparation) => {
     try {
       saveGamePreparation(next);
@@ -231,6 +290,11 @@ export default function ExpeditionBoard({
           {economy.error}
         </p>
       )}
+      {heroes.error && (
+        <p className="preparation-storage-error" role="alert">
+          {heroes.error}
+        </p>
+      )}
       {initialPanel === 'overview' ? (
         <ExpeditionOverview
           plan={plan}
@@ -240,6 +304,8 @@ export default function ExpeditionBoard({
           medals={medals.store}
           economy={economy.store}
           onEconomy={setEconomyTeam}
+          heroes={heroes.store}
+          onHeroes={setHeroTeam}
         />
       ) : initialPanel === 'roster' ? (
         <OperationRoster
@@ -335,6 +401,16 @@ export default function ExpeditionBoard({
           teamIndex={economyTeam}
           onChange={updateEconomy}
           onClose={() => setEconomyTeam(null)}
+        />
+      )}
+      {heroTeam !== null && heroes.store && (
+        <HeroVaultModal
+          key={`${heroTeam}-${currentSeasonIndex(plan)}`}
+          plan={plan}
+          store={heroes.store}
+          teamIndex={heroTeam}
+          onChange={updateHeroes}
+          onClose={() => setHeroTeam(null)}
         />
       )}
       <p className="operation-save-note">

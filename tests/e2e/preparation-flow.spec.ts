@@ -186,7 +186,7 @@ test('keeps future seasons optional and the three operating menus responsive', a
 });
 
 for (const count of [2, 4])
-  test(`${count === 2 ? 'confirms' : 'blocks'} ${count} expedition teams without inventing a fourth-place bonus`, async ({
+  test(`confirms ${count} expedition teams with the decided rank bonuses`, async ({
     page,
   }) => {
     const id = await seedOperation(page, 8, false);
@@ -222,24 +222,13 @@ for (const count of [2, 4])
     if (count === 4) {
       await expect(
         page.locator('.match-result').last().locator('.match-point-preview strong'),
-      ).toHaveText('미정');
-      await page.getByRole('button', { name: '경기 결과 확정하기', exact: true }).click();
-      await expect(page.getByRole('alert')).toContainText('4위 순위 포인트');
-      expect(
-        await page.evaluate((id) => {
-          const store = JSON.parse(
-            localStorage.getItem(`jre.practice-matches.v1.${id}`)!,
-          );
-          return { history: store.history.length, teams: store.draft.teams.length };
-        }, id),
-      ).toEqual({ history: 0, teams: 4 });
-      return;
+      ).toHaveText('30P');
     }
     await page.getByRole('button', { name: '경기 결과 확정하기', exact: true }).click();
     await page.getByRole('link', { name: '현황으로 돌아가기', exact: true }).click();
     await expect(
-      page.locator('.operation-team').first().locator('.operation-team-stats'),
-    ).toContainText('60P');
+      page.locator('.operation-team').last().locator('.operation-team-stats'),
+    ).toContainText(count === 4 ? '30P' : '50P');
     await page.reload();
     await expect(page.locator('.operation-team')).toHaveCount(count);
     expect(

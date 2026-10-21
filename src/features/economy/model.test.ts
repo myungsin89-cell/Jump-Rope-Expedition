@@ -108,23 +108,24 @@ describe('로컬 포인트·구매 장부', () => {
     );
   });
 
-  it('does not turn an unconfirmed four-team preview into spendable points', () => {
+  it('lets fourth place spend its 30 participation points after confirmation', () => {
     const value = plan(4);
     const draft = createPractice(value, 0);
     draft.teams.forEach((team, index) => {
       team.raw = String(100 - index * 10);
       team.jumpers[0].actual = '0';
     });
-    expect(() => saveOfficialPractice(draft, new Date().toISOString())).toThrow(
-      '미정인 순위 포인트',
-    );
+    saveOfficialPractice(draft, new Date().toISOString());
     const practice = readPracticeStore(value.id);
     const sources = { practice, medals: readMedals(value.id) };
     const summary = teamEconomySummary(value, sources, readEconomy(value.id), 3, 0);
-    expect(summary.balance).toBe(0);
-    expect(() => purchaseItem(value, sources, 3, 0, 'UNIT_01', 'buy-4')).toThrow(
-      '30P 부족',
-    );
+    expect(summary.balance).toBe(30);
+    const purchased = purchaseItem(value, sources, 3, 0, 'UNIT_01', 'buy-4');
+    expect(teamEconomySummary(value, sources, purchased, 3, 0)).toMatchObject({
+      balance: 0,
+      spent: 30,
+      inventory: { UNIT_01: 1, UNIT_02: 0, UNIT_03: 0, UNIT_04: 0 },
+    });
   });
 
   it('preserves malformed source data and refuses to overwrite it', () => {

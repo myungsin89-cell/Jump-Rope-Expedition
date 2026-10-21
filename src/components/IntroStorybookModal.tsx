@@ -101,9 +101,13 @@ const INTRO_SCENES: IntroScene[] = [
         {
           icon: '🪢',
           label: '경기 참가',
-          text: '8자 줄넘기 경기에 참가하면 세 팀 모두 30P',
+          text: '8자 줄넘기 경기에 참가하면 모든 원정대가 30P',
         },
-        { icon: '🏆', label: '순위 보너스', text: '1위 +30P · 2위 +20P · 3위 +10P' },
+        {
+          icon: '🏆',
+          label: '순위 보너스',
+          text: '1위 +30P · 2위 +20P · 3위 +10P · 4위 +0P',
+        },
         { icon: '🌱', label: '성장 보너스', text: '지난 경기보다 기록이 오르면 +20P' },
         { icon: '🎖️', label: '메달', text: '선생님이 주신 메달 1개마다 +10P' },
       ],

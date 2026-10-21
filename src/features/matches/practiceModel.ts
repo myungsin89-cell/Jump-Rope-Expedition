@@ -297,13 +297,11 @@ export function saveOfficialPractice(
     practiceInputs(draft),
     previous ? practiceInputs(previous) : [],
   );
-  if (results.some((result) => result.estimatedPoints === null))
-    throw new Error('미정인 순위 포인트가 있어 경기 결과를 확정할 수 없어요.');
   const official = {
     confirmedAt,
     awards: results.map((result) => ({
       teamKey: result.teamKey,
-      points: result.estimatedPoints!,
+      points: result.estimatedPoints,
     })),
   };
   const existing = store.history.find((entry) => entry.id === draft.id);

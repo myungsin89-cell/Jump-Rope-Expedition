@@ -11,6 +11,8 @@ import { companionProgress, medalPoints } from '../medals/model';
 import type { MedalStore } from '../medals/model';
 import type { EconomyStore } from '../economy/model';
 import { teamEconomySummary } from '../economy/model';
+import type { HeroStore } from '../heroes/model';
+import { teamHeroRewards } from '../heroes/model';
 
 export default function ExpeditionOverview({
   plan,
@@ -20,6 +22,8 @@ export default function ExpeditionOverview({
   medals,
   economy,
   onEconomy,
+  heroes,
+  onHeroes,
 }: {
   plan: Preparation;
   store: PracticeStore | null;
@@ -28,6 +32,8 @@ export default function ExpeditionOverview({
   medals: MedalStore | null;
   economy: EconomyStore | null;
   onEconomy: (teamIndex: number) => void;
+  heroes: HeroStore | null;
+  onHeroes: (teamIndex: number) => void;
 }) {
   const seasonIndex = currentSeasonIndex(plan);
   const season = plan.seasons[seasonIndex];
@@ -100,6 +106,12 @@ export default function ExpeditionOverview({
             index,
             seasonIndex,
           );
+          const heroRewards = heroes
+            ? teamHeroRewards(heroes, index, seasonIndex).filter(
+                (reward) => reward.heroId,
+              )
+            : [];
+          const sealedHeroes = heroRewards.filter((reward) => !reward.revealedAt).length;
           const total =
             points === null || medalTotal === null ? null : (points ?? 0) + medalTotal;
           const jumpers = (plan.jumpers?.[index] ?? []).filter((jumper) =>
@@ -155,7 +167,7 @@ export default function ExpeditionOverview({
                   빛나는 동료들: 서로 다른 수상자 {progress.distinct}명 · 다음 기준{' '}
                   {progress.next}명
                   {progress.earned > 0
-                    ? ` · 조건 달성 ${progress.earned}회 (영웅 추첨은 다음 단계)`
+                    ? ` · 영웅 획득 조건 ${progress.earned}회 달성`
                     : ''}
                 </p>
               )}
@@ -169,6 +181,15 @@ export default function ExpeditionOverview({
                 {economySummary.balance === null
                   ? '확인 필요'
                   : `${economySummary.balance.toLocaleString()}P`}
+              </button>
+              <button
+                type="button"
+                className="preparation-secondary hero-team-button"
+                disabled={!heroes}
+                onClick={() => onHeroes(index)}
+              >
+                영웅 보관함 · {heroRewards.length}장
+                {sealedHeroes > 0 ? ` · 미공개 ${sealedHeroes}` : ''}
               </button>
             </article>
           );

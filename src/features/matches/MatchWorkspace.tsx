@@ -136,19 +136,13 @@ function Results({
                   : '확정 예정 포인트'}
             </span>
             <strong>
-              {result.estimatedPoints === null ? (
-                '미정'
-              ) : (
-                <>
-                  {result.estimatedPoints}
-                  <small>P</small>
-                </>
-              )}
+              {result.estimatedPoints}
+              <small>P</small>
             </strong>
           </div>
           <p className="match-point-breakdown">
-            참가 {result.participationPoints} + 순위 {result.rankingPoints ?? '미정'} +
-            성장 {result.growthPoints}
+            참가 {result.participationPoints} + 순위 {result.rankingPoints} + 성장{' '}
+            {result.growthPoints}
           </p>
         </section>
       ))}
@@ -256,12 +250,6 @@ function MatchBoard({ plan }: { plan: Preparation }) {
         practiceInputs(draft),
         previous ? practiceInputs(previous) : [],
       );
-      if (preview.some((result) => result.estimatedPoints === null)) {
-        setStorageError(
-          '4위 순위 포인트가 아직 정해지지 않아 이 결과를 공식 확정할 수 없어요.',
-        );
-        return;
-      }
       setWorking(true);
       try {
         if (!testBypass) await saveTeacherBackup(plan);
@@ -468,8 +456,6 @@ function MatchBoard({ plan }: { plan: Preparation }) {
                   <p className="match-result-note">
                     확정 포인트는 참가·순위·성장을 반영해요. 훈장 +10P는 별도 장부에서
                     합산돼요.
-                    {results.some((result) => result.rankingPoints === null) &&
-                      ' 4위 순위 포인트가 미정인 결과는 공식 확정할 수 없어요.'}
                   </p>
                 </>
               ) : (

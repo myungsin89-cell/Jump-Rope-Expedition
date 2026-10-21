@@ -5,10 +5,12 @@ export default function OperationModal({
   title,
   onClose,
   children,
+  className = '',
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const id = useId();
@@ -28,7 +30,7 @@ export default function OperationModal({
   return (
     <dialog
       ref={ref}
-      className="operation-modal"
+      className={`operation-modal ${className}`.trim()}
       aria-labelledby={id}
       onCancel={(event) => {
         event.preventDefault();

@@ -37,7 +37,7 @@ function serverMessage(message: string) {
   if (value.includes('payload does not match'))
     return '같은 경기 번호로 다른 결과가 이미 저장되어 있어요.';
   if (value.includes('fourth-place'))
-    return '4위 순위 포인트가 아직 정해지지 않아 이 결과를 확정할 수 없어요.';
+    return '서버에 최신 4위 포인트 규칙을 적용한 뒤 다시 시도해 주세요.';
   if (value.includes('award calculation does not match'))
     return '서버의 직전 공식 경기와 포인트 계산이 달라요. 현황에서 서버 자료를 다시 불러온 뒤 시도해 주세요.';
   if (value.includes('invalid match') || value.includes('invalid awards'))
@@ -50,11 +50,9 @@ function serverMessage(message: string) {
 }
 
 export function officialAwards(results: MatchPreview[]) {
-  if (results.some((result) => result.estimatedPoints === null))
-    throw new Error('4위 순위 포인트가 미정이라 경기 결과를 확정할 수 없어요.');
   return results.map((result) => ({
     teamKey: result.teamKey,
-    points: result.estimatedPoints!,
+    points: result.estimatedPoints,
   }));
 }
 
