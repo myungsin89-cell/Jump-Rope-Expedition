@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { readPreparations } from '../preparation/model';
 import { parseStudentBoard, studentBoardData } from '../../shared/domain/studentBoard';
-import type { StudentBoardData } from '../../shared/domain/studentBoard';
+import type {
+  StudentBoardData,
+  StudentHeroRevealEvent,
+} from '../../shared/domain/studentBoard';
 import UnitCard from '../card-ui/UnitCard';
 import HeroCard from '../card-ui/HeroCard';
 import { HEROES_CATALOG, UNITS_CATALOG } from '../card-ui/catalog';
@@ -15,6 +18,8 @@ export default function StudentBoard({ route }: { route: string }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [refresh, setRefresh] = useState(0);
+  const [activeReveal, setActiveReveal] = useState<StudentHeroRevealEvent | null>(null);
+  const [unlockedRevealId, setUnlockedRevealId] = useState<string | null>(null);
   const title = useRef<HTMLHeadingElement>(null);
   const preview = route.startsWith('/student-preview/');
   const previewParts = route.split('/');
@@ -71,12 +76,57 @@ export default function StudentBoard({ route }: { route: string }) {
     return () => controller.abort();
   }, [route, preview, refresh]);
   useEffect(() => {
-    if (preview || panel !== 'heroes') return;
+    if (preview) return;
     const interval = window.setInterval(() => {
       if (document.visibilityState === 'visible') setRefresh((value) => value + 1);
-    }, 2_500);
+    }, 1_000);
     return () => window.clearInterval(interval);
-  }, [panel, preview]);
+  }, [preview]);
+  const revealEventId = data?.heroReveal?.eventId;
+  const revealSlot = data?.heroReveal?.slot;
+  const revealHeroId = data?.heroReveal?.heroId;
+  const revealStartedAt = data?.heroReveal?.startedAt;
+  useEffect(() => {
+    if (
+      preview ||
+      !revealEventId ||
+      revealSlot === undefined ||
+      !revealHeroId ||
+      !revealStartedAt
+    )
+      return;
+    const reveal: StudentHeroRevealEvent = {
+      eventId: revealEventId,
+      slot: revealSlot,
+      heroId: revealHeroId,
+      startedAt: revealStartedAt,
+    };
+    const seenKey = `jre.student-reveal-seen.${route.slice('/team/'.length)}`;
+    if (localStorage.getItem(seenKey) === reveal.eventId) {
+      queueMicrotask(() => setUnlockedRevealId(reveal.eventId));
+      return;
+    }
+    const delay = Date.parse(reveal.startedAt) - Date.now();
+    if (delay < -12_000) {
+      localStorage.setItem(seenKey, reveal.eventId);
+      queueMicrotask(() => setUnlockedRevealId(reveal.eventId));
+      return;
+    }
+    let clearTimer = 0;
+    const startTimer = window.setTimeout(
+      () => {
+        localStorage.setItem(seenKey, reveal.eventId);
+        setUnlockedRevealId(reveal.eventId);
+        setActiveReveal(reveal);
+        clearTimer = window.setTimeout(() => setActiveReveal(null), 8_000);
+      },
+      Math.max(0, delay),
+    );
+    return () => {
+      window.clearTimeout(startTimer);
+      window.clearTimeout(clearTimer);
+    };
+  }, [preview, revealEventId, revealHeroId, revealSlot, revealStartedAt, route]);
   useEffect(() => {
     title.current?.focus({ preventScroll: true });
   }, [data]);
@@ -87,6 +137,17 @@ export default function StudentBoard({ route }: { route: string }) {
   ] as const;
   return (
     <main className="student-board">
+      {activeReveal && (
+        <section className="student-live-reveal" aria-live="assertive">
+          <div className="student-live-reveal-glow" aria-hidden="true" />
+          <p>우리 원정대의 새 영웅</p>
+          {(() => {
+            const hero = HEROES_CATALOG.find((item) => item.id === activeReveal.heroId);
+            return hero ? <HeroCard hero={hero} state="revealed" /> : null;
+          })()}
+          <strong>새로운 영웅이 합류했습니다!</strong>
+        </section>
+      )}
       <header className="student-top">
         <a href="#/">줄넘기 원정대</a>
         <span>둘러보기 · 읽기 전용</span>
@@ -188,9 +249,14 @@ export default function StudentBoard({ route }: { route: string }) {
                 {data.heroes.length ? (
                   <div className="student-card-grid student-owned-heroes">
                     {data.heroes.map((slot) => {
-                      const hero = slot.heroId
-                        ? HEROES_CATALOG.find((item) => item.id === slot.heroId)
-                        : null;
+                      const waitingForScheduledReveal =
+                        !preview &&
+                        data.heroReveal?.slot === slot.slot &&
+                        unlockedRevealId !== data.heroReveal.eventId;
+                      const hero =
+                        slot.heroId && !waitingForScheduledReveal
+                          ? HEROES_CATALOG.find((item) => item.id === slot.heroId)
+                          : null;
                       return hero ? (
                         <HeroCard key={slot.slot} hero={hero} state="revealed" />
                       ) : (

@@ -5,8 +5,17 @@ import type { HeroStore } from '../heroes/model';
 import type { PracticeStore, SavedPractice } from '../matches/practiceModel';
 import { parseCount } from '../matches/practiceModel';
 import type { Preparation } from '../preparation/model';
+import {
+  BATTLE_RULE_VERSION,
+  calculateBattleAuthority,
+  parseBattleAuthorityResult,
+} from '../../shared/domain/battleAuthority';
+import type {
+  BattleAuthorityInput,
+  BattleAuthorityResult,
+} from '../../shared/domain/battleAuthority';
 
-export const BATTLE_RULE_VERSION = 'battle-v1' as const;
+export { BATTLE_RULE_VERSION };
 
 export type BattleStatus = 'closing' | 'calculated' | 'finished';
 export type BattleEventType =
@@ -64,46 +73,6 @@ export interface BattleStore {
   battles: SeasonBattle[];
 }
 
-interface BossRules {
-  physicalRatio: number;
-  magicRatio: number;
-  acornMultiplier: number;
-  hammerMultiplier: number;
-}
-
-const BOSS_RULES: Record<string, BossRules> = {
-  BOSS_01: {
-    physicalRatio: 0.8,
-    magicRatio: 0.2,
-    acornMultiplier: 0.85,
-    hammerMultiplier: 1.35,
-  },
-  BOSS_02: {
-    physicalRatio: 0.25,
-    magicRatio: 0.75,
-    acornMultiplier: 1.4,
-    hammerMultiplier: 0.8,
-  },
-  BOSS_03: {
-    physicalRatio: 0.35,
-    magicRatio: 0.65,
-    acornMultiplier: 0.9,
-    hammerMultiplier: 1.3,
-  },
-  BOSS_04: {
-    physicalRatio: 0.75,
-    magicRatio: 0.25,
-    acornMultiplier: 1.3,
-    hammerMultiplier: 0.85,
-  },
-  BOSS_05: {
-    physicalRatio: 0.4,
-    magicRatio: 0.6,
-    acornMultiplier: 1.15,
-    hammerMultiplier: 1.15,
-  },
-};
-
 export const battleKey = (expeditionId: string) =>
   `jre.practice-battles.v1.${expeditionId}`;
 
@@ -129,7 +98,7 @@ const teamIndex = (value: unknown): value is number =>
 const heroId = (value: unknown): value is string =>
   text(value) && /^H(0[1-9]|1[0-5])$/.test(value);
 const bossId = (value: unknown): value is string =>
-  text(value) && Boolean(BOSS_RULES[value]);
+  text(value) && /^BOSS_0[1-5]$/.test(value);
 const inventory = (value: unknown): value is BattleInventory =>
   object(value) && economyUnitIds.every((id) => safeInteger(value[id]));
 
@@ -366,80 +335,27 @@ function bestJumperExtra(
   }, 0);
 }
 
-const rounded = (value: number) => Math.round(value * 1_000_000) / 1_000_000;
-
-function calculateTeam(
+export function createBattleAuthorityInput(
   plan: Preparation,
   practice: PracticeStore,
   economy: EconomyStore,
   heroes: HeroStore,
   targetSeason: number,
-  targetTeam: number,
-  rules: BossRules,
-): Omit<BattleTeamResult, 'rank' | 'victoryPoints'> {
-  const team = plan.teams[targetTeam];
-  if (!team) throw new Error('최종 대전에 참여할 원정대를 확인해 주세요.');
-  const units = teamInventory(economy, targetSeason, targetTeam);
-  const heroIds = seasonHeroIds(heroes, targetSeason, targetTeam);
-  const has = (id: string) => heroIds.includes(id);
-  const fullForce = economyUnitIds.every((id) => units[id] > 0) && has('H12');
-  const sharedAttack =
-    (has('H04') ? 0.07 : 0) +
-    (has('H09') ? 0.15 : 0) +
-    (has('H11') ? 0.15 : 0) +
-    (has('H14') ? 0.2 : 0) +
-    (fullForce ? 0.18 : 0);
-  const sharedDefense =
-    (has('H10') ? 0.15 : 0) + (has('H14') ? 0.2 : 0) + (fullForce ? 0.18 : 0);
-  const physicalPrimary = rules.physicalRatio >= rules.magicRatio;
-  const physicalBonus =
-    sharedDefense +
-    (has('H05') ? 0.1 : 0) +
-    (has('H06') ? 0.07 : 0) +
-    (has('H11') && physicalPrimary ? 0.15 : 0);
-  const magicBonus =
-    sharedDefense +
-    (has('H03') ? 0.1 : 0) +
-    (has('H07') ? 0.07 : 0) +
-    (has('H11') && !physicalPrimary ? 0.15 : 0);
-  const acornAttack =
-    units.UNIT_01 *
-    100 *
-    rules.acornMultiplier *
-    (1 + sharedAttack + (has('H01') ? 0.1 : 0));
-  const hammerAttack =
-    units.UNIT_02 *
-    100 *
-    rules.hammerMultiplier *
-    (1 + sharedAttack + (has('H02') ? 0.1 : 0));
-  const baseOffense = acornAttack + hammerAttack;
-  const physicalDefense = units.UNIT_03 * (1 + physicalBonus);
-  const magicDefense = units.UNIT_04 * (1 + magicBonus);
-  const defenseUptime =
-    0.45 +
-    0.55 *
-      (1 -
-        rules.physicalRatio * 0.45 ** physicalDefense -
-        rules.magicRatio * 0.45 ** magicDefense);
-  const actionUptime = Math.min(1, defenseUptime + (has('H08') ? 0.07 : 0));
-  const jumperExtra = bestJumperExtra(practice, targetSeason, targetTeam);
-  const lumiAttack = has('H13') ? Math.min(jumperExtra, baseOffense * 0.2) : 0;
-  const leonAttack = has('H15')
-    ? Math.min(Math.max(physicalDefense, magicDefense) * 100 * 0.25, baseOffense * 0.25)
-    : 0;
-  const heroAttack = lumiAttack + leonAttack;
+  pending: SeasonBattle,
+): BattleAuthorityInput {
   return {
-    teamIndex: targetTeam,
-    teamName: team.name,
-    inventory: units,
-    heroIds,
-    bestJumperExtra: jumperExtra,
-    baseOffense: rounded(baseOffense),
-    heroAttack: rounded(heroAttack),
-    physicalDefense: rounded(physicalDefense),
-    magicDefense: rounded(magicDefense),
-    actionUptime: rounded(actionUptime),
-    actualDamage: Math.floor((baseOffense + heroAttack) * actionUptime),
+    ruleVersion: BATTLE_RULE_VERSION,
+    seasonIndex: targetSeason,
+    bossId: pending.bossId,
+    matchCount: pending.matchCount,
+    eventPrefix: pending.id,
+    teams: plan.teams.map((team, targetTeam) => ({
+      teamIndex: targetTeam,
+      teamName: team.name,
+      inventory: teamInventory(economy, targetSeason, targetTeam),
+      heroIds: seasonHeroIds(heroes, targetSeason, targetTeam),
+      bestJumperExtra: bestJumperExtra(practice, targetSeason, targetTeam),
+    })),
   };
 }
 
@@ -456,43 +372,12 @@ export function calculateSeasonBattle(
   const pending = seasonBattle(store, targetSeason);
   if (!pending) throw new Error('먼저 시즌 종료를 눌러 주세요.');
   if (pending.status !== 'closing') return store;
-  const rules = BOSS_RULES[pending.bossId];
-  if (!rules || !BOSSES_CATALOG.some((boss) => boss.id === pending.bossId))
+  if (!BOSSES_CATALOG.some((boss) => boss.id === pending.bossId))
     throw new Error('비밀 보스의 전투 규칙을 확인해 주세요.');
-  const calculated = plan.teams.map((_, index) =>
-    calculateTeam(plan, practice, economy, heroes, targetSeason, index, rules),
+  const result = calculateBattleAuthority(
+    createBattleAuthorityInput(plan, practice, economy, heroes, targetSeason, pending),
+    calculatedAt,
   );
-  const highestDamage = Math.max(...calculated.map((team) => team.actualDamage));
-  const teams: BattleTeamResult[] = calculated.map((team) => ({
-    ...team,
-    rank: 1 + calculated.filter((other) => other.actualDamage > team.actualDamage).length,
-    victoryPoints: team.actualDamage === highestDamage ? 1 : 0,
-  }));
-  const totalDamage = teams.reduce((sum, team) => sum + team.actualDamage, 0);
-  const bossHp = Math.max(1_000, Math.ceil((totalDamage * 1.18) / 100) * 100);
-  const cooperationDamage = Math.max(0, bossHp - totalDamage);
-  const events: BattleEvent[] = [
-    { id: `${pending.id}:boss`, type: 'boss-reveal' },
-    ...teams.flatMap((team) => [
-      {
-        id: `${pending.id}:boss-attack:${team.teamIndex}`,
-        type: 'boss-attack' as const,
-        teamIndex: team.teamIndex,
-      },
-      {
-        id: `${pending.id}:team-attack:${team.teamIndex}`,
-        type: 'team-attack' as const,
-        teamIndex: team.teamIndex,
-        amount: team.actualDamage,
-      },
-    ]),
-    {
-      id: `${pending.id}:cooperation`,
-      type: 'cooperation',
-      amount: cooperationDamage,
-    },
-    { id: `${pending.id}:result`, type: 'result' },
-  ];
   return commit({
     ...store,
     battles: store.battles.map((battle) =>
@@ -500,11 +385,44 @@ export function calculateSeasonBattle(
         ? {
             ...battle,
             status: 'calculated',
-            calculatedAt,
-            bossHp,
-            cooperationDamage,
-            teams,
-            events,
+            calculatedAt: result.calculatedAt,
+            bossHp: result.bossHp,
+            cooperationDamage: result.cooperationDamage,
+            teams: result.teams,
+            events: result.events,
+          }
+        : battle,
+    ),
+  });
+}
+
+export function acceptAuthorityBattleResult(
+  expeditionId: string,
+  rawResult: BattleAuthorityResult,
+): BattleStore {
+  const result = parseBattleAuthorityResult(rawResult);
+  const store = readBattles(expeditionId);
+  const pending = seasonBattle(store, result.seasonIndex);
+  if (!pending) throw new Error('서버 결과를 연결할 시즌 종료 기록이 없어요.');
+  if (pending.status !== 'closing') return store;
+  if (
+    pending.bossId !== result.bossId ||
+    pending.matchCount !== result.matchCount ||
+    pending.ruleVersion !== result.ruleVersion
+  )
+    throw new Error('서버 결과와 시즌 종료 입력이 일치하지 않아요.');
+  return commit({
+    ...store,
+    battles: store.battles.map((battle) =>
+      battle.id === pending.id
+        ? {
+            ...battle,
+            status: 'calculated',
+            calculatedAt: result.calculatedAt,
+            bossHp: result.bossHp,
+            cooperationDamage: result.cooperationDamage,
+            teams: result.teams,
+            events: result.events,
           }
         : battle,
     ),

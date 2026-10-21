@@ -130,3 +130,45 @@ test('previews a read-only student team and browses real unit and hero cards wit
   );
   expect(errors).toEqual([]);
 });
+
+test('plays one scheduled hero reveal across a live team board', async ({ page }) => {
+  const token = '33333333-3333-4333-8333-333333333333';
+  const startedAt = new Date(Date.now() + 1_800).toISOString();
+  const payload = {
+    version: 1,
+    expeditionName: '별빛 원정',
+    teamName: '초록 원정대',
+    teamIndex: 0,
+    seasonNumber: 1,
+    publishedAt: new Date().toISOString(),
+    members: [{ name: '가람', number: 1, captain: true, jumper: false }],
+    heroes: [{ slot: 1, revealed: true, heroId: 'H09' }],
+    heroReveal: {
+      eventId: 'reward-live-1',
+      slot: 1,
+      heroId: 'H09',
+      startedAt,
+    },
+  };
+  await page.route('**/functions/v1/student-board?token=*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(payload),
+    });
+  });
+  await page.goto(`/#/team/${token}`);
+  await expect(
+    page.getByRole('heading', { level: 1, name: '초록 원정대' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: '영웅 카드', exact: true }).click();
+  await expect(page.locator('.student-sealed-hero')).toHaveCount(1);
+  const reveal = page.locator('.student-live-reveal');
+  await expect(reveal).toBeVisible({ timeout: 5_000 });
+  await expect(reveal).toContainText('새로운 영웅이 합류했습니다');
+  await expect(reveal.getByText('아르코', { exact: true })).toBeVisible();
+  await page.screenshot({
+    path: 'artifacts/student-live-hero-reveal.png',
+    fullPage: true,
+  });
+});

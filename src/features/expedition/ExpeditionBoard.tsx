@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { PageFrame, ErrorSummary } from '../preparation/PreparationUI';
 import {
@@ -43,6 +43,11 @@ import {
 import type { BattleStore } from '../battle/model';
 import FinalBattleModal from '../battle/FinalBattleModal';
 import { syncPublishedStudentBoards } from '../student/studentBoardClient';
+import {
+  revealHeroWithAuthority,
+  syncHeroRewardsWithAuthority,
+  usesGameAuthority,
+} from '../../shared/lib/gameAuthorityClient';
 
 export default function ExpeditionBoard({
   initial,
@@ -131,18 +136,47 @@ export default function ExpeditionBoard({
       };
     }
   });
-  const updateHeroes = (store: HeroStore) => {
-    setHeroes({ store, error: '' });
-    void syncPublishedStudentBoards(plan, store)
-      .then((synced) => {
-        if (synced) setServerStatus('학생 영웅 화면까지 갱신 완료');
+  const authorityFingerprint = useRef('');
+  const updateHeroes = useCallback(
+    (store: HeroStore) => {
+      setHeroes({ store, error: '' });
+      void syncPublishedStudentBoards(plan, store)
+        .then((synced) => {
+          if (synced) setServerStatus('학생 영웅 화면까지 갱신 완료');
+        })
+        .catch(() =>
+          setServerStatus(
+            '학생 영웅 화면 갱신을 기다리고 있어요. QR 게시에서 다시 시도하세요.',
+          ),
+        );
+    },
+    [plan],
+  );
+  useEffect(() => {
+    if (!heroes.store || !usesGameAuthority()) return;
+    const fingerprint = heroes.store.rewards
+      .map((reward) => reward.achievementId)
+      .sort()
+      .join('|');
+    if (!fingerprint || authorityFingerprint.current === fingerprint) return;
+    authorityFingerprint.current = fingerprint;
+    let active = true;
+    setServerStatus('새 영웅을 서버에서 확정하는 중…');
+    void syncHeroRewardsWithAuthority(plan.id, heroes.store)
+      .then((store) => {
+        if (!active) return;
+        updateHeroes(store);
+        setServerStatus('영웅 추첨 서버 확정 완료');
       })
-      .catch(() =>
-        setServerStatus(
-          '학생 영웅 화면 갱신을 기다리고 있어요. QR 게시에서 다시 시도하세요.',
-        ),
-      );
-  };
+      .catch(() => {
+        if (!active) return;
+        authorityFingerprint.current = '';
+        setServerStatus('영웅 서버 확정을 기다리고 있어요. 잠시 후 다시 시도하세요.');
+      });
+    return () => {
+      active = false;
+    };
+  }, [heroes.store, plan.id, updateHeroes]);
   const reconcileHeroes = (medalStore: MedalStore, economyStore: EconomyStore) => {
     if (!loaded.store) return;
     try {
@@ -168,6 +202,12 @@ export default function ExpeditionBoard({
   const updateEconomy = (store: EconomyStore) => {
     setEconomy({ store, error: '' });
     if (medals.store) reconcileHeroes(medals.store, store);
+  };
+  const revealTeamHero = async (rewardId: string) => {
+    if (!heroes.store) throw new Error('영웅 기록을 먼저 확인해 주세요.');
+    const next = await revealHeroWithAuthority(plan.id, heroes.store, rewardId);
+    updateHeroes(next);
+    return next;
   };
   const [errors, setErrors] = useState<FieldErrors>({});
   const [notice, setNotice] = useState('');
@@ -485,7 +525,7 @@ export default function ExpeditionBoard({
           plan={plan}
           store={heroes.store}
           teamIndex={heroTeam}
-          onChange={updateHeroes}
+          onReveal={revealTeamHero}
           onClose={() => setHeroTeam(null)}
         />
       )}

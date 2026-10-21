@@ -57,8 +57,9 @@ describe('student-only preparation snapshot', () => {
     const board = studentBoardData(value, 0, '2026-10-22T00:00:00.000Z', {
       expeditionId: value.id,
       rewards: [
-        { teamIndex: 0, seasonIndex: 0, heroId: 'H01' },
+        { id: 'sealed-1', teamIndex: 0, seasonIndex: 0, heroId: 'H01' },
         {
+          id: 'reveal-2',
           teamIndex: 0,
           seasonIndex: 0,
           heroId: 'H02',
@@ -76,9 +77,21 @@ describe('student-only preparation snapshot', () => {
       { slot: 1, revealed: false },
       { slot: 2, revealed: true, heroId: 'H02' },
     ]);
+    expect(board.heroReveal).toEqual({
+      eventId: 'reveal-2',
+      slot: 2,
+      heroId: 'H02',
+      startedAt: '2026-10-22T00:00:00.000Z',
+    });
     expect(JSON.stringify(board)).not.toContain('H01');
     expect(JSON.stringify(board)).not.toContain('H15');
     expect(parseStudentBoard(board)).toEqual(board);
+    expect(() =>
+      parseStudentBoard({
+        ...board,
+        heroReveal: { ...board.heroReveal, heroId: 'H15' },
+      }),
+    ).toThrow('이벤트');
   });
   it('rejects malformed member numbers and unsupported versions', () => {
     const board = studentBoardData(plan(), 0);

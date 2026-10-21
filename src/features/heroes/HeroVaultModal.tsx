@@ -4,7 +4,7 @@ import { HEROES_CATALOG, RARITY_LABELS } from '../card-ui/catalog';
 import OperationModal from '../expedition/OperationModal';
 import { currentSeasonIndex } from '../expedition/operations';
 import type { Preparation } from '../preparation/model';
-import { HERO_MISSIONS, heroMissionIds, revealHero, teamHeroRewards } from './model';
+import { HERO_MISSIONS, heroMissionIds, teamHeroRewards } from './model';
 import type { HeroReward, HeroStore } from './model';
 import './heroes.css';
 
@@ -18,13 +18,13 @@ export default function HeroVaultModal({
   plan,
   store,
   teamIndex,
-  onChange,
+  onReveal,
   onClose,
 }: {
   plan: Preparation;
   store: HeroStore;
   teamIndex: number;
-  onChange: (store: HeroStore) => void;
+  onReveal: (rewardId: string) => Promise<HeroStore>;
   onClose: () => void;
 }) {
   const seasonIndex = currentSeasonIndex(plan);
@@ -38,6 +38,7 @@ export default function HeroVaultModal({
   const exhausted = current.filter((reward) => !reward.heroId);
   const [pending, setPending] = useState<string | null>(null);
   const [revealedReward, setRevealedReward] = useState<HeroReward | null>(null);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const achievementCounts = useMemo(
     () =>
@@ -51,13 +52,16 @@ export default function HeroVaultModal({
       ),
     [store, teamIndex],
   );
-  const reveal = () => {
-    if (!pending) return;
+  const reveal = async () => {
+    if (!pending || busy) return;
+    setBusy(true);
     try {
-      const next = revealHero(plan.id, pending);
+      const next = await onReveal(pending);
       const reward = next.rewards.find((item) => item.id === pending);
       if (!reward?.heroId) throw new Error('공개할 영웅을 찾지 못했어요.');
-      onChange(next);
+      const delay = reward.revealedAt ? Date.parse(reward.revealedAt) - Date.now() : 0;
+      if (delay > 0)
+        await new Promise<void>((resolve) => window.setTimeout(resolve, delay));
       setRevealedReward(reward);
       setPending(null);
       setError('');
@@ -65,6 +69,8 @@ export default function HeroVaultModal({
       setError(
         reason instanceof Error ? reason.message : '영웅 카드를 공개하지 못했어요.',
       );
+    } finally {
+      setBusy(false);
     }
   };
   const revealedHero = revealedReward
@@ -132,12 +138,18 @@ export default function HeroVaultModal({
                   <button
                     type="button"
                     className="preparation-secondary"
+                    disabled={busy}
                     onClick={() => setPending(null)}
                   >
                     아직이에요
                   </button>
-                  <button type="button" className="preparation-primary" onClick={reveal}>
-                    모두 함께 공개하기
+                  <button
+                    type="button"
+                    className="preparation-primary"
+                    disabled={busy}
+                    onClick={() => void reveal()}
+                  >
+                    {busy ? '서버에서 공개 준비 중…' : '모두 함께 공개하기'}
                   </button>
                 </div>
               </div>
@@ -245,7 +257,8 @@ export default function HeroVaultModal({
           )}
 
           <p className="operation-save-note">
-            임무 판정과 추첨 결과는 교사 원정 자료에 함께 저장됩니다.
+            서버가 연결되면 추첨 결과와 공개 시각을 서버에서 확정하고 같은 원정대 QR
+            화면에 전달합니다.
           </p>
         </>
       )}

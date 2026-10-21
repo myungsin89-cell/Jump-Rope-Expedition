@@ -2,17 +2,24 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { BOSSES_CATALOG } from '../card-ui/boss-catalog';
 import { HEROES_CATALOG, UNITS_CATALOG } from '../card-ui/catalog';
 import type { EconomyStore } from '../economy/model';
-import { revealSeasonHeroes } from '../heroes/model';
 import type { HeroStore } from '../heroes/model';
 import type { PracticeStore } from '../matches/practiceModel';
 import type { Preparation } from '../preparation/model';
 import {
+  acceptAuthorityBattleResult,
   calculateSeasonBattle,
   cancelSeasonClose,
+  createBattleAuthorityInput,
   finishSeasonBattle,
   seasonBattle,
 } from './model';
 import type { BattleEvent, BattleInventory, BattleStore, SeasonBattle } from './model';
+import {
+  calculateBattleWithAuthority,
+  finishBattleWithAuthority,
+  revealSeasonHeroesWithAuthority,
+  syncHeroRewardsWithAuthority,
+} from '../../shared/lib/gameAuthorityClient';
 import './battle.css';
 
 type BattleView = 'closing' | 'ready' | 'playing' | 'result';
@@ -65,6 +72,7 @@ export default function FinalBattleModal({
   const [view, setView] = useState<BattleView>(() => viewFor(initial));
   const [eventIndex, setEventIndex] = useState(0);
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
   const title = useRef<HTMLHeadingElement>(null);
   const boss = BOSSES_CATALOG.find((item) => item.id === battle.bossId);
   const reducedMotion = useMemo(
@@ -103,19 +111,36 @@ export default function FinalBattleModal({
     return () => window.clearTimeout(timeout);
   }, [battle.events, currentEvent?.type, eventIndex, reducedMotion, view]);
 
-  const calculate = () => {
+  const calculate = async () => {
+    if (busy) return;
+    setBusy(true);
     try {
       const calculatedAt = new Date().toISOString();
-      const nextStore = calculateSeasonBattle(
+      const authorityHeroes = await syncHeroRewardsWithAuthority(plan.id, heroes);
+      onHeroes(authorityHeroes);
+      const input = createBattleAuthorityInput(
         plan,
         practice,
         economy,
-        heroes,
-        calculatedAt,
+        authorityHeroes,
+        seasonIndex,
+        battle,
       );
+      const authorityResult = await calculateBattleWithAuthority(
+        plan.id,
+        battle.id,
+        input,
+      );
+      const nextStore = authorityResult
+        ? acceptAuthorityBattleResult(plan.id, authorityResult)
+        : calculateSeasonBattle(plan, practice, economy, heroes, calculatedAt);
       const nextBattle = seasonBattle(nextStore, seasonIndex);
       if (!nextBattle) throw new Error('계산한 최종 대전을 불러오지 못했어요.');
-      const revealed = revealSeasonHeroes(plan.id, seasonIndex, calculatedAt);
+      const revealed = await revealSeasonHeroesWithAuthority(
+        plan.id,
+        authorityHeroes,
+        seasonIndex,
+      );
       setBattle(nextBattle);
       setView('ready');
       setError('');
@@ -125,6 +150,8 @@ export default function FinalBattleModal({
       setError(
         reason instanceof Error ? reason.message : '최종 대전을 계산하지 못했어요.',
       );
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -144,9 +171,16 @@ export default function FinalBattleModal({
     setView('playing');
   };
 
-  const finish = () => {
+  const finish = async () => {
+    if (busy) return;
+    setBusy(true);
     try {
-      const nextStore = finishSeasonBattle(plan.id, seasonIndex);
+      const finishedAt = await finishBattleWithAuthority(plan.id, seasonIndex);
+      const nextStore = finishSeasonBattle(
+        plan.id,
+        seasonIndex,
+        finishedAt ?? new Date().toISOString(),
+      );
       const nextBattle = seasonBattle(nextStore, seasonIndex);
       if (!nextBattle) throw new Error('완료한 최종 대전을 불러오지 못했어요.');
       const nextSeason = Math.min(seasonIndex + 1, plan.seasonCount - 1);
@@ -160,6 +194,8 @@ export default function FinalBattleModal({
       setError(
         reason instanceof Error ? reason.message : '시즌 결과를 저장하지 못했어요.',
       );
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -227,8 +263,13 @@ export default function FinalBattleModal({
               <button type="button" className="preparation-secondary" onClick={cancel}>
                 종료 준비 취소
               </button>
-              <button type="button" className="preparation-primary" onClick={calculate}>
-                전투 결과 계산하기
+              <button
+                type="button"
+                className="preparation-primary"
+                disabled={busy}
+                onClick={() => void calculate()}
+              >
+                {busy ? '서버에서 결과 확정 중…' : '전투 결과 계산하기'}
               </button>
             </div>
           </div>
@@ -396,8 +437,13 @@ export default function FinalBattleModal({
                   현황으로 돌아가기
                 </button>
               ) : (
-                <button type="button" className="preparation-primary" onClick={finish}>
-                  결과 저장하고 시즌 마치기
+                <button
+                  type="button"
+                  className="preparation-primary"
+                  disabled={busy}
+                  onClick={() => void finish()}
+                >
+                  {busy ? '서버에 완료 기록 중…' : '결과 저장하고 시즌 마치기'}
                 </button>
               )}
             </div>

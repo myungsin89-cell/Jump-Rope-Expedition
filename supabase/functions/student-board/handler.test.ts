@@ -123,6 +123,12 @@ describe('student sharing API boundary', () => {
         { slot: 2, revealed: true, heroId: 'H02' },
       ]);
       expect(JSON.stringify(body.p_boards[0])).not.toContain('H01');
+      expect(body.p_boards[0].heroReveal).toEqual({
+        eventId: 'reward-visible',
+        slot: 2,
+        heroId: 'H02',
+        startedAt: '2026-10-22T00:00:00.000Z',
+      });
       expect(body.p_boards[1].heroes).toEqual([]);
       return json(
         body.p_boards.map((payload: unknown, team_index: number) => ({
@@ -142,8 +148,9 @@ describe('student sharing API boundary', () => {
         heroes: {
           expeditionId: value.id,
           rewards: [
-            { teamIndex: 0, seasonIndex: 0, heroId: 'H01' },
+            { id: 'reward-sealed', teamIndex: 0, seasonIndex: 0, heroId: 'H01' },
             {
+              id: 'reward-visible',
               teamIndex: 0,
               seasonIndex: 0,
               heroId: 'H02',

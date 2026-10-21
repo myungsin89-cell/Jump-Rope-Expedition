@@ -31,3 +31,6 @@ enable_confirmations = false
 
 [functions.student-board]
 verify_jwt = false
+
+[functions.game-authority]
+verify_jwt = false

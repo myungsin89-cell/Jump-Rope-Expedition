@@ -5,9 +5,17 @@ export interface StudentHeroSlot {
   heroId?: string;
 }
 
+export interface StudentHeroRevealEvent {
+  eventId: string;
+  slot: number;
+  heroId: string;
+  startedAt: string;
+}
+
 export interface StudentHeroSource {
   expeditionId: string;
   rewards: {
+    id?: string;
     teamIndex: number;
     seasonIndex: number;
     heroId: string | null;
@@ -24,6 +32,7 @@ export interface StudentBoardData {
   publishedAt: string;
   members: { name: string; number: number; captain: boolean; jumper: boolean }[];
   heroes: StudentHeroSlot[];
+  heroReveal?: StudentHeroRevealEvent;
 }
 export const isUuid = (value: unknown): value is string =>
   typeof value === 'string' &&
@@ -45,6 +54,19 @@ export function studentBoardData(
 ): StudentBoardData {
   const team = plan.teams[teamIndex];
   if (!team) throw new Error('원정대를 찾을 수 없어요.');
+  const teamRewards =
+    heroes?.rewards.filter(
+      (reward) =>
+        reward.teamIndex === teamIndex &&
+        reward.seasonIndex === (plan.currentSeasonIndex ?? 0) &&
+        reward.heroId,
+    ) ?? [];
+  const latestReveal = teamRewards
+    .map((reward, index) => ({ reward, slot: index + 1 }))
+    .filter((item) => item.reward.revealedAt)
+    .sort((left, right) =>
+      String(right.reward.revealedAt).localeCompare(String(left.reward.revealedAt)),
+    )[0];
   return {
     version: 1,
     expeditionName: plan.className,
@@ -68,19 +90,23 @@ export function studentBoardData(
           ]
         : [],
     ),
-    heroes:
-      heroes?.rewards
-        .filter(
-          (reward) =>
-            reward.teamIndex === teamIndex &&
-            reward.seasonIndex === (plan.currentSeasonIndex ?? 0) &&
-            reward.heroId,
-        )
-        .map((reward, index) => ({
-          slot: index + 1,
-          revealed: Boolean(reward.revealedAt),
-          ...(reward.revealedAt && reward.heroId ? { heroId: reward.heroId } : {}),
-        })) ?? [],
+    heroes: teamRewards.map((reward, index) => ({
+      slot: index + 1,
+      revealed: Boolean(reward.revealedAt),
+      ...(reward.revealedAt && reward.heroId ? { heroId: reward.heroId } : {}),
+    })),
+    ...(latestReveal?.reward.heroId && latestReveal.reward.revealedAt
+      ? {
+          heroReveal: {
+            eventId:
+              latestReveal.reward.id ??
+              `${teamIndex}:${latestReveal.slot}:${latestReveal.reward.revealedAt}`,
+            slot: latestReveal.slot,
+            heroId: latestReveal.reward.heroId,
+            startedAt: latestReveal.reward.revealedAt,
+          },
+        }
+      : {}),
   };
 }
 
@@ -101,6 +127,10 @@ export function parseStudentHeroSource(
       !integer(reward.teamIndex, 0, 3) ||
       !integer(reward.seasonIndex, 0, 4) ||
       !(
+        reward.id === undefined ||
+        (typeof reward.id === 'string' && reward.id.length > 0 && reward.id.length <= 320)
+      ) ||
+      !(
         reward.heroId === null ||
         (typeof reward.heroId === 'string' && /^H(0[1-9]|1[0-5])$/.test(reward.heroId))
       ) ||
@@ -110,6 +140,7 @@ export function parseStudentHeroSource(
     )
       throw new Error('영웅 게시 자료를 확인해 주세요.');
     return {
+      ...(typeof reward.id === 'string' ? { id: reward.id } : {}),
       teamIndex: reward.teamIndex,
       seasonIndex: reward.seasonIndex,
       heroId: reward.heroId,
@@ -170,6 +201,32 @@ export function parseStudentBoard(value: unknown): StudentBoardData {
   });
   if (new Set(heroes.map((hero) => hero.slot)).size !== heroes.length)
     throw new Error('영웅 카드 위치를 확인해 주세요.');
+  let heroReveal: StudentHeroRevealEvent | undefined;
+  if (value.heroReveal !== undefined) {
+    const reveal = value.heroReveal;
+    if (
+      !obj(reveal) ||
+      typeof reveal.eventId !== 'string' ||
+      !reveal.eventId.length ||
+      reveal.eventId.length > 320 ||
+      !integer(reveal.slot, 1, 15) ||
+      typeof reveal.heroId !== 'string' ||
+      !/^H(0[1-9]|1[0-5])$/.test(reveal.heroId) ||
+      typeof reveal.startedAt !== 'string' ||
+      !Number.isFinite(Date.parse(reveal.startedAt)) ||
+      !heroes.some(
+        (hero) =>
+          hero.slot === reveal.slot && hero.revealed && hero.heroId === reveal.heroId,
+      )
+    )
+      throw new Error('영웅 공개 이벤트를 확인해 주세요.');
+    heroReveal = {
+      eventId: reveal.eventId,
+      slot: reveal.slot,
+      heroId: reveal.heroId,
+      startedAt: reveal.startedAt,
+    };
+  }
   return {
     version: 1,
     expeditionName: value.expeditionName,
@@ -179,6 +236,7 @@ export function parseStudentBoard(value: unknown): StudentBoardData {
     publishedAt: value.publishedAt,
     members,
     heroes,
+    ...(heroReveal ? { heroReveal } : {}),
   };
 }
 /** Minimal one-teacher backup validation; unknown fields are never stored or published. */

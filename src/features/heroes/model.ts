@@ -170,6 +170,10 @@ function commit(store: HeroStore): HeroStore {
   return store;
 }
 
+export function saveHeroStore(store: HeroStore): HeroStore {
+  return commit(parseHeroStore(store, store.expeditionId));
+}
+
 function teamIndex(key: string): number {
   const index = Number(key.replace('team-', ''));
   if (!team(index)) throw new Error('원정대 기록을 확인해 주세요.');
