@@ -50,7 +50,7 @@ export default function TeamMembers({
         </span>
         <span className="operation-member-name">
           <span className="operation-member-name-row">
-            <span>{student.name}</span>
+            <span className="operation-member-label">{student.name}</span>
             {received.length > 0 && (
               <span className="medal-name-icons">
                 {received.map(({ medal }) => (
@@ -61,11 +61,6 @@ export default function TeamMembers({
               </span>
             )}
           </span>
-          {jumper && (
-            <span className="operation-jumper-mark" aria-hidden="true">
-              도전점퍼
-            </span>
-          )}
         </span>
         {isCaptain && !featured && (
           <span className="operation-captain-tag">원정대장</span>
@@ -102,7 +97,7 @@ export function RosterLegend() {
   return (
     <p className="operation-roster-legend">
       <span aria-hidden="true" />
-      금색 표시: 도전점퍼 · 이름을 누르면 상세와 배수를 확인해요.
+      이름 아래 금색 선: 도전점퍼 · 이름을 누르면 상세와 배수를 확인해요.
     </p>
   );
 }

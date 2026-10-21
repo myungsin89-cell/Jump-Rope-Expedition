@@ -43,6 +43,7 @@ export default function StudentSharing({
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const apiUrl = import.meta.env.VITE_BOARD_API_URL?.trim();
+  const hasPublishedBoards = links.length === plan.teams.length;
   const baseUrl =
     import.meta.env.VITE_PUBLIC_APP_URL?.trim() || location.origin + location.pathname;
   const publish = async (rotate: boolean) => {
@@ -82,7 +83,8 @@ export default function StudentSharing({
         수정·구매·기록 입력은 제공하지 않아요.
       </p>
       <p className="preparation-hint">
-        팀 구성을 바꾼 뒤에는 ‘현재 명단 게시’를 눌러 학생 화면을 갱신해 주세요.
+        처음에는 ‘원정대 게시판 만들기’를 눌러 실제 링크와 QR을 만들어 주세요. 팀 구성을
+        바꾼 뒤에는 같은 버튼으로 학생 화면을 갱신할 수 있어요.
       </p>
       {!apiUrl ? (
         <p className="preparation-hint">
@@ -92,7 +94,8 @@ export default function StudentSharing({
       ) : (
         <>
           <p className="preparation-hint">
-            게시 변경은 로그인한 교사만 할 수 있어요. 학생에게는 원정대 QR만 공유합니다.
+            <strong>서버 연결됨</strong> · 게시 변경은 로그인한 교사만 할 수 있어요.
+            학생에게는 원정대 QR만 공유합니다.
           </p>
           <div className="preparation-actions">
             <button
@@ -101,7 +104,11 @@ export default function StudentSharing({
               disabled={busy}
               onClick={() => void publish(false)}
             >
-              {busy ? '게시 중…' : '현재 명단 게시'}
+              {busy
+                ? '게시 중…'
+                : hasPublishedBoards
+                  ? '현재 명단 다시 게시'
+                  : '원정대 게시판 만들기'}
             </button>
             {links.length > 0 && (
               <button
@@ -132,6 +139,11 @@ export default function StudentSharing({
             <li key={index}>
               <h3>{team.name}</h3>
               <a href={`#/student-preview/${plan.id}/${index}`}>학생 화면 미리보기</a>
+              {!link && apiUrl && (
+                <p className="student-share-pending">
+                  아직 게시 전이에요. 위의 ‘원정대 게시판 만들기’를 눌러 주세요.
+                </p>
+              )}
               {link && (
                 <>
                   <TeamQr url={url} />
@@ -142,7 +154,7 @@ export default function StudentSharing({
                     value={url}
                     onFocus={(event) => event.target.select()}
                   />
-                  <a href={`#/team/${link.token}`}>게시된 학생 화면 열기</a>
+                  <a href={`#/team/${link.token}`}>실제 원정대 게시판 열기</a>
                 </>
               )}
             </li>

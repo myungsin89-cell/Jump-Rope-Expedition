@@ -78,12 +78,24 @@ test('previews a read-only student team and browses real unit and hero cards wit
   const original = await page.evaluate(() => localStorage.getItem('jre.preparations.v2'));
   await page.getByRole('button', { name: '학생 화면 공유', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('읽기');
+  await expect(
+    page.getByRole('button', { name: '원정대 게시판 만들기', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText('서버 연결됨', { exact: true })).toBeVisible();
+  await expect(page.locator('.student-share-pending')).toHaveCount(3);
   await page
     .getByRole('link', { name: '학생 화면 미리보기', exact: true })
     .first()
     .click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('초록 원정대');
   await expect(page.locator('.student-roster li')).toHaveCount(10);
+  await expect(page.getByText('도전점퍼', { exact: true })).toHaveCount(0);
+  expect(
+    await page
+      .locator('.student-roster li.is-jumper .student-member-name')
+      .first()
+      .evaluate((element) => getComputedStyle(element).textDecorationLine),
+  ).toContain('underline');
   await expect(page.getByRole('textbox')).toHaveCount(0);
   await expect(
     page.getByRole('button', { name: /구매|기록하기|학생 추가|편성/ }),

@@ -220,11 +220,14 @@ export default function StudentBoard({ route }: { route: string }) {
                 </div>
                 <ol>
                   {data.members.map((member) => (
-                    <li key={member.number} className={member.jumper ? 'is-jumper' : ''}>
+                    <li
+                      key={member.number}
+                      className={member.jumper ? 'is-jumper' : ''}
+                      aria-label={`${member.number}번 ${member.name}${member.captain ? ' 원정대장' : ''}${member.jumper ? ' 도전점퍼' : ''}`}
+                    >
                       <span>{String(member.number).padStart(2, '0')}</span>
-                      <strong>{member.name}</strong>
+                      <strong className="student-member-name">{member.name}</strong>
                       {member.captain && <span className="student-role">원정대장</span>}
-                      {member.jumper && <span className="student-role">도전점퍼</span>}
                     </li>
                   ))}
                 </ol>

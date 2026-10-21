@@ -268,8 +268,7 @@
   flex-wrap: wrap;
   gap: 6px;
 }
-.operation-captain-tag,
-.operation-jumper-mark {
+.operation-captain-tag {
   flex-shrink: 0;
   font-size: 11px;
   line-height: 1.5;
@@ -278,22 +277,11 @@
   color: var(--team-color, var(--forest-primary));
   font-weight: 700;
 }
-.operation-jumper-mark {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  width: max-content;
-  color: #8a6513;
-  font-size: 10px;
-  font-weight: 750;
-  letter-spacing: 0.04em;
-}
-.operation-jumper-mark::before {
-  width: 19px;
-  height: 2px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #d29a20, #f2d277);
-  content: '';
+.operation-student-name.is-jumper .operation-member-label {
+  text-decoration-line: underline;
+  text-decoration-color: #d29a20;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
 }
 .operation-captain-feature {
   margin: 4px 4px 12px;

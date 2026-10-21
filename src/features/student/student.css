@@ -116,7 +116,7 @@
   padding: 10px 12px;
 }
 .student-roster li.is-jumper {
-  border-color: #587a62;
+  border-color: transparent;
 }
 .student-roster li > span:first-child {
   font-size: 13px;
@@ -126,6 +126,12 @@
 .student-roster strong {
   font-weight: 500;
   overflow-wrap: anywhere;
+}
+.student-roster li.is-jumper .student-member-name {
+  text-decoration-line: underline;
+  text-decoration-color: #d29a20;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
 }
 .student-role {
   font-size: 12px;
@@ -317,6 +323,12 @@
 .student-share-list h3 {
   font: 22px var(--font-display);
   margin: 0 0 10px;
+}
+.student-share-pending {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
 }
 .student-share-list img {
   display: block;

@@ -33,9 +33,13 @@ test('uses outlined rosters, hides multipliers until student detail, and limits 
       .first()
       .evaluate((element) => getComputedStyle(element).borderTopColor),
   ).toBe('rgba(0, 0, 0, 0)');
-  await expect(firstTeam.locator('.operation-jumper-mark').first()).toHaveText(
-    '도전점퍼',
-  );
+  await expect(firstTeam.getByText('도전점퍼', { exact: true })).toHaveCount(0);
+  expect(
+    await firstTeam
+      .locator('.operation-student-name.is-jumper .operation-member-label')
+      .first()
+      .evaluate((element) => getComputedStyle(element).textDecorationLine),
+  ).toContain('underline');
   expect(
     await page
       .locator('.operation-team')
