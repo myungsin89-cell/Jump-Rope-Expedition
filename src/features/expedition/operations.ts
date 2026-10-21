@@ -97,13 +97,16 @@ export function setJumper(
   };
 }
 export function previewHistory(history: SavedPractice[], seasonIndex: number) {
-  const entries = history.filter((entry) => entry.seasonIndex === seasonIndex);
+  const activeHistory = history.filter(
+    (entry) => Boolean(entry.official) && !entry.official?.voidedAt,
+  );
+  const entries = activeHistory.filter((entry) => entry.seasonIndex === seasonIndex);
   const points = new Map<string, number | null>();
   let latest: ReturnType<typeof calculateMatchPreview> = [];
-  history.forEach((entry, index) => {
+  activeHistory.forEach((entry, index) => {
     const results = calculateMatchPreview(
       practiceInputs(entry),
-      index ? practiceInputs(history[index - 1]) : [],
+      index ? practiceInputs(activeHistory[index - 1]) : [],
     );
     if (entry.seasonIndex !== seasonIndex) return;
     latest = results;

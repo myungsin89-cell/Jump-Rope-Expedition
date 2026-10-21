@@ -186,7 +186,7 @@ test('keeps future seasons optional and the three operating menus responsive', a
 });
 
 for (const count of [2, 4])
-  test(`records and restores ${count} expedition teams without inventing a fourth-place bonus`, async ({
+  test(`${count === 2 ? 'confirms' : 'blocks'} ${count} expedition teams without inventing a fourth-place bonus`, async ({
     page,
   }) => {
     const id = await seedOperation(page, 8, false);
@@ -219,19 +219,29 @@ for (const count of [2, 4])
       await page.locator(`#actual-${index}-0`).fill('0');
     }
     await page.getByRole('button', { name: '순위·포인트 미리보기' }).click();
-    if (count === 4)
+    if (count === 4) {
       await expect(
         page.locator('.match-result').last().locator('.match-point-preview strong'),
       ).toHaveText('미정');
-    await page.getByRole('button', { name: '연습 기록 저장하기', exact: true }).click();
+      await page.getByRole('button', { name: '경기 결과 확정하기', exact: true }).click();
+      await expect(page.getByRole('alert')).toContainText('4위 순위 포인트');
+      expect(
+        await page.evaluate((id) => {
+          const store = JSON.parse(
+            localStorage.getItem(`jre.practice-matches.v1.${id}`)!,
+          );
+          return { history: store.history.length, teams: store.draft.teams.length };
+        }, id),
+      ).toEqual({ history: 0, teams: 4 });
+      return;
+    }
+    await page.getByRole('button', { name: '경기 결과 확정하기', exact: true }).click();
     await page.getByRole('link', { name: '현황으로 돌아가기', exact: true }).click();
     await expect(
       page.locator('.operation-team').first().locator('.operation-team-stats'),
     ).toContainText('60P');
     await page.reload();
     await expect(page.locator('.operation-team')).toHaveCount(count);
-    if (count === 4)
-      await expect(page.locator('.operation-team').last()).toContainText('일부 미정');
     expect(
       await page.evaluate(
         (id) =>

@@ -5,8 +5,10 @@ import {
   parseCount,
   practiceKey,
   readPracticeStore,
+  saveOfficialPractice,
   savePractice,
   validatePractice,
+  voidOfficialPractice,
   writePracticeDraft,
 } from './practiceModel';
 
@@ -100,6 +102,28 @@ describe('연습 기록판 입력과 저장', () => {
     expect(stored.draft?.id).toBe('next-match');
     expect(stored.history[0]).not.toHaveProperty('estimatedPoints');
     expect(Object.keys(localStorage)).toEqual([practiceKey(value.classId)]);
+  });
+  it('keeps an official award audit and reverses it without deleting the match', () => {
+    const value = completeDraft();
+    writePracticeDraft(value);
+    const confirmed = saveOfficialPractice(value, '2026-10-21T01:00:00.000Z');
+    expect(confirmed.draft).toBeNull();
+    expect(confirmed.history[0].official?.awards).toEqual([
+      { teamKey: 'team-0', points: 60 },
+      { teamKey: 'team-1', points: 60 },
+      { teamKey: 'team-2', points: 60 },
+    ]);
+    const voided = voidOfficialPractice(
+      value.classId,
+      value.id,
+      '기록 입력 오류',
+      '2026-10-21T02:00:00.000Z',
+    );
+    expect(voided.history).toHaveLength(1);
+    expect(voided.history[0].official).toMatchObject({
+      voidReason: '기록 입력 오류',
+      voidedAt: '2026-10-21T02:00:00.000Z',
+    });
   });
   it('preserves stored data on corruption and keeps the draft when saving fails', () => {
     const value = completeDraft();

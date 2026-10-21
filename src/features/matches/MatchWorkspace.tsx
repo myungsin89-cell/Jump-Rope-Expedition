@@ -16,24 +16,33 @@ import {
   parseCount,
   practiceInputs,
   readPracticeStore,
-  savePractice,
+  saveOfficialPractice,
   validatePractice,
+  voidOfficialPractice,
   writePracticeDraft,
 } from './practiceModel';
-import type { PracticeDraft, PracticeJumper, PracticeStore } from './practiceModel';
+import type {
+  PracticeDraft,
+  PracticeJumper,
+  PracticeStore,
+  SavedPractice,
+} from './practiceModel';
 import '../preparation/preparation.css';
 import './matches.css';
 import TeacherSessionButton from '../auth/TeacherSessionButton';
 import { saveTeacherBackup } from '../backup/teacherBackup';
+import { confirmOfficialMatch, voidOfficialMatch } from './officialMatches';
 
 type Phase = 'jumpers' | 'records' | 'review' | 'saved';
 const PHASE_TITLES: Record<Phase, string> = {
   jumpers: '이번 도전의 주인공을 정해요',
   records: '함께 넘은 개수를 기록해요',
   review: '원정대의 도전을 확인해요',
-  saved: '연습 기록을 저장했어요',
+  saved: '공식 경기 결과를 확정했어요',
 };
 const formatCount = (value: number) => value.toLocaleString('ko-KR');
+const testBypass =
+  import.meta.env.DEV && import.meta.env.VITE_AUTH_TEST_BYPASS === 'true';
 
 function MatchFrame({ plan, children }: { plan?: Preparation; children: ReactNode }) {
   return (
@@ -69,12 +78,23 @@ function MatchFrame({ plan, children }: { plan?: Preparation; children: ReactNod
   );
 }
 
-function Results({ results, draft }: { results: MatchPreview[]; draft: PracticeDraft }) {
+function Results({
+  results,
+  draft,
+  confirmed,
+  voided,
+}: {
+  results: MatchPreview[];
+  draft: PracticeDraft;
+  confirmed: boolean;
+  voided: boolean;
+}) {
+  const status = voided ? '취소된' : confirmed ? '확정' : '예상';
   return (
     <div
       className="match-results"
       data-count={results.length}
-      aria-label="예상 경기 결과"
+      aria-label={`${status} 경기 결과`}
     >
       {results.map((result, index) => (
         <section className={`match-result team-color-${index}`} key={result.teamKey}>
@@ -86,7 +106,7 @@ function Results({ results, draft }: { results: MatchPreview[]; draft: PracticeD
             {results.filter((other) => other.rank === result.rank).length > 1
               ? '공동 '
               : ''}
-            {result.rank}위 <small>예상 순위</small>
+            {result.rank}위 <small>{status} 순위</small>
           </p>
           <dl>
             <div>
@@ -104,11 +124,17 @@ function Results({ results, draft }: { results: MatchPreview[]; draft: PracticeD
           </dl>
           <p className="match-growth">
             {result.previousRawCount === null
-              ? '첫 연습 기록 · 성장 보너스 없음'
-              : `직전 연습 원기록 ${formatCount(result.previousRawCount)}개 → ${formatCount(result.rawCount)}개`}
+              ? '첫 경기 기록 · 성장 보너스 없음'
+              : `직전 경기 원기록 ${formatCount(result.previousRawCount)}개 → ${formatCount(result.rawCount)}개`}
           </p>
           <div className="match-point-preview">
-            <span>예상 팀 포인트</span>
+            <span>
+              {voided
+                ? '회수된 팀 포인트'
+                : confirmed
+                  ? '지급 팀 포인트'
+                  : '확정 예정 포인트'}
+            </span>
             <strong>
               {result.estimatedPoints === null ? (
                 '미정'
@@ -163,7 +189,7 @@ function MatchBoard({ plan }: { plan: Preparation }) {
         store: null,
         draft: null,
         error:
-          '작성 중인 연습 기록을 읽을 수 없어요. 원본을 그대로 보관했으니 게임 준비로 돌아가 다시 시도해 주세요.',
+          '작성 중인 경기 기록을 읽을 수 없어요. 원본을 그대로 보관했으니 게임 준비로 돌아가 다시 시도해 주세요.',
       };
     }
   });
@@ -172,6 +198,9 @@ function MatchBoard({ plan }: { plan: Preparation }) {
   const [phase, setPhase] = useState<Phase>(loaded.draft?.locked ? 'records' : 'jumpers');
   const [errors, setErrors] = useState<FieldErrors>({});
   const [storageError, setStorageError] = useState('');
+  const [working, setWorking] = useState(false);
+  const [voiding, setVoiding] = useState<SavedPractice | null>(null);
+  const [voidReason, setVoidReason] = useState('');
   const title = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     title.current?.focus({ preventScroll: true });
@@ -212,9 +241,9 @@ function MatchBoard({ plan }: { plan: Preparation }) {
     );
     updateTeam(teamIndex, { jumpers });
   };
-  const submit = (event: FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!draft) return;
+    if (!draft || working) return;
     const nextErrors = validatePractice(draft, phase !== 'jumpers');
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
@@ -223,23 +252,50 @@ function MatchBoard({ plan }: { plan: Preparation }) {
       setPhase('records');
     } else if (phase === 'records') setPhase('review');
     else if (phase === 'review') {
+      const preview = calculateMatchPreview(
+        practiceInputs(draft),
+        previous ? practiceInputs(previous) : [],
+      );
+      if (preview.some((result) => result.estimatedPoints === null)) {
+        setStorageError(
+          '4위 순위 포인트가 아직 정해지지 않아 이 결과를 공식 확정할 수 없어요.',
+        );
+        return;
+      }
+      setWorking(true);
       try {
-        setStore(savePractice(draft));
+        if (!testBypass) await saveTeacherBackup(plan);
+        const confirmation = await confirmOfficialMatch(plan, draft, preview);
+        setStore(saveOfficialPractice(draft, confirmation.confirmedAt));
         setStorageError('');
         setPhase('saved');
-        void saveTeacherBackup(plan).catch(() => {
-          setStorageError(
-            '기록은 이 브라우저에 저장했지만 서버 동기화를 기다리고 있어요. 원정 현황에서 다시 저장할 수 있어요.',
-          );
-        });
-      } catch {
+        if (!testBypass) {
+          try {
+            await saveTeacherBackup(plan);
+          } catch {
+            setStorageError(
+              '공식 결과와 포인트는 서버에 확정했지만 원정 백업 동기화를 기다리고 있어요. 현황의 서버 저장으로 다시 시도할 수 있어요.',
+            );
+          }
+        }
+      } catch (reason) {
         setStorageError(
-          '연습 기록을 저장하지 못했어요. 입력 내용은 그대로 남아 있어요. 다시 저장해 주세요.',
+          reason instanceof Error
+            ? reason.message
+            : '공식 경기 결과를 확정하지 못했어요. 입력 내용은 그대로 남아 있어요.',
         );
+      } finally {
+        setWorking(false);
       }
     }
   };
-  const previous = store?.history.filter((entry) => entry.id !== draft?.id).at(-1);
+  const previous = store?.history
+    .filter(
+      (entry) =>
+        entry.id !== draft?.id && Boolean(entry.official) && !entry.official?.voidedAt,
+    )
+    .at(-1);
+  const currentSaved = store?.history.find((entry) => entry.id === draft?.id);
   const results =
     draft && (phase === 'review' || phase === 'saved')
       ? calculateMatchPreview(
@@ -256,7 +312,52 @@ function MatchBoard({ plan }: { plan: Preparation }) {
     );
     update(next);
     setErrors({});
+    setStorageError('');
+    setVoiding(null);
+    setVoidReason('');
     setPhase(next.locked ? 'records' : 'jumpers');
+  };
+
+  const cancelOfficialMatch = async () => {
+    if (!voiding || working) return;
+    const reason = voidReason.trim();
+    if (reason.length < 3 || reason.length > 200) {
+      setStorageError('취소 사유를 3자 이상 200자 이내로 입력해 주세요.');
+      return;
+    }
+    setWorking(true);
+    try {
+      const cancellation = await voidOfficialMatch(plan.id, voiding.id, reason);
+      if (!cancellation.voidedAt) throw new Error('경기 취소 시간을 확인하지 못했어요.');
+      setStore(
+        voidOfficialPractice(
+          plan.id,
+          voiding.id,
+          cancellation.voidReason ?? reason,
+          cancellation.voidedAt,
+        ),
+      );
+      setVoiding(null);
+      setVoidReason('');
+      setStorageError('');
+      if (!testBypass) {
+        try {
+          await saveTeacherBackup(plan);
+        } catch {
+          setStorageError(
+            '포인트 회수는 서버에 반영했지만 원정 백업 동기화를 기다리고 있어요.',
+          );
+        }
+      }
+    } catch (reasonValue) {
+      setStorageError(
+        reasonValue instanceof Error
+          ? reasonValue.message
+          : '공식 경기 취소를 완료하지 못했어요.',
+      );
+    } finally {
+      setWorking(false);
+    }
   };
 
   return (
@@ -268,13 +369,20 @@ function MatchBoard({ plan }: { plan: Preparation }) {
             {PHASE_TITLES[phase]}
           </h1>
         </div>
-        <span className="match-practice-badge">연습용 기록판</span>
+        <span className="match-practice-badge">공식 경기 기록판</span>
       </div>
       <div className="match-preview-notice">
-        <strong>지금은 기록 입력 미리보기예요.</strong>
+        <strong>
+          {currentSaved?.official?.voidedAt
+            ? '경기 취소와 포인트 회수를 완료했어요.'
+            : phase === 'saved'
+              ? '공식 결과와 팀 포인트를 서버에 기록했어요.'
+              : '확정 전까지 입력 내용을 다시 확인할 수 있어요.'}
+        </strong>
         <span>
-          실제 경기와 팀 포인트에는 반영하지 않아요. 팀 QR 입력과 공식 경기 확정은 아직
-          연결하지 않았어요.
+          {phase === 'saved'
+            ? '원본 기록은 장부에 보존돼요. 다음 경기를 입력하거나 현황으로 돌아갈 수 있어요.'
+            : '결과를 확정하면 팀 포인트가 서버 원장에 지급돼요. 잘못 확정한 기록은 사유를 남기고 취소할 수 있어요.'}
         </span>
       </div>
       {loaded.error ? (
@@ -286,7 +394,7 @@ function MatchBoard({ plan }: { plan: Preparation }) {
         store && (
           <>
             <ol className="match-steps" aria-label="기록 입력 순서">
-              {['도전점퍼 정하기', '개수 입력하기', '결과 확인하기'].map(
+              {['도전점퍼 정하기', '개수 입력하기', '결과 확정하기'].map(
                 (label, index) => (
                   <li
                     key={label}
@@ -304,7 +412,7 @@ function MatchBoard({ plan }: { plan: Preparation }) {
             </ol>
             <div className="match-season-row">
               <div>
-                <label htmlFor="practice-season">이번 연습 시즌</label>
+                <label htmlFor="practice-season">이번 경기 시즌</label>
                 {phase === 'jumpers' ||
                 (phase === 'records' &&
                   !draft.teams.some(
@@ -351,12 +459,17 @@ function MatchBoard({ plan }: { plan: Preparation }) {
             <form onSubmit={submit} noValidate>
               {results ? (
                 <>
-                  <Results results={results} draft={draft} />
+                  <Results
+                    results={results}
+                    draft={draft}
+                    confirmed={Boolean(currentSaved?.official)}
+                    voided={Boolean(currentSaved?.official?.voidedAt)}
+                  />
                   <p className="match-result-note">
-                    예상 포인트는 참가·순위·성장만 반영해요. 훈장은 경기와 별개의 +10P이며
-                    아직 연결하지 않았어요. 공식 포인트는 지급되지 않아요.
+                    확정 포인트는 참가·순위·성장을 반영해요. 훈장 +10P는 별도 장부에서
+                    합산돼요.
                     {results.some((result) => result.rankingPoints === null) &&
-                      ' 4위 순위 보너스는 아직 정하지 않아 예상 합계를 표시하지 않아요.'}
+                      ' 4위 순위 포인트가 미정인 결과는 공식 확정할 수 없어요.'}
                   </p>
                 </>
               ) : (
@@ -592,7 +705,7 @@ function MatchBoard({ plan }: { plan: Preparation }) {
                       type="button"
                       onClick={newPractice}
                     >
-                      다음 연습 기록
+                      다음 경기 기록
                     </button>
                   )}
                 </div>
@@ -601,12 +714,18 @@ function MatchBoard({ plan }: { plan: Preparation }) {
                     현황으로 돌아가기
                   </a>
                 ) : (
-                  <button className="preparation-primary" type="submit">
-                    {phase === 'jumpers'
-                      ? '도전점퍼 정하고 기록 입력'
-                      : phase === 'records'
-                        ? '순위·포인트 미리보기'
-                        : '연습 기록 저장하기'}
+                  <button
+                    className="preparation-primary"
+                    disabled={working}
+                    type="submit"
+                  >
+                    {working
+                      ? '서버에 확정 중…'
+                      : phase === 'jumpers'
+                        ? '도전점퍼 정하고 기록 입력'
+                        : phase === 'records'
+                          ? '순위·포인트 미리보기'
+                          : '경기 결과 확정하기'}
                   </button>
                 )}
               </div>
@@ -614,14 +733,21 @@ function MatchBoard({ plan }: { plan: Preparation }) {
 
             {store.history.length > 0 && (
               <details className="match-history" open={phase === 'saved'}>
-                <summary>저장한 연습 기록 {store.history.length}개</summary>
-                <p>공식 경기 이력과 별도로 이 브라우저에만 저장해요.</p>
+                <summary>경기 기록 장부 {store.history.length}개</summary>
+                <p>공식 기록은 서버 포인트 원장과 연결되며 취소해도 원본을 보존해요.</p>
                 <ol>
                   {store.history.map((entry, index) => (
                     <li key={entry.id}>
                       <h3>
-                        {index + 1}번째 연습 · 시즌 {entry.seasonIndex + 1}
+                        {index + 1}번째 경기 · 시즌 {entry.seasonIndex + 1}
                       </h3>
+                      <span className="match-history-status">
+                        {entry.official?.voidedAt
+                          ? '취소됨'
+                          : entry.official
+                            ? '공식 확정'
+                            : '이전 연습 기록'}
+                      </span>
                       <ul>
                         {entry.teams.map((team) => (
                           <li key={team.key}>
@@ -638,14 +764,71 @@ function MatchBoard({ plan }: { plan: Preparation }) {
                           </li>
                         ))}
                       </ul>
+                      {entry.official?.voidedAt ? (
+                        <p className="match-voided-note">
+                          {entry.official.voidedAt.slice(0, 10)} 취소 ·{' '}
+                          {entry.official.voidReason}
+                        </p>
+                      ) : entry.official ? (
+                        <button
+                          type="button"
+                          className="match-void-button"
+                          onClick={() => {
+                            setVoiding(entry);
+                            setVoidReason('');
+                            setStorageError('');
+                          }}
+                        >
+                          잘못 확정한 기록 취소
+                        </button>
+                      ) : null}
+                      {voiding?.id === entry.id && (
+                        <div className="match-void-panel">
+                          <label htmlFor={`match-void-reason-${entry.id}`}>
+                            취소 사유
+                          </label>
+                          <textarea
+                            id={`match-void-reason-${entry.id}`}
+                            maxLength={200}
+                            value={voidReason}
+                            onChange={(event) => setVoidReason(event.target.value)}
+                            placeholder="예: 2원정대 기록을 잘못 입력함"
+                          />
+                          <p>
+                            기록은 삭제하지 않고 지급된 경기 포인트를 반대 거래로
+                            회수해요.
+                          </p>
+                          <div>
+                            <button
+                              type="button"
+                              className="preparation-secondary"
+                              disabled={working}
+                              onClick={() => {
+                                setVoiding(null);
+                                setVoidReason('');
+                              }}
+                            >
+                              돌아가기
+                            </button>
+                            <button
+                              type="button"
+                              className="preparation-primary"
+                              disabled={working}
+                              onClick={() => void cancelOfficialMatch()}
+                            >
+                              {working ? '포인트 회수 중…' : '기록 취소 확정'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ol>
               </details>
             )}
             <p className="match-save-hint">
-              입력 내용과 지정한 도전점퍼는 새로고침해도 이어서 확인할 수 있어요. 연습
-              순위와 예상 포인트는 공식 장부에 저장하지 않아요.
+              입력 중인 내용은 이 브라우저에 자동 보관돼요. 결과 확정과 취소는 교사 계정의
+              서버 경기·포인트 장부에 기록됩니다.
             </p>
           </>
         )

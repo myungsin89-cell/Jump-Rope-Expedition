@@ -92,7 +92,7 @@ test('creates a custom medal and gives repeated awards with icons, history and e
     await page.locator(`#actual-${index}-0`).fill('0');
   }
   await page.getByRole('button', { name: '순위·포인트 미리보기', exact: true }).click();
-  await page.getByRole('button', { name: '연습 기록 저장하기', exact: true }).click();
+  await page.getByRole('button', { name: '경기 결과 확정하기', exact: true }).click();
   await page.getByRole('link', { name: '현황으로 돌아가기', exact: true }).click();
   await expect(
     page.locator('.operation-team').first().locator('.operation-team-stats'),

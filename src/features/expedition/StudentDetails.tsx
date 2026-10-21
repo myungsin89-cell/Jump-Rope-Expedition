@@ -45,18 +45,20 @@ export default function StudentDetails({
     onClose();
   };
   const records =
-    store?.history.flatMap((entry) =>
-      entry.teams.flatMap((item) =>
-        item.jumpers
-          .filter((choice) => choice.studentId === student.id)
-          .map((choice) => ({
-            id: entry.id,
-            season: entry.seasonIndex + 1,
-            date: entry.savedAt.slice(0, 10),
-            count: choice.actual,
-          })),
-      ),
-    ) ?? [];
+    store?.history
+      .filter((entry) => !entry.official?.voidedAt)
+      .flatMap((entry) =>
+        entry.teams.flatMap((item) =>
+          item.jumpers
+            .filter((choice) => choice.studentId === student.id)
+            .map((choice) => ({
+              id: entry.id,
+              season: entry.seasonIndex + 1,
+              date: entry.savedAt.slice(0, 10),
+              count: choice.actual,
+            })),
+        ),
+      ) ?? [];
   return (
     <OperationModal title={`${student.name} 학생 상세`} onClose={close}>
       <p className="preparation-hint">
@@ -163,7 +165,7 @@ export default function StudentDetails({
         <details className="operation-detail-section" open={records.length > 0}>
           <summary>
             <h3>
-              도전점퍼 성장 기록 <small>{records.length}건 · 연습</small>
+              도전점퍼 성장 기록 <small>{records.length}건 · 경기</small>
             </h3>
           </summary>
           {records.length ? (
@@ -178,7 +180,7 @@ export default function StudentDetails({
               ))}
             </ul>
           ) : (
-            <p>도전점퍼로 기록한 개인 연습 기록이 아직 없어요.</p>
+            <p>도전점퍼로 기록한 개인 경기 기록이 아직 없어요.</p>
           )}
         </details>
         <div className="preparation-actions">

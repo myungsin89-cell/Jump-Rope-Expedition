@@ -7,7 +7,9 @@ import {
 import {
   createPractice,
   readPracticeStore,
+  saveOfficialPractice,
   savePractice,
+  voidOfficialPractice,
 } from '../matches/practiceModel';
 import {
   arrangeTeam,
@@ -140,8 +142,31 @@ describe('현황 중심 원정 운영', () => {
     const entries = [a, b].map((entry) => ({
       ...entry,
       savedAt: '2026-10-20T00:00:00Z',
+      official: {
+        confirmedAt: '2026-10-20T00:00:00Z',
+        awards: entry.teams.map((team) => ({ teamKey: team.key, points: 60 })),
+      },
     }));
     expect(previewHistory(entries, 0).points.get('team-0')).toBe(60);
     expect(previewHistory(entries, 1).points.get('team-0')).toBe(80);
+  });
+  it('removes a voided official match from rankings and point totals without deleting it', () => {
+    const value = plan();
+    const match = createPractice(value);
+    match.teams.forEach((team) => {
+      team.raw = '100';
+      team.jumpers[0].actual = '0';
+    });
+    saveOfficialPractice(match, '2026-10-21T01:00:00.000Z');
+    voidOfficialPractice(
+      value.id,
+      match.id,
+      '잘못 입력한 경기',
+      '2026-10-21T02:00:00.000Z',
+    );
+    const store = readPracticeStore(value.id);
+    expect(store.history).toHaveLength(1);
+    expect(previewHistory(store.history, 0).entries).toHaveLength(0);
+    expect(previewHistory(store.history, 0).points.size).toBe(0);
   });
 });

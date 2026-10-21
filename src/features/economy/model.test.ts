@@ -3,7 +3,7 @@ import { awardMedal, readMedals, saveMedal } from '../medals/model';
 import {
   createPractice,
   readPracticeStore,
-  savePractice,
+  saveOfficialPractice,
 } from '../matches/practiceModel';
 import { createPreparation } from '../preparation/model';
 import type { Preparation } from '../preparation/model';
@@ -45,7 +45,7 @@ function addMatch(value: Preparation, raws: number[]) {
     team.raw = String(raws[index]);
     team.jumpers[0].actual = '0';
   });
-  return savePractice(draft);
+  return saveOfficialPractice(draft, new Date().toISOString());
 }
 
 beforeEach(() => localStorage.clear());
@@ -108,14 +108,22 @@ describe('로컬 포인트·구매 장부', () => {
     );
   });
 
-  it('blocks spending when the four-team fourth-place bonus is still undecided', () => {
+  it('does not turn an unconfirmed four-team preview into spendable points', () => {
     const value = plan(4);
-    const practice = addMatch(value, [100, 90, 80, 70]);
+    const draft = createPractice(value, 0);
+    draft.teams.forEach((team, index) => {
+      team.raw = String(100 - index * 10);
+      team.jumpers[0].actual = '0';
+    });
+    expect(() => saveOfficialPractice(draft, new Date().toISOString())).toThrow(
+      '미정인 순위 포인트',
+    );
+    const practice = readPracticeStore(value.id);
     const sources = { practice, medals: readMedals(value.id) };
     const summary = teamEconomySummary(value, sources, readEconomy(value.id), 3, 0);
-    expect(summary.balance).toBeNull();
+    expect(summary.balance).toBe(0);
     expect(() => purchaseItem(value, sources, 3, 0, 'UNIT_01', 'buy-4')).toThrow(
-      '포인트 기록',
+      '30P 부족',
     );
   });
 

@@ -13,6 +13,13 @@ test('purchases units and a private hint, then restores a mistaken purchase', as
       seasonIndex: 0,
       locked: true,
       savedAt: `2026-10-${20 + round}T00:00:00.000Z`,
+      official: {
+        confirmedAt: `2026-10-${20 + round}T00:00:00.000Z`,
+        awards: plan.teams.map((_: unknown, teamIndex: number) => ({
+          teamKey: `team-${teamIndex}`,
+          points: 60 - teamIndex * 10 + round * 20,
+        })),
+      },
       teams: plan.teams.map(
         (team: { name: string; studentIds: string[] }, teamIndex: number) => ({
           key: `team-${teamIndex}`,

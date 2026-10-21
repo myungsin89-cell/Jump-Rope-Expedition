@@ -47,7 +47,7 @@ export default function ExpeditionOverview({
               {!ready
                 ? '시즌 설정 필요'
                 : rosterReady
-                  ? '기록 가능 · 연습'
+                  ? '공식 기록 가능'
                   : '대원 구성 필요'}
             </small>
           </h2>
@@ -117,11 +117,11 @@ export default function ExpeditionOverview({
               </header>
               <dl className="operation-team-stats">
                 <div>
-                  <dt>최근 연습 순위</dt>
+                  <dt>최근 경기 순위</dt>
                   <dd>{latest ? `${latest.rank}위` : '—'}</dd>
                 </div>
                 <div>
-                  <dt>연습 획득 합계</dt>
+                  <dt>경기 획득 합계</dt>
                   <dd>
                     {medalTotal === null
                       ? '확인 필요'
@@ -181,13 +181,13 @@ export default function ExpeditionOverview({
         </p>
       )}
       <p className="operation-local-note">
-        이 브라우저의 경기·훈장·구매 연습 기록 기준이에요. 팀 준비의 잔액과 구매는 로컬
-        기능 검증용이며 서버 공식 장부·누적 승점은 아직 연결 전이에요.
+        확정한 경기 포인트와 훈장·구매 기록을 합산한 현재 장부예요. 공식 경기의 확정과
+        취소는 교사 계정의 서버 원장에도 기록됩니다.
       </p>
       <section className="operation-history" aria-labelledby="operation-history-heading">
         <div className="operation-section-heading">
           <h2 id="operation-history-heading">
-            최근 경기 기록 <small>연습</small>
+            최근 경기 기록 <small>공식</small>
           </h2>
           <span>{summary.entries.length}개</span>
         </div>

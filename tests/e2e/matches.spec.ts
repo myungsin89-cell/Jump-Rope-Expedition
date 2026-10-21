@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { seedMatchClass } from './match-fixture';
 
-test('locks independently chosen jumpers, restores counts, and previews tied ranks without posting points', async ({
+test('confirms official results, posts points once, and preserves a cancellation audit', async ({
   page,
 }) => {
   const id = await seedMatchClass(page);
@@ -45,8 +45,13 @@ test('locks independently chosen jumpers, restores counts, and previews tied ran
   await expect(cards.nth(1).locator('.match-result-rank')).toContainText('공동 1위');
   await expect(cards.nth(2).locator('.match-result-rank')).toContainText('3위');
   await expect(cards.nth(0).locator('.match-point-preview strong')).toHaveText('60P');
-  await page.getByRole('button', { name: '연습 기록 저장하기', exact: true }).click();
-  await expect(page.getByText('저장한 연습 기록 1개')).toBeVisible();
+  await page.getByRole('button', { name: '경기 결과 확정하기', exact: true }).click();
+  await expect(page.getByText('경기 기록 장부 1개')).toBeVisible();
+  await expect(page.getByText('공식 확정', { exact: true })).toBeVisible();
+  await page.screenshot({
+    path: 'artifacts/official-match-confirmed-desktop.png',
+    fullPage: true,
+  });
   const stored = await page.evaluate((classId) => {
     const value = JSON.parse(localStorage.getItem(`jre.practice-matches.v1.${classId}`)!);
     return {
@@ -62,7 +67,12 @@ test('locks independently chosen jumpers, restores counts, and previews tied ran
     hasPoints: false,
     keys: ['jre.practice-matches.v1.record-board-class', 'jre.preparations.v2'],
   });
-  await page.getByRole('button', { name: '다음 연습 기록', exact: true }).click();
+  await page.getByRole('button', { name: '잘못 확정한 기록 취소', exact: true }).click();
+  await page.getByLabel('취소 사유').fill('첫 경기 기록 입력 오류');
+  await page.getByRole('button', { name: '기록 취소 확정', exact: true }).click();
+  await expect(page.getByText('취소됨', { exact: true })).toBeVisible();
+  await expect(page.getByText(/첫 경기 기록 입력 오류/)).toBeVisible();
+  await page.getByRole('button', { name: '다음 경기 기록', exact: true }).click();
   for (let index = 0; index < 3; index++)
     await page.locator(`#jumper-${index}-0`).selectOption(`s-${index + 1}`);
   await page.getByRole('button', { name: '도전점퍼 정하고 기록 입력' }).click();
@@ -71,8 +81,8 @@ test('locks independently chosen jumpers, restores counts, and previews tied ran
     await page.locator(`#actual-${index}-0`).fill('0');
   }
   await page.getByRole('button', { name: '순위·포인트 미리보기' }).click();
-  await expect(cards.nth(0).locator('.match-point-preview strong')).toHaveText('70P');
-  await expect(cards.nth(0).locator('.match-point-breakdown')).toContainText('성장 20');
+  await expect(cards.nth(0).locator('.match-point-preview strong')).toHaveText('50P');
+  await expect(cards.nth(0).locator('.match-point-breakdown')).toContainText('성장 0');
   await expect(cards.nth(1).locator('.match-point-breakdown')).toContainText('성장 0');
   await expect(cards.nth(2).locator('.match-point-breakdown')).toContainText('성장 0');
 });
@@ -83,7 +93,7 @@ test('requires prepared teams and seasons and stays usable at mobile width', asy
   const id = await seedMatchClass(page);
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto(`/#/game/${id}`);
-  await expect(page.locator('.match-practice-badge')).toHaveText('연습용 기록판');
+  await expect(page.locator('.match-practice-badge')).toHaveText('공식 경기 기록판');
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
   ).toBe(true);

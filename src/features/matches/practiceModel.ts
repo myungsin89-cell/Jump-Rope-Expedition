@@ -29,6 +29,12 @@ export interface PracticeDraft {
 }
 export interface SavedPractice extends PracticeDraft {
   savedAt: string;
+  official?: {
+    confirmedAt: string;
+    awards: { teamKey: string; points: number }[];
+    voidedAt?: string;
+    voidReason?: string;
+  };
 }
 export interface PracticeStore {
   version: 1;
@@ -191,7 +197,34 @@ function isSavedPractice(value: unknown, classId: string): value is SavedPractic
   )
     return false;
   try {
-    calculateMatchPreview(practiceInputs(value));
+    const results = calculateMatchPreview(practiceInputs(value));
+    if (value.official !== undefined) {
+      if (
+        !isRecord(value.official) ||
+        typeof value.official.confirmedAt !== 'string' ||
+        !Number.isFinite(Date.parse(value.official.confirmedAt)) ||
+        !Array.isArray(value.official.awards) ||
+        value.official.awards.length !== results.length ||
+        !value.official.awards.every(
+          (award) =>
+            isRecord(award) &&
+            typeof award.teamKey === 'string' &&
+            results.some((result) => result.teamKey === award.teamKey) &&
+            Number.isSafeInteger(award.points) &&
+            Number(award.points) >= 0,
+        ) ||
+        new Set(value.official.awards.map((award) => award.teamKey)).size !==
+          value.official.awards.length ||
+        (value.official.voidedAt !== undefined &&
+          (typeof value.official.voidedAt !== 'string' ||
+            !Number.isFinite(Date.parse(value.official.voidedAt)) ||
+            typeof value.official.voidReason !== 'string' ||
+            value.official.voidReason.trim().length < 3 ||
+            value.official.voidReason.length > 200)) ||
+        (value.official.voidedAt === undefined && value.official.voidReason !== undefined)
+      )
+        return false;
+    }
     return true;
   } catch {
     return false;
@@ -214,7 +247,7 @@ export function parsePracticeStore(value: unknown, classId: string): PracticeSto
     !value.history.every((entry) => isSavedPractice(entry, classId)) ||
     new Set(value.history.map((entry) => entry.id)).size !== value.history.length
   ) {
-    throw new Error('연습 기록을 읽을 수 없어요. 원본은 그대로 보관돼요.');
+    throw new Error('경기 기록을 읽을 수 없어요. 원본은 그대로 보관돼요.');
   }
   return value as unknown as PracticeStore;
 }
@@ -242,5 +275,75 @@ export function savePractice(draft: PracticeDraft): PracticeStore {
       : [...store.history, { ...draft, savedAt: new Date().toISOString() }],
   };
   localStorage.setItem(practiceKey(draft.classId), JSON.stringify(next));
+  return next;
+}
+
+export function saveOfficialPractice(
+  draft: PracticeDraft,
+  confirmedAt: string,
+): PracticeStore {
+  if (!Number.isFinite(Date.parse(confirmedAt)))
+    throw new Error('경기 확정 시간을 확인해 주세요.');
+  if (!draft.locked || Object.keys(validatePractice(draft, true)).length)
+    throw new Error('도전점퍼와 기록을 먼저 확인해 주세요.');
+  const store = readPracticeStore(draft.classId);
+  const previous = store.history
+    .filter(
+      (entry) =>
+        entry.id !== draft.id && Boolean(entry.official) && !entry.official?.voidedAt,
+    )
+    .at(-1);
+  const results = calculateMatchPreview(
+    practiceInputs(draft),
+    previous ? practiceInputs(previous) : [],
+  );
+  if (results.some((result) => result.estimatedPoints === null))
+    throw new Error('미정인 순위 포인트가 있어 경기 결과를 확정할 수 없어요.');
+  const official = {
+    confirmedAt,
+    awards: results.map((result) => ({
+      teamKey: result.teamKey,
+      points: result.estimatedPoints!,
+    })),
+  };
+  const existing = store.history.find((entry) => entry.id === draft.id);
+  if (existing?.official) return store;
+  if (existing) throw new Error('같은 입력이 이미 연습 기록으로 저장되어 있어요.');
+  const next: PracticeStore = {
+    ...store,
+    draft: store.draft?.id === draft.id ? null : store.draft,
+    history: [...store.history, { ...draft, savedAt: confirmedAt, official }],
+  };
+  localStorage.setItem(practiceKey(draft.classId), JSON.stringify(next));
+  return next;
+}
+
+export function voidOfficialPractice(
+  classId: string,
+  matchId: string,
+  voidReason: string,
+  voidedAt: string,
+): PracticeStore {
+  const reason = voidReason.trim();
+  if (reason.length < 3 || reason.length > 200)
+    throw new Error('취소 사유를 3자 이상 200자 이내로 입력해 주세요.');
+  if (!Number.isFinite(Date.parse(voidedAt)))
+    throw new Error('경기 취소 시간을 확인해 주세요.');
+  const store = readPracticeStore(classId);
+  const target = store.history.find((entry) => entry.id === matchId);
+  if (!target?.official) throw new Error('취소할 공식 경기 기록을 찾지 못했어요.');
+  if (target.official.voidedAt) return store;
+  const next: PracticeStore = {
+    ...store,
+    history: store.history.map((entry) =>
+      entry.id === matchId
+        ? {
+            ...entry,
+            official: { ...entry.official!, voidedAt, voidReason: reason },
+          }
+        : entry,
+    ),
+  };
+  localStorage.setItem(practiceKey(classId), JSON.stringify(next));
   return next;
 }
