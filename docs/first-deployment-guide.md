@@ -48,12 +48,12 @@ npx supabase functions deploy student-board --no-verify-jwt
 
 Vercel 프로젝트의 Environment Variables에 브라우저에서 사용 가능한 공개 설정을 입력한다.
 
-| 이름                     | 값                                       |
-| ------------------------ | ---------------------------------------- |
-| `VITE_SUPABASE_URL`      | Supabase 프로젝트 URL                    |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anon/publishable 공개 키        |
-| `VITE_BOARD_API_URL`     | 배포된 student-board 함수 전체 HTTPS URL |
-| `VITE_PUBLIC_APP_URL`    | Vercel 운영 앱 주소                      |
+| 이름                     | 값                                                                      |
+| ------------------------ | ----------------------------------------------------------------------- |
+| `VITE_SUPABASE_URL`      | Supabase 프로젝트 URL (Integration의 `NEXT_PUBLIC_SUPABASE_URL`도 인식) |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon/publishable 공개 키 (Integration 공개 키도 인식)          |
+| `VITE_BOARD_API_URL`     | 배포된 student-board 함수 전체 HTTPS URL                                |
+| `VITE_PUBLIC_APP_URL`    | Vercel 운영 앱 주소                                                     |
 
 Vite 변수는 빌드에 들어가므로 변경 후 새 배포가 필요하다. **게시 키와 service-role 키는 여기 넣지 않는다.** 로컬에서도 사용하려면 같은 공개 주소를 `.env.local`에 넣고 개발 서버를 재시작한다. `.env.local`은 커밋하지 않는다.
 
