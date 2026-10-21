@@ -142,6 +142,54 @@
   gap: 24px;
   justify-items: center;
 }
+.student-owned-heroes {
+  justify-content: start;
+  justify-items: stretch;
+  margin-bottom: 34px;
+}
+.student-sealed-hero {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  min-height: 320px;
+  border: 1px solid #315846;
+  border-radius: 18px;
+  padding: 22px;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(239, 213, 124, 0.2), transparent 28%),
+    linear-gradient(145deg, #173a2a, #0e251b);
+  color: white;
+  text-align: center;
+}
+.student-sealed-hero > span {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  border-radius: 50%;
+  color: #f0d477;
+  font: 46px/1 var(--font-display);
+}
+.student-sealed-hero strong {
+  font-size: 1.1rem;
+}
+.student-sealed-hero small {
+  margin-top: 8px;
+  color: #bfd2c7;
+}
+.student-empty-heroes {
+  margin: 0 0 28px;
+  border: 1px dashed #bccac2;
+  border-radius: 12px;
+  padding: 20px;
+  color: var(--text-muted);
+}
+.student-catalog-heading {
+  border-top: 1px solid #dde4df;
+  padding-top: 26px;
+}
 .student-message {
   padding: 48px 0;
   line-height: 1.8;

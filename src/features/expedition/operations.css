@@ -96,6 +96,67 @@
   gap: 8px;
   text-align: center;
 }
+
+.operation-battle-button {
+  width: 100%;
+}
+
+.operation-battle-summary {
+  margin-top: 28px;
+  border-top: 1px solid #dbe4df;
+  padding-top: 24px;
+}
+
+.operation-battle-summary .operation-section-heading p {
+  margin: 4px 0 0;
+  color: #718078;
+  font-size: 0.92rem;
+}
+
+.operation-expedition-standings {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.operation-expedition-standings li {
+  display: grid;
+  grid-template-columns: 54px minmax(140px, 1fr) auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 14px;
+  border: 1px solid #dbe4df;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.operation-expedition-standings li > span,
+.operation-expedition-standings li > b {
+  color: #1b573d;
+}
+
+.operation-expedition-standings li > small {
+  color: #76837c;
+}
+
+.operation-battle-history {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .operation-expedition-standings li {
+    grid-template-columns: 44px minmax(110px, 1fr) auto;
+  }
+
+  .operation-expedition-standings li > small {
+    grid-column: 2 / -1;
+  }
+}
 .operation-record-action .preparation-primary {
   min-width: 210px;
   box-shadow: none;

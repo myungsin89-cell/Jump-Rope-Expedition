@@ -13,6 +13,8 @@ import type { EconomyStore } from '../economy/model';
 import { teamEconomySummary } from '../economy/model';
 import type { HeroStore } from '../heroes/model';
 import { teamHeroRewards } from '../heroes/model';
+import type { BattleStore } from '../battle/model';
+import { expeditionStandings, isSeasonBattleLocked, seasonBattle } from '../battle/model';
 
 export default function ExpeditionOverview({
   plan,
@@ -24,6 +26,8 @@ export default function ExpeditionOverview({
   onEconomy,
   heroes,
   onHeroes,
+  battles,
+  onBattle,
 }: {
   plan: Preparation;
   store: PracticeStore | null;
@@ -34,6 +38,8 @@ export default function ExpeditionOverview({
   onEconomy: (teamIndex: number) => void;
   heroes: HeroStore | null;
   onHeroes: (teamIndex: number) => void;
+  battles: BattleStore | null;
+  onBattle: (seasonIndex: number) => void;
 }) {
   const seasonIndex = currentSeasonIndex(plan);
   const season = plan.seasons[seasonIndex];
@@ -42,6 +48,9 @@ export default function ExpeditionOverview({
     !Object.keys(validatePreparation(plan, 'teams')).length &&
     !Object.keys(validateJumpers(plan)).length;
   const summary = previewHistory(store?.history ?? [], seasonIndex);
+  const activeBattle = battles ? seasonBattle(battles, seasonIndex) : null;
+  const seasonLocked = battles ? isSeasonBattleLocked(battles, seasonIndex) : false;
+  const standings = battles ? expeditionStandings(battles) : [];
   const assigned = new Set(plan.teams.flatMap((team) => team.studentIds));
   return (
     <section aria-labelledby="operation-overview-heading">
@@ -68,17 +77,38 @@ export default function ExpeditionOverview({
           </span>
         </div>
         <div className="operation-record-action">
-          <button type="button" className="preparation-primary" onClick={onRecord}>
+          <button
+            type="button"
+            className="preparation-primary"
+            onClick={onRecord}
+            disabled={seasonLocked}
+          >
             경기 기록하기
           </button>
+          <button
+            type="button"
+            className="preparation-secondary operation-battle-button"
+            disabled={!ready || !rosterReady || !store || !economy || !heroes || !battles}
+            onClick={() => onBattle(seasonIndex)}
+          >
+            {activeBattle?.status === 'closing'
+              ? '시즌 종료 계속하기'
+              : activeBattle?.status === 'calculated'
+                ? '최종 대전 재생하기'
+                : activeBattle?.status === 'finished'
+                  ? '최종 대전 결과 보기'
+                  : '시즌 종료 · 최종 대전'}
+          </button>
           <span>
-            {!rosterReady
-              ? '먼저 명단에서 대원과 도전점퍼를 정해 주세요.'
-              : !ready
-                ? '먼저 이번 시즌의 기간과 보스를 정해 주세요.'
-                : store?.draft
-                  ? '작성 중인 입력은 이어서 열려요.'
-                  : '개수 입력 후 순위와 포인트 확인'}
+            {seasonLocked
+              ? '이 시즌은 전투 계산이 끝나 새 경기를 기록할 수 없어요.'
+              : !rosterReady
+                ? '먼저 명단에서 대원과 도전점퍼를 정해 주세요.'
+                : !ready
+                  ? '먼저 이번 시즌의 기간과 보스를 정해 주세요.'
+                  : store?.draft
+                    ? '작성 중인 입력은 이어서 열려요.'
+                    : '개수 입력 후 순위와 포인트 확인'}
           </span>
         </div>
       </div>
@@ -174,7 +204,7 @@ export default function ExpeditionOverview({
               <button
                 type="button"
                 className="preparation-secondary economy-team-button"
-                disabled={!store || !medals || !economy}
+                disabled={!store || !medals || !economy || seasonLocked}
                 onClick={() => onEconomy(index)}
               >
                 팀 준비 · 잔액{' '}
@@ -195,6 +225,57 @@ export default function ExpeditionOverview({
           );
         })}
       </div>
+      {battles && battles.battles.length > 0 && (
+        <section
+          className="operation-battle-summary"
+          aria-labelledby="battle-summary-heading"
+        >
+          <div className="operation-section-heading">
+            <div>
+              <h2 id="battle-summary-heading">최종 대전 기록</h2>
+              <p>승점이 같으면 누적 실제 피해량으로 전체 순위를 정해요.</p>
+            </div>
+            <span>
+              {battles.battles.filter((battle) => battle.status === 'finished').length}회
+              완료
+            </span>
+          </div>
+          {standings.length > 0 && (
+            <ol className="operation-expedition-standings">
+              {[...standings]
+                .sort(
+                  (left, right) =>
+                    left.rank - right.rank || right.totalDamage - left.totalDamage,
+                )
+                .map((standing) => (
+                  <li key={standing.teamIndex}>
+                    <span>{standing.rank}위</span>
+                    <strong>{standing.teamName}</strong>
+                    <b>{standing.victoryPoints}승점</b>
+                    <small>{standing.totalDamage.toLocaleString()} 누적 피해</small>
+                  </li>
+                ))}
+            </ol>
+          )}
+          <div className="operation-battle-history">
+            {battles.battles.map((battle) => (
+              <button
+                key={battle.id}
+                type="button"
+                className="preparation-secondary"
+                onClick={() => onBattle(battle.seasonIndex)}
+              >
+                시즌 {battle.seasonIndex + 1} ·{' '}
+                {battle.status === 'closing'
+                  ? '종료 준비'
+                  : battle.status === 'calculated'
+                    ? '재생 대기'
+                    : '결과 보기'}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
       {assigned.size < plan.students.length && (
         <p className="operation-fine-print">
           아직 원정대에 배정하지 않은 학생이 {plan.students.length - assigned.size}명

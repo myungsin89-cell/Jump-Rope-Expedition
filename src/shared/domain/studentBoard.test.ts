@@ -52,6 +52,34 @@ describe('student-only preparation snapshot', () => {
       }),
     ).toEqual(board);
   });
+  it('publishes only this team sealed count and revealed hero identities', () => {
+    const value = plan();
+    const board = studentBoardData(value, 0, '2026-10-22T00:00:00.000Z', {
+      expeditionId: value.id,
+      rewards: [
+        { teamIndex: 0, seasonIndex: 0, heroId: 'H01' },
+        {
+          teamIndex: 0,
+          seasonIndex: 0,
+          heroId: 'H02',
+          revealedAt: '2026-10-22T00:00:00.000Z',
+        },
+        {
+          teamIndex: 1,
+          seasonIndex: 0,
+          heroId: 'H15',
+          revealedAt: '2026-10-22T00:00:00.000Z',
+        },
+      ],
+    });
+    expect(board.heroes).toEqual([
+      { slot: 1, revealed: false },
+      { slot: 2, revealed: true, heroId: 'H02' },
+    ]);
+    expect(JSON.stringify(board)).not.toContain('H01');
+    expect(JSON.stringify(board)).not.toContain('H15');
+    expect(parseStudentBoard(board)).toEqual(board);
+  });
   it('rejects malformed member numbers and unsupported versions', () => {
     const board = studentBoardData(plan(), 0);
     expect(() =>

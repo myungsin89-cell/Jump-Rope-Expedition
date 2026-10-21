@@ -1,6 +1,7 @@
 import {
   isUuid,
   parseStudentBoard,
+  parseStudentHeroSource,
   parseTeacherPreparation,
   studentBoardData,
 } from '../../../src/shared/domain/studentBoard.ts';
@@ -98,15 +99,22 @@ export function createBoardHandler(env: Environment, fetcher: typeof fetch = fet
       if (!value || typeof value !== 'object' || !('plan' in value))
         return respond({ error: 'Invalid request' }, 400);
       let plan;
+      let heroes;
       try {
         plan = parseTeacherPreparation(value.plan);
+        heroes =
+          'heroes' in value && value.heroes !== undefined
+            ? parseStudentHeroSource(value.heroes, plan.id)
+            : undefined;
       } catch {
-        return respond({ error: 'Invalid preparation' }, 400);
+        return respond({ error: 'Invalid preparation or heroes' }, 400);
       }
       if (!('action' in value) || value.action !== 'publish')
         return respond({ error: 'Invalid action' }, 400);
       const time = new Date().toISOString();
-      const boards = plan.teams.map((_, index) => studentBoardData(plan, index, time));
+      const boards = plan.teams.map((_, index) =>
+        studentBoardData(plan, index, time, heroes),
+      );
       const response = await rest('rpc/publish_student_boards_v2', {
         method: 'POST',
         body: JSON.stringify({

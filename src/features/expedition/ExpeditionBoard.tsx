@@ -34,6 +34,15 @@ import { saveTeacherBackup } from '../backup/teacherBackup';
 import { readHeroes, reconcileHeroRewards } from '../heroes/model';
 import type { HeroStore } from '../heroes/model';
 import HeroVaultModal from '../heroes/HeroVaultModal';
+import {
+  beginSeasonClose,
+  isSeasonBattleLocked,
+  readBattles,
+  seasonBattle,
+} from '../battle/model';
+import type { BattleStore } from '../battle/model';
+import FinalBattleModal from '../battle/FinalBattleModal';
+import { syncPublishedStudentBoards } from '../student/studentBoardClient';
 
 export default function ExpeditionBoard({
   initial,
@@ -74,6 +83,7 @@ export default function ExpeditionBoard({
   const [serverStatus, setServerStatus] = useState('서버 동기화 준비 중…');
   const [economyTeam, setEconomyTeam] = useState<number | null>(null);
   const [heroTeam, setHeroTeam] = useState<number | null>(null);
+  const [battleSeason, setBattleSeason] = useState<number | null>(null);
   const [economy, setEconomy] = useState(() => {
     try {
       return { store: readEconomy(initial.id) as EconomyStore | null, error: '' };
@@ -108,7 +118,31 @@ export default function ExpeditionBoard({
       };
     }
   });
-  const updateHeroes = (store: HeroStore) => setHeroes({ store, error: '' });
+  const [battles, setBattles] = useState(() => {
+    try {
+      return { store: readBattles(initial.id) as BattleStore | null, error: '' };
+    } catch (reason) {
+      return {
+        store: null,
+        error:
+          reason instanceof Error
+            ? reason.message
+            : '최종 대전 기록을 읽지 못했어요. 원본은 보존했어요.',
+      };
+    }
+  });
+  const updateHeroes = (store: HeroStore) => {
+    setHeroes({ store, error: '' });
+    void syncPublishedStudentBoards(plan, store)
+      .then((synced) => {
+        if (synced) setServerStatus('학생 영웅 화면까지 갱신 완료');
+      })
+      .catch(() =>
+        setServerStatus(
+          '학생 영웅 화면 갱신을 기다리고 있어요. QR 게시에서 다시 시도하세요.',
+        ),
+      );
+  };
   const reconcileHeroes = (medalStore: MedalStore, economyStore: EconomyStore) => {
     if (!loaded.store) return;
     try {
@@ -140,7 +174,8 @@ export default function ExpeditionBoard({
   const [student, setStudent] = useState<StudentPlan | null>(null);
   const [seasonEditor, setSeasonEditor] = useState(() => currentSeasonIndex(initial));
   useEffect(() => {
-    if (loaded.error || medals.error || economy.error || heroes.error) return;
+    if (loaded.error || medals.error || economy.error || heroes.error || battles.error)
+      return;
     let active = true;
     const timeout = window.setTimeout(() => {
       if (active) setServerStatus('변경 내용을 서버에 저장하는 중…');
@@ -166,6 +201,8 @@ export default function ExpeditionBoard({
     economy.store,
     heroes.error,
     heroes.store,
+    battles.error,
+    battles.store,
   ]);
   const save = (next: Preparation) => {
     try {
@@ -192,6 +229,10 @@ export default function ExpeditionBoard({
     const teamErrors = validatePreparation(plan, 'teams');
     const jumperErrors = validateJumpers(plan);
     const seasonErrors = validateSeason(plan, currentSeasonIndex(plan));
+    if (battles.store && isSeasonBattleLocked(battles.store, currentSeasonIndex(plan))) {
+      setNotice('최종 대전 계산이 끝난 시즌에는 새 경기를 기록할 수 없어요.');
+      return;
+    }
     if (Object.keys(teamErrors).length || Object.keys(jumperErrors).length) {
       setNotice('명단에서 각 원정대에 대원을 배정하고 도전점퍼를 1~2명씩 정해 주세요.');
       if (initialPanel !== 'roster') navigate('roster');
@@ -203,6 +244,25 @@ export default function ExpeditionBoard({
       return;
     }
     if (save(plan)) window.location.assign(`#/game/${plan.id}`);
+  };
+  const openBattle = (seasonIndex: number) => {
+    if (!loaded.store || !economy.store || !heroes.store || !battles.store) {
+      setStorageError('경기·병력·영웅 기록을 모두 읽은 뒤 최종 대전을 열 수 있어요.');
+      return;
+    }
+    try {
+      const existing = seasonBattle(battles.store, seasonIndex);
+      const nextStore = existing
+        ? battles.store
+        : beginSeasonClose({ ...plan, currentSeasonIndex: seasonIndex }, loaded.store);
+      setBattles({ store: nextStore, error: '' });
+      setBattleSeason(seasonIndex);
+      setStorageError('');
+    } catch (reason) {
+      setStorageError(
+        reason instanceof Error ? reason.message : '시즌 종료를 준비하지 못했어요.',
+      );
+    }
   };
   const chooseSeason = (event: FormEvent) => {
     event.preventDefault();
@@ -247,6 +307,7 @@ export default function ExpeditionBoard({
           <button
             type="button"
             className="preparation-secondary"
+            disabled={!heroes.store}
             onClick={() => setSharing(true)}
           >
             학생 화면 공유
@@ -295,6 +356,11 @@ export default function ExpeditionBoard({
           {heroes.error}
         </p>
       )}
+      {battles.error && (
+        <p className="preparation-storage-error" role="alert">
+          {battles.error}
+        </p>
+      )}
       {initialPanel === 'overview' ? (
         <ExpeditionOverview
           plan={plan}
@@ -306,6 +372,8 @@ export default function ExpeditionBoard({
           onEconomy={setEconomyTeam}
           heroes={heroes.store}
           onHeroes={setHeroTeam}
+          battles={battles.store}
+          onBattle={openBattle}
         />
       ) : initialPanel === 'roster' ? (
         <OperationRoster
@@ -341,7 +409,8 @@ export default function ExpeditionBoard({
               medals.error ||
               economy.error ||
               economy.store?.purchases.length ||
-              economy.store?.reversals.length,
+              economy.store?.reversals.length ||
+              battles.store?.battles.length,
             )}
             minSeasonCount={Math.max(
               1,
@@ -350,6 +419,7 @@ export default function ExpeditionBoard({
               ...(medals.store?.awards.map((award) => award.seasonIndex + 1) ?? []),
               ...(economy.store?.purchases.map((purchase) => purchase.seasonIndex + 1) ??
                 []),
+              ...(battles.store?.battles.map((battle) => battle.seasonIndex + 1) ?? []),
             )}
           />
           <div className="preparation-actions">
@@ -387,7 +457,13 @@ export default function ExpeditionBoard({
           onClose={() => setManagingMedals(false)}
         />
       )}
-      {sharing && <StudentSharing plan={plan} onClose={() => setSharing(false)} />}
+      {sharing && heroes.store && (
+        <StudentSharing
+          plan={plan}
+          heroes={heroes.store}
+          onClose={() => setSharing(false)}
+        />
+      )}
       {backingUp && (
         <TeacherServerModal mode="save" plan={plan} onClose={() => setBackingUp(false)} />
       )}
@@ -413,6 +489,26 @@ export default function ExpeditionBoard({
           onClose={() => setHeroTeam(null)}
         />
       )}
+      {battleSeason !== null &&
+        loaded.store &&
+        economy.store &&
+        heroes.store &&
+        battles.store &&
+        seasonBattle(battles.store, battleSeason) && (
+          <FinalBattleModal
+            key={`${battleSeason}-${seasonBattle(battles.store, battleSeason)?.status}`}
+            plan={{ ...plan, currentSeasonIndex: battleSeason }}
+            practice={loaded.store}
+            economy={economy.store}
+            heroes={heroes.store}
+            store={battles.store}
+            seasonIndex={battleSeason}
+            onStore={(store) => setBattles({ store, error: '' })}
+            onHeroes={updateHeroes}
+            onPlan={save}
+            onClose={() => setBattleSeason(null)}
+          />
+        )}
       <p className="operation-save-note">
         변경 내용은 이 브라우저와 교사 계정에 자동 저장돼요. {serverStatus}
       </p>

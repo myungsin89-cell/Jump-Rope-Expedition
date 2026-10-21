@@ -12,6 +12,7 @@ import {
   readHeroes,
   reconcileHeroRewards,
   revealHero,
+  revealSeasonHeroes,
 } from './model';
 
 function plan(teamCount = 3): Preparation {
@@ -130,6 +131,22 @@ describe('영웅 추첨', () => {
       '2026-10-21T00:00:00.000Z',
     );
     expect(revealHero(value.id, sealed.id)).toEqual(revealed);
+  });
+
+  it('reveals every sealed hero in the closing season for the final battle', () => {
+    const value = plan();
+    const sources = stores(value);
+    sources.practice.history = Array.from({ length: 6 }, (_, index) =>
+      savedMatch(value, `match-${index}`, [100 + index * 10, 80, 60], [10 + index, 5, 4]),
+    );
+    const sealed = reconcileHeroRewards(value, sources, () => 0);
+    const revealed = revealSeasonHeroes(value.id, 0, '2026-10-21T00:00:00.000Z');
+    expect(revealed.rewards).toHaveLength(sealed.rewards.length);
+    expect(
+      revealed.rewards
+        .filter((reward) => reward.seasonIndex === 0 && reward.heroId)
+        .every((reward) => reward.revealedAt === '2026-10-21T00:00:00.000Z'),
+    ).toBe(true);
   });
 });
 

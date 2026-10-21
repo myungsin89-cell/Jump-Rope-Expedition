@@ -5,6 +5,7 @@ import type { StudentBoardData } from '../../shared/domain/studentBoard';
 import UnitCard from '../card-ui/UnitCard';
 import HeroCard from '../card-ui/HeroCard';
 import { HEROES_CATALOG, UNITS_CATALOG } from '../card-ui/catalog';
+import { readHeroes } from '../heroes/model';
 import forest from '../../../assets/illustrations/title-screen-cover-v1.png';
 import './student.css';
 
@@ -26,7 +27,14 @@ export default function StudentBoard({ route }: { route: string }) {
           const plan = readPreparations().find((item) => item.id === id);
           if (!plan || !/^[0-3]$/.test(index ?? ''))
             throw new Error('이 브라우저에서 미리 볼 원정대를 찾을 수 없어요.');
-          setData(studentBoardData(plan, Number(index)));
+          setData(
+            studentBoardData(
+              plan,
+              Number(index),
+              new Date().toISOString(),
+              readHeroes(plan.id),
+            ),
+          );
         } else {
           const endpoint = import.meta.env.VITE_BOARD_API_URL?.trim();
           if (!endpoint)
@@ -62,6 +70,13 @@ export default function StudentBoard({ route }: { route: string }) {
     void load();
     return () => controller.abort();
   }, [route, preview, refresh]);
+  useEffect(() => {
+    if (preview || panel !== 'heroes') return;
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') setRefresh((value) => value + 1);
+    }, 2_500);
+    return () => window.clearInterval(interval);
+  }, [panel, preview]);
   useEffect(() => {
     title.current?.focus({ preventScroll: true });
   }, [data]);
@@ -159,22 +174,66 @@ export default function StudentBoard({ route }: { route: string }) {
                   {new Date(data.publishedAt).toLocaleString('ko-KR')}
                 </p>
               </section>
+            ) : panel === 'heroes' ? (
+              <section aria-label="우리 원정대 영웅">
+                <div className="student-section-heading">
+                  <h2>
+                    우리 영웅 <small>{data.heroes.length}장</small>
+                  </h2>
+                  <span>{preview ? '미리보기' : '자동 동기화 중'}</span>
+                </div>
+                <p className="student-help">
+                  봉인된 카드는 팀원들과 함께 공개하면 이 화면에도 자동으로 나타나요.
+                </p>
+                {data.heroes.length ? (
+                  <div className="student-card-grid student-owned-heroes">
+                    {data.heroes.map((slot) => {
+                      const hero = slot.heroId
+                        ? HEROES_CATALOG.find((item) => item.id === slot.heroId)
+                        : null;
+                      return hero ? (
+                        <HeroCard key={slot.slot} hero={hero} state="revealed" />
+                      ) : (
+                        <article className="student-sealed-hero" key={slot.slot}>
+                          <span>?</span>
+                          <strong>봉인된 영웅 카드</strong>
+                          <small>팀원들과 함께 공개해요</small>
+                        </article>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="student-empty-heroes">
+                    아직 획득한 영웅이 없어요. 원정대의 도전을 이어가 보세요.
+                  </p>
+                )}
+                <div className="student-section-heading student-catalog-heading">
+                  <h2>영웅 도감</h2>
+                  <span>15종</span>
+                </div>
+                <p className="student-help">
+                  아직 만나지 못한 영웅까지 능력을 미리 살펴볼 수 있어요.
+                </p>
+                <div className="student-card-grid">
+                  {HEROES_CATALOG.map((hero) => (
+                    <HeroCard key={hero.id} hero={hero} state="revealed" />
+                  ))}
+                </div>
+              </section>
             ) : (
               <section aria-label="카드 도감">
                 <div className="student-section-heading">
-                  <h2>{panel === 'units' ? '함께할 병력' : '만나게 될 영웅'}</h2>
+                  <h2>함께할 병력</h2>
                   <span>카드 구경</span>
                 </div>
                 <p className="student-help">
-                  어떤 힘을 가진 카드인지 미리 살펴봐요. 실제 보유 카드가 아니며, 지금은
-                  구매하거나 획득할 수 없어요.
+                  어떤 힘을 가진 카드인지 미리 살펴봐요. 실제 보유 카드가 아니며, 이
+                  화면에서는 구매할 수 없어요.
                 </p>
                 <div className="student-card-grid">
-                  {panel === 'units'
-                    ? UNITS_CATALOG.map((unit) => <UnitCard key={unit.id} unit={unit} />)
-                    : HEROES_CATALOG.map((hero) => (
-                        <HeroCard key={hero.id} hero={hero} state="revealed" />
-                      ))}
+                  {UNITS_CATALOG.map((unit) => (
+                    <UnitCard key={unit.id} unit={unit} />
+                  ))}
                 </div>
               </section>
             )}

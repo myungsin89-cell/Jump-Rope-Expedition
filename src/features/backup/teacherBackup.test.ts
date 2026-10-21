@@ -57,6 +57,11 @@ describe('teacher backup client', () => {
       expect(body.owner_id).toBe(auth.userId);
       expect(body.expedition_id).toBe(value.id);
       expect(body.snapshot).toMatchObject({ version: 1, plan: value });
+      expect(body.snapshot.battles).toEqual({
+        version: 1,
+        expeditionId: value.id,
+        battles: [],
+      });
       return Response.json([row(value)]);
     });
     await expect(

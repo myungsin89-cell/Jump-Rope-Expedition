@@ -40,7 +40,41 @@ test('previews a read-only student team and browses real unit and hero cards wit
 }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await seedOperation(page);
+  const id = await seedOperation(page);
+  await page.evaluate((expeditionId) => {
+    localStorage.setItem(
+      `jre.practice-heroes.v1.${expeditionId}`,
+      JSON.stringify({
+        version: 1,
+        expeditionId,
+        rewards: [
+          {
+            id: 'student-sealed',
+            achievementId: 'student-achievement-1',
+            missionId: 'FIVE_STEPS',
+            teamIndex: 0,
+            seasonIndex: 0,
+            heroId: 'H01',
+            awardedAt: '2026-10-21T00:00:00.000Z',
+            contributorIds: [],
+            contributorNames: [],
+          },
+          {
+            id: 'student-revealed',
+            achievementId: 'student-achievement-2',
+            missionId: 'SHINING_CHALLENGE',
+            teamIndex: 0,
+            seasonIndex: 0,
+            heroId: 'H02',
+            awardedAt: '2026-10-21T00:00:00.000Z',
+            revealedAt: '2026-10-22T00:00:00.000Z',
+            contributorIds: [],
+            contributorNames: [],
+          },
+        ],
+      }),
+    );
+  }, id);
   const original = await page.evaluate(() => localStorage.getItem('jre.preparations.v2'));
   await page.getByRole('button', { name: '학생 화면 공유', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('읽기');
@@ -74,8 +108,12 @@ test('previews a read-only student team and browses real unit and hero cards wit
     fullPage: true,
   });
   await page.getByRole('button', { name: '영웅 카드', exact: true }).click();
-  await expect(page.locator('.jre-card-hero')).toHaveCount(15);
-  await expect(page.getByText('실제 보유 카드가 아니며', { exact: false })).toBeVisible();
+  await expect(page.locator('.student-owned-heroes .jre-card-hero')).toHaveCount(1);
+  await expect(page.locator('.student-sealed-hero')).toHaveCount(1);
+  await expect(page.locator('.student-card-grid .jre-card-hero')).toHaveCount(16);
+  await expect(
+    page.getByText('아직 만나지 못한 영웅까지', { exact: false }),
+  ).toBeVisible();
   await page.setViewportSize({ width: 375, height: 812 });
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),

@@ -1,4 +1,19 @@
 import type { Preparation } from '../../features/preparation/model';
+export interface StudentHeroSlot {
+  slot: number;
+  revealed: boolean;
+  heroId?: string;
+}
+
+export interface StudentHeroSource {
+  expeditionId: string;
+  rewards: {
+    teamIndex: number;
+    seasonIndex: number;
+    heroId: string | null;
+    revealedAt?: string;
+  }[];
+}
 
 export interface StudentBoardData {
   version: 1;
@@ -8,6 +23,7 @@ export interface StudentBoardData {
   seasonNumber: number;
   publishedAt: string;
   members: { name: string; number: number; captain: boolean; jumper: boolean }[];
+  heroes: StudentHeroSlot[];
 }
 export const isUuid = (value: unknown): value is string =>
   typeof value === 'string' &&
@@ -25,6 +41,7 @@ export function studentBoardData(
   plan: Preparation,
   teamIndex: number,
   publishedAt = new Date().toISOString(),
+  heroes?: StudentHeroSource,
 ): StudentBoardData {
   const team = plan.teams[teamIndex];
   if (!team) throw new Error('원정대를 찾을 수 없어요.');
@@ -51,7 +68,55 @@ export function studentBoardData(
           ]
         : [],
     ),
+    heroes:
+      heroes?.rewards
+        .filter(
+          (reward) =>
+            reward.teamIndex === teamIndex &&
+            reward.seasonIndex === (plan.currentSeasonIndex ?? 0) &&
+            reward.heroId,
+        )
+        .map((reward, index) => ({
+          slot: index + 1,
+          revealed: Boolean(reward.revealedAt),
+          ...(reward.revealedAt && reward.heroId ? { heroId: reward.heroId } : {}),
+        })) ?? [],
   };
+}
+
+export function parseStudentHeroSource(
+  value: unknown,
+  expeditionId: string,
+): StudentHeroSource {
+  if (
+    !obj(value) ||
+    value.expeditionId !== expeditionId ||
+    !Array.isArray(value.rewards) ||
+    value.rewards.length > 600
+  )
+    throw new Error('영웅 게시 자료를 확인해 주세요.');
+  const rewards = value.rewards.map((reward) => {
+    if (
+      !obj(reward) ||
+      !integer(reward.teamIndex, 0, 3) ||
+      !integer(reward.seasonIndex, 0, 4) ||
+      !(
+        reward.heroId === null ||
+        (typeof reward.heroId === 'string' && /^H(0[1-9]|1[0-5])$/.test(reward.heroId))
+      ) ||
+      (reward.revealedAt !== undefined &&
+        (typeof reward.revealedAt !== 'string' ||
+          !Number.isFinite(Date.parse(reward.revealedAt))))
+    )
+      throw new Error('영웅 게시 자료를 확인해 주세요.');
+    return {
+      teamIndex: reward.teamIndex,
+      seasonIndex: reward.seasonIndex,
+      heroId: reward.heroId,
+      ...(typeof reward.revealedAt === 'string' ? { revealedAt: reward.revealedAt } : {}),
+    };
+  });
+  return { expeditionId, rewards };
 }
 export function parseStudentBoard(value: unknown): StudentBoardData {
   if (
@@ -64,7 +129,9 @@ export function parseStudentBoard(value: unknown): StudentBoardData {
     typeof value.publishedAt !== 'string' ||
     !Number.isFinite(Date.parse(value.publishedAt)) ||
     !Array.isArray(value.members) ||
-    value.members.length > 200
+    value.members.length > 200 ||
+    (value.heroes !== undefined &&
+      (!Array.isArray(value.heroes) || value.heroes.length > 15))
   )
     throw new Error('학생 화면 자료를 확인해 주세요.');
   const members = value.members.map((member) => {
@@ -85,6 +152,24 @@ export function parseStudentBoard(value: unknown): StudentBoardData {
   });
   if (new Set(members.map((member) => member.number)).size !== members.length)
     throw new Error('대원 번호를 확인해 주세요.');
+  const heroes = (value.heroes ?? []).map((hero) => {
+    if (
+      !obj(hero) ||
+      !integer(hero.slot, 1, 15) ||
+      typeof hero.revealed !== 'boolean' ||
+      (hero.revealed
+        ? typeof hero.heroId !== 'string' || !/^H(0[1-9]|1[0-5])$/.test(hero.heroId)
+        : hero.heroId !== undefined)
+    )
+      throw new Error('영웅 공개 자료를 확인해 주세요.');
+    return {
+      slot: hero.slot,
+      revealed: hero.revealed,
+      ...(hero.revealed ? { heroId: hero.heroId as string } : {}),
+    };
+  });
+  if (new Set(heroes.map((hero) => hero.slot)).size !== heroes.length)
+    throw new Error('영웅 카드 위치를 확인해 주세요.');
   return {
     version: 1,
     expeditionName: value.expeditionName,
@@ -93,6 +178,7 @@ export function parseStudentBoard(value: unknown): StudentBoardData {
     seasonNumber: value.seasonNumber,
     publishedAt: value.publishedAt,
     members,
+    heroes,
   };
 }
 /** Minimal one-teacher backup validation; unknown fields are never stored or published. */

@@ -114,6 +114,48 @@ describe('student sharing API boundary', () => {
     expect(await response.json()).toHaveProperty('links');
   });
 
+  it('publishes only same-team revealed hero identities and keeps sealed cards private', async () => {
+    const value = plan();
+    const fetcher = authenticatedFetcher(async (_url, init) => {
+      const body = JSON.parse(String(init?.body));
+      expect(body.p_boards[0].heroes).toEqual([
+        { slot: 1, revealed: false },
+        { slot: 2, revealed: true, heroId: 'H02' },
+      ]);
+      expect(JSON.stringify(body.p_boards[0])).not.toContain('H01');
+      expect(body.p_boards[1].heroes).toEqual([]);
+      return json(
+        body.p_boards.map((payload: unknown, team_index: number) => ({
+          payload,
+          team_index,
+          token,
+        })),
+      );
+    });
+    const response = await createBoardHandler(
+      env,
+      fetcher,
+    )(
+      request({
+        action: 'publish',
+        plan: value,
+        heroes: {
+          expeditionId: value.id,
+          rewards: [
+            { teamIndex: 0, seasonIndex: 0, heroId: 'H01' },
+            {
+              teamIndex: 0,
+              seasonIndex: 0,
+              heroId: 'H02',
+              revealedAt: '2026-10-22T00:00:00.000Z',
+            },
+          ],
+        },
+      }),
+    );
+    expect(response.status).toBe(200);
+  });
+
   it('rejects forbidden origins, unsupported methods and malformed data', async () => {
     const fetcher = authenticatedFetcher(() => json([]));
     const handler = createBoardHandler(env, fetcher);

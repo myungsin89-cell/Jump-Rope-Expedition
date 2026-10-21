@@ -32,6 +32,8 @@ import './matches.css';
 import TeacherSessionButton from '../auth/TeacherSessionButton';
 import { saveTeacherBackup } from '../backup/teacherBackup';
 import { confirmOfficialMatch, voidOfficialMatch } from './officialMatches';
+import { currentSeasonIndex } from '../expedition/operations';
+import { isSeasonBattleLocked, readBattles } from '../battle/model';
 
 type Phase = 'jumpers' | 'records' | 'review' | 'saved';
 const PHASE_TITLES: Record<Phase, string> = {
@@ -176,7 +178,7 @@ function MatchBoard({ plan }: { plan: Preparation }) {
         pending &&
         (hasCounts || (sameRoster && Object.keys(validateJumpers(plan)).length))
           ? pending
-          : createPractice(plan);
+          : createPractice(plan, currentSeasonIndex(plan));
       return { store, draft, error: '', resumed: Boolean(pending && hasCounts) };
     } catch {
       return {
@@ -293,11 +295,7 @@ function MatchBoard({ plan }: { plan: Preparation }) {
       : null;
   const newPractice = () => {
     if (!draft) return;
-    const ready = readySeasonIndices(plan);
-    const next = createPractice(
-      plan,
-      ready.includes(draft.seasonIndex) ? draft.seasonIndex : ready[0],
-    );
+    const next = createPractice(plan, currentSeasonIndex(plan));
     update(next);
     setErrors({});
     setStorageError('');
@@ -308,6 +306,17 @@ function MatchBoard({ plan }: { plan: Preparation }) {
 
   const cancelOfficialMatch = async () => {
     if (!voiding || working) return;
+    try {
+      if (isSeasonBattleLocked(readBattles(plan.id), voiding.seasonIndex)) {
+        setStorageError('최종 대전 계산이 끝난 시즌의 공식 경기는 취소할 수 없어요.');
+        return;
+      }
+    } catch (reason) {
+      setStorageError(
+        reason instanceof Error ? reason.message : '최종 대전 기록을 확인하지 못했어요.',
+      );
+      return;
+    }
     const reason = voidReason.trim();
     if (reason.length < 3 || reason.length > 200) {
       setStorageError('취소 사유를 3자 이상 200자 이내로 입력해 주세요.');
@@ -415,11 +424,9 @@ function MatchBoard({ plan }: { plan: Preparation }) {
                       update({ ...draft, seasonIndex: Number(event.target.value) })
                     }
                   >
-                    {readySeasonIndices(plan).map((index) => (
-                      <option key={index} value={index}>
-                        시즌 {index + 1}
-                      </option>
-                    ))}
+                    <option value={currentSeasonIndex(plan)}>
+                      시즌 {currentSeasonIndex(plan) + 1}
+                    </option>
                   </select>
                 ) : (
                   <strong>시즌 {draft.seasonIndex + 1}</strong>
@@ -826,11 +833,16 @@ function MatchBoard({ plan }: { plan: Preparation }) {
 export default function MatchWorkspace({ classId }: { classId: string }) {
   const [loaded] = useState(() => {
     try {
-      return { plan: readPreparations().find((plan) => plan.id === classId), error: '' };
+      const plan = readPreparations().find((item) => item.id === classId);
+      const locked = plan
+        ? isSeasonBattleLocked(readBattles(plan.id), currentSeasonIndex(plan))
+        : false;
+      return { plan, error: '', locked };
     } catch {
       return {
         plan: undefined,
         error: '학급을 읽을 수 없어요. 저장된 원본은 그대로예요.',
+        locked: false,
       };
     }
   });
@@ -838,14 +850,19 @@ export default function MatchWorkspace({ classId }: { classId: string }) {
   const ready =
     plan &&
     !Object.keys(validatePreparation(plan, 'teams')).length &&
-    readySeasonIndices(plan).length > 0;
+    readySeasonIndices(plan).includes(currentSeasonIndex(plan)) &&
+    !loaded.locked;
   if (!ready || !plan)
     return (
       <MatchFrame plan={plan}>
         <div className="match-blocked">
           <h1>
             {loaded.error ||
-              (plan ? '팀과 시즌을 먼저 확인해 주세요' : '등록한 학급을 찾을 수 없어요')}
+              (loaded.locked
+                ? '최종 대전 계산이 끝난 시즌이에요'
+                : plan
+                  ? '팀과 시즌을 먼저 확인해 주세요'
+                  : '등록한 학급을 찾을 수 없어요')}
           </h1>
           <p>
             게임 준비에서 세 팀에 팀원을 배정하고, 기록할 시즌 하나의 보스와 기간만 정해

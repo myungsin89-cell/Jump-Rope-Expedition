@@ -10,6 +10,8 @@ import { medalKey, parseMedalStore, readMedals } from '../../features/medals/mod
 import type { MedalStore } from '../../features/medals/model';
 import { heroKey, parseHeroStore, readHeroes } from '../../features/heroes/model';
 import type { HeroStore } from '../../features/heroes/model';
+import { battleKey, parseBattleStore, readBattles } from '../../features/battle/model';
+import type { BattleStore } from '../../features/battle/model';
 import {
   mergeServerPreparations,
   readPreparations,
@@ -24,6 +26,7 @@ export interface TeacherSnapshot {
   medals: MedalStore;
   economy: EconomyStore;
   heroes: HeroStore;
+  battles: BattleStore;
 }
 
 const object = (value: unknown): value is Record<string, unknown> =>
@@ -37,6 +40,7 @@ export function createTeacherSnapshot(plan: Preparation): TeacherSnapshot {
     medals: readMedals(plan.id),
     economy: readEconomy(plan.id),
     heroes: readHeroes(plan.id),
+    battles: readBattles(plan.id),
   };
 }
 
@@ -52,6 +56,10 @@ export function parseTeacherSnapshot(value: unknown): TeacherSnapshot {
     economy: parseEconomyStore(value.economy, plan.id),
     heroes: parseHeroStore(
       value.heroes ?? { version: 1, expeditionId: plan.id, rewards: [] },
+      plan.id,
+    ),
+    battles: parseBattleStore(
+      value.battles ?? { version: 1, expeditionId: plan.id, battles: [] },
       plan.id,
     ),
   };
@@ -74,5 +82,6 @@ export function restoreTeacherSnapshot(
   localStorage.setItem(medalKey(saved.id), JSON.stringify(snapshot.medals));
   localStorage.setItem(economyKey(saved.id), JSON.stringify(snapshot.economy));
   localStorage.setItem(heroKey(saved.id), JSON.stringify(snapshot.heroes));
+  localStorage.setItem(battleKey(saved.id), JSON.stringify(snapshot.battles));
   return merged;
 }

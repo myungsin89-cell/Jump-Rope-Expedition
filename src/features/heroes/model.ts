@@ -456,6 +456,31 @@ export function revealHero(
   });
 }
 
+export function revealSeasonHeroes(
+  expeditionId: string,
+  seasonIndexValue: number,
+  revealedAt = new Date().toISOString(),
+): HeroStore {
+  if (!season(seasonIndexValue) || !date(revealedAt))
+    throw new Error('영웅 공개 시즌과 시간을 확인해 주세요.');
+  const store = readHeroes(expeditionId);
+  const hasSealed = store.rewards.some(
+    (reward) =>
+      reward.seasonIndex === seasonIndexValue &&
+      Boolean(reward.heroId) &&
+      !reward.revealedAt,
+  );
+  if (!hasSealed) return store;
+  return commit({
+    ...store,
+    rewards: store.rewards.map((reward) =>
+      reward.seasonIndex === seasonIndexValue && reward.heroId && !reward.revealedAt
+        ? { ...reward, revealedAt }
+        : reward,
+    ),
+  });
+}
+
 export function teamHeroRewards(
   store: HeroStore,
   teamIndexValue: number,
