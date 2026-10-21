@@ -2,7 +2,7 @@
 
 > 작성일: 2026-10-20  
 > 담당 모듈: `src/features/card-ui/`  
-> 대상: 메인 앱 개발자, 학생 팀 보드/상점 담당자, 교사 시즌 운영 담당자  
+> 대상: 메인 앱 개발자, 학생 팀 보드/상점 담당자, 교사 시즌 운영 담당자
 
 본 문서는 `docs/card-ui-agent-development-brief.md` 및 사용자 피드백에 따라 제작된 **병력 4종, 영웅 15종, 시즌 보스 5종 카드 컴포넌트(`UnitCard`, `HeroCard`, `BossCard`)**와 **수수께끼 단서 3단계 순차 해금 시스템**, 그리고 **독립 미리보기 화면(`CardPreview`)**의 최종 구현 및 인계 명세서입니다.
 
@@ -11,6 +11,7 @@
 ## 1. 구현된 컴포넌트 및 기능 요약
 
 ### 1) 병력 카드 (`UnitCard`)
+
 - **대상**: 4대 정예 병력 (도토리 탐험가, 숲속 해머단, 잎사귀 수호자, 별빛 요정)
 - **디자인**: 클래식 보드게임(러브레터 스타일)의 앤틱 월넛 우드 테두리(`border: 2.5px solid #3c2918`), 일러스트 하단 가로 구분선, 따뜻한 갈색 양피지 영역 분리.
 - **표시 정보**: 고정 가격(`30P`), 역할 뱃지, 전투 설명, 전신 일러스트(100% contain, 잘림 방지).
@@ -18,6 +19,7 @@
 - **폴백 UI**: 이미지 로드 실패 시에도 카드 레이아웃과 텍스트를 온전히 보존하는 Fallback UI 내장.
 
 ### 2) 영웅 카드 (`HeroCard`)
+
 - **대상**: 15대 영웅 (일반 8종, 희귀 5종, 전설 2종)
 - **등급별 프레임 차별화 (학생들의 몰입감과 환호 유도)**:
   - **일반(Common)**: 단정하고 고풍스러운 클래식 앤틱 우드 테두리
@@ -29,6 +31,7 @@
 - **긴 문구 가변 레이아웃**: 루미(H13), 레온(H15) 등 3~4줄 길이의 긴 특수 효과 텍스트도 줄바꿈과 여백이 온전히 유지됨.
 
 ### 3) 보스 카드 (`BossCard`)
+
 - **대상**: 5대 시즌 보스 (바위 골렘, 바람 익룡, 가시 덩굴 트렌트, 얼음 설인, 화산 드래곤 카이저)
 - **공개 상태 (`state: 'revealed'`)**:
   - 교사용 시즌 설정 화면 또는 시즌 마지막 날 대결 공개 시 사용.
@@ -41,10 +44,12 @@
     - 한 번에 다 보여주지 않고, 고정 3칸 슬롯 중 줄넘기 포인트로 해금한 개수만큼만 오픈.
     - `[단서 N/3 해금]` 카운터 제공.
     - **해금된 슬롯**: 밝은 황금빛 양피지 위에 동화풍 수수께끼 본문 표시.
-    - **미해금 슬롯**: 🔒 자물쇠 아이콘과 함께 *"줄넘기 협동 포인트로 수수께끼를 풀어보세요"* 잠금 안내문 표시.
+    - **미해금 슬롯**: 🔒 자물쇠 아이콘과 함께 _"줄넘기 협동 포인트로 수수께끼를 풀어보세요"_ 잠금 안내문 표시.
 
 ### 4) 동화풍 수수께끼 단서 3단계 (스탯 직접 노출 배제)
+
 아이들이 스탯 수치("물리 80%")를 직접 보는 것이 아니라, 동화 속 예언/암호처럼 학급에서 토론하고 추리할 수 있도록 문구를 구성했습니다:
+
 - **바위 골렘**: (1) 바람/화살 무효 ➡️ (2) 둔탁한 통나무 충격(해머단 연상) ➡️ (3) 푸른 잎사귀 방패(잎사귀 수호자 방어)
 - **바람 익룡**: (1) 공중 비행 ➡️ (2) 도토리 화살만이 닿음(원거리 저격) ➡️ (3) 별빛 요정의 마법 장막(마법 방어)
 - **가시 덩굴 트렌트**: (1) 신비로운 보랏빛 고목 ➡️ (2) 해머단과 요정의 협동 ➡️ (3) 숲의 차가운 주술(마법 공격 위주)
@@ -81,6 +86,7 @@ src/features/card-ui/
 메인 앱이나 학생 팀 보드, 교사용 시즌 설정 화면을 만드는 담당자는 `src/features/card-ui`에서 필요한 컴포넌트와 카탈로그를 한 줄로 가져와 사용할 수 있습니다.
 
 ### 1) 모듈 Import
+
 ```typescript
 import {
   UnitCard,
@@ -91,14 +97,11 @@ import {
   BOSSES_CATALOG,
 } from './features/card-ui';
 
-import type {
-  UnitDefinition,
-  HeroDefinition,
-  BossDefinition,
-} from './features/card-ui';
+import type { UnitDefinition, HeroDefinition, BossDefinition } from './features/card-ui';
 ```
 
 ### 2) 학생 팀 보드: 병력 상점 연동 예시
+
 ```tsx
 import { UnitCard, UNITS_CATALOG } from './features/card-ui';
 
@@ -120,10 +123,14 @@ function TroopShopGrid({ teamTroops }: { teamTroops: Record<string, number> }) {
 ```
 
 ### 3) 학생 팀 보드: 비밀 보스 & 수수께끼 힌트 슬롯 연동 예시
+
 ```tsx
 import { BossCard, BOSSES_CATALOG } from './features/card-ui';
 
-function TeamSecretBossSection({ currentSeasonBossId, unlockedHintCount }: {
+function TeamSecretBossSection({
+  currentSeasonBossId,
+  unlockedHintCount,
+}: {
   currentSeasonBossId: string;
   unlockedHintCount: number; // 0, 1, 2, 3
 }) {
@@ -135,7 +142,7 @@ function TeamSecretBossSection({ currentSeasonBossId, unlockedHintCount }: {
     <div className="team-boss-section">
       {/* state="hidden"으로 전달하면 실명/스탯은 숨겨지고 3단계 슬롯이 자동 표시됨 */}
       <BossCard state="hidden" hintsRevealed={hintsRevealed} />
-      
+
       {unlockedHintCount < 3 && (
         <button type="button" onClick={handleBuyNextHint}>
           단서 {unlockedHintCount + 1} 해금하기 ({[30, 50, 80][unlockedHintCount]}P)
@@ -147,10 +154,14 @@ function TeamSecretBossSection({ currentSeasonBossId, unlockedHintCount }: {
 ```
 
 ### 4) 교사용 시즌 설정: 시각적 보스 선택 화면 연동 예시
+
 ```tsx
 import { BossCard, BOSSES_CATALOG } from './features/card-ui';
 
-function BossSelector({ selectedBossId, onSelectBoss }: {
+function BossSelector({
+  selectedBossId,
+  onSelectBoss,
+}: {
   selectedBossId: string;
   onSelectBoss: (bossId: string) => void;
 }) {
@@ -171,6 +182,7 @@ function BossSelector({ selectedBossId, onSelectBoss }: {
 ```
 
 ### 5) 영웅 도감 / 보유 덱 연동 예시
+
 ```tsx
 import { HeroCard, HEROES_CATALOG } from './features/card-ui';
 
@@ -194,14 +206,15 @@ function HeroDexGrid({ unlockedHeroIds }: { unlockedHeroIds: string[] }) {
 
 ## 4. 검증 결과 및 테스트 스위트
 
-| 검증 항목 | 명령어 | 결과 | 비고 |
-| :--- | :--- | :---: | :--- |
-| **TypeScript 타입 검사** | `npm run typecheck` | **통과 (0 error)** | 엄격 타입 검사 완료 |
-| **단위 테스트 (Vitest)** | `npm test -- src/features/card-ui` | **21 passed** | 카탈로그, 보안 은닉, 3단계 슬롯 검증 |
-| **E2E 브라우저 테스트** | `npx playwright test tests/e2e/card-ui.spec.ts --project=chromium` | **6 passed** | 데스크톱/태블릿/모바일 반응형 검증 |
-| **프로덕션 빌드** | `npm run build` | **통과 (dist 정상 생성)** | 번들링 무결성 확인 |
+| 검증 항목                | 명령어                                                             |           결과            | 비고                                 |
+| :----------------------- | :----------------------------------------------------------------- | :-----------------------: | :----------------------------------- |
+| **TypeScript 타입 검사** | `npm run typecheck`                                                |    **통과 (0 error)**     | 엄격 타입 검사 완료                  |
+| **단위 테스트 (Vitest)** | `npm test -- src/features/card-ui`                                 |       **21 passed**       | 카탈로그, 보안 은닉, 3단계 슬롯 검증 |
+| **E2E 브라우저 테스트**  | `npx playwright test tests/e2e/card-ui.spec.ts --project=chromium` |       **6 passed**        | 데스크톱/태블릿/모바일 반응형 검증   |
+| **프로덕션 빌드**        | `npm run build`                                                    | **통과 (dist 정상 생성)** | 번들링 무결성 확인                   |
 
 ### 검증 스크린샷 위치
+
 - 전체 데스크톱 뷰 (1440×900): `artifacts/card-ui/desktop-1440.png`
 - 태블릿 뷰 (768×1024): `artifacts/card-ui/tablet-768.png`
 - 모바일 세로 뷰 (375×812): `artifacts/card-ui/mobile-375.png`

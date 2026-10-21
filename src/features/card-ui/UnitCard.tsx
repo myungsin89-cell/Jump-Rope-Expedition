@@ -19,7 +19,11 @@ export default function UnitCard({ unit, ownedCount, className = '' }: UnitCardP
 
       <div className="jre-card-media">
         {imageError ? (
-          <div className="jre-card-image-fallback" role="img" aria-label="이미지를 불러오지 못했어요">
+          <div
+            className="jre-card-image-fallback"
+            role="img"
+            aria-label="이미지를 불러오지 못했어요"
+          >
             <span aria-hidden="true">🍃</span>
             <span>이미지를 불러오지 못했어요</span>
           </div>

@@ -4,12 +4,14 @@ import coverImage from '../assets/illustrations/title-screen-cover-v1.png';
 import bgmTitleUrl from '../assets/audio/bgm/bgm_title_forest_departure_loop.wav';
 import ExpeditionTitleLogo from './components/ExpeditionTitleLogo';
 import IntroStorybookModal from './components/IntroStorybookModal';
+import { useAuth } from './features/auth/AuthContext';
 
 const PreparationWorkspace = lazy(
   () => import('./features/preparation/PreparationWorkspace'),
 );
 const MatchWorkspace = lazy(() => import('./features/matches/MatchWorkspace'));
 const StudentBoard = lazy(() => import('./features/student/StudentBoard'));
+const TeacherLogin = lazy(() => import('./features/auth/TeacherLogin'));
 
 function currentRoute() {
   return window.location.hash.startsWith('#/') ? window.location.hash.slice(1) : '/';
@@ -70,6 +72,7 @@ function ArrowIcon() {
 }
 
 function App() {
+  const { status } = useAuth();
   const [route, setRoute] = useState(currentRoute);
   const [introOpen, setIntroOpen] = useState(false);
   const [bgmPlaying, setBgmPlaying] = useState(false);
@@ -108,7 +111,7 @@ function App() {
     setIntroOpen(true);
   };
 
-  if (route.startsWith('/team/') || route.startsWith('/student-preview/')) {
+  if (route.startsWith('/team/')) {
     return (
       <Suspense
         fallback={
@@ -122,12 +125,28 @@ function App() {
     );
   }
 
-  if (
+  const teacherRoute =
     route === '/prepare' ||
     route === '/preparations' ||
     route.startsWith('/preparations/') ||
-    route.startsWith('/game/')
-  ) {
+    route.startsWith('/game/') ||
+    route.startsWith('/student-preview/');
+
+  if (route === '/login' || (teacherRoute && status !== 'authenticated')) {
+    return (
+      <Suspense
+        fallback={
+          <main className="preparation-loading" role="status">
+            로그인 화면을 열고 있어요…
+          </main>
+        }
+      >
+        <TeacherLogin />
+      </Suspense>
+    );
+  }
+
+  if (teacherRoute) {
     return (
       <Suspense
         fallback={
@@ -136,7 +155,9 @@ function App() {
           </main>
         }
       >
-        {route.startsWith('/game/') ? (
+        {route.startsWith('/student-preview/') ? (
+          <StudentBoard key={route} route={route} />
+        ) : route.startsWith('/game/') ? (
           <MatchWorkspace key={route} classId={route.slice('/game/'.length)} />
         ) : (
           <PreparationWorkspace route={route} />

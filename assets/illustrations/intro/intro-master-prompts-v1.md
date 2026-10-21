@@ -8,6 +8,7 @@
 ---
 
 ## Scene 1: 숲속의 부름과 세 원정대 (The Call of the Forest & 3 Expedition Teams)
+
 - 파일명: `assets/illustrations/intro/intro-scene-1-expedition-teams.png`
 - 스토리 텍스트:
   > **"3개의 원정대 팀이 숲속 모험을 시작합니다!"**  
@@ -15,6 +16,7 @@
   > 세 팀이 힘을 모아 숲의 평화를 되찾는 대모험을 떠나볼까요?
 
 ### 프롬프트
+
 ```text
 Use case: stylized-concept
 Asset type: 16:9 widescreen storybook illustration for an elementary classroom web game
@@ -31,6 +33,7 @@ Constraints: No text, no letters, no words, no user interface, no watermark, no 
 ---
 
 ## Scene 2: 비밀 보스와 끝없는 시즌 원정 (Secret Bosses & Endless Seasons)
+
 - 파일명: `assets/illustrations/intro/intro-scene-2-secret-bosses-seasons.png`
 - 스토리 텍스트:
   > **"숲속 깊은 곳에는 바위 골렘부터 불꽃의 드래곤까지, 다양한 비밀 보스들이 잠들어 있습니다."**  
@@ -38,6 +41,7 @@ Constraints: No text, no letters, no words, no user interface, no watermark, no 
   > 시즌을 거듭하며 우리 원정대의 전설을 완성해 나가세요.
 
 ### 프롬프트
+
 ```text
 Use case: stylized-concept
 Asset type: 16:9 widescreen storybook illustration for an elementary classroom web game
@@ -54,6 +58,7 @@ Constraints: No text, no numbers, no words, no watermark, no gory monsters, no a
 ---
 
 ## Scene 3: 함께 넘는 8자 줄넘기와 팀 포인트 (Team Figure-8 Long-Rope Jumping & Team Points)
+
 - 파일명: `assets/illustrations/intro/intro-scene-3-jump-rope-hints.png`
 - 규칙 근거: `docs/decision-log.md` D-006(포인트), D-008(병력 30P), D-009(힌트 100P)
 - 스토리 텍스트(자막) 요약:
@@ -63,6 +68,7 @@ Constraints: No text, no numbers, no words, no watermark, no gory monsters, no a
 - 주의: 개인 줄넘기(짧은 줄) 금지. 반드시 **긴 줄 1개를 두 명이 돌리는 8자 줄넘기**여야 함.
 
 ### 프롬프트
+
 ```text
 Use case: stylized-concept
 Asset type: 16:9 widescreen storybook illustration for an elementary classroom web game
@@ -79,6 +85,7 @@ Constraints: No text, letters, numbers or UI; NO individual short jump ropes; no
 ---
 
 ## Scene 4: 4대 정예 병력과 영웅의 소환 (Assemble 4 Troops & Summon Heroes)
+
 - 파일명: `assets/illustrations/intro/intro-scene-4-troops-and-heroes.png`
 - 스토리 텍스트:
   > **"보스의 특성에 맞춰 4대 정예 병력(도토리 궁수, 해머단, 잎사귀 방패, 별빛 요정)을 전략적으로 모으세요!"**  
@@ -86,6 +93,7 @@ Constraints: No text, letters, numbers or UI; NO individual short jump ropes; no
   > 어떤 병력과 영웅을 선택하느냐가 승리의 열쇠예요!
 
 ### 프롬프트
+
 ```text
 Use case: stylized-concept
 Asset type: 16:9 widescreen storybook illustration for an elementary classroom web game
@@ -102,6 +110,7 @@ Constraints: No text, no words on the cards, no letters, no UI, no aggressive sh
 ---
 
 ## Scene 5: 세 팀의 협동, 최종 대전 (The Final Battle: 3 Teams Unite!)
+
 - 파일명: `assets/illustrations/intro/intro-scene-5-final-battle-cooperation.png`
 - 스토리 텍스트:
   > **"마침내 드러난 비밀 보스와의 최종 대전!"**  
@@ -109,6 +118,7 @@ Constraints: No text, no words on the cards, no letters, no UI, no aggressive sh
   > 모두의 점수와 전략이 합쳐질 때, 숲에는 따뜻한 평화가 찾아오고 다음 시즌의 문이 열립니다!
 
 ### 프롬프트
+
 ```text
 Use case: stylized-concept
 Asset type: 16:9 widescreen storybook illustration for an elementary classroom web game

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 
 import scene1Img from '../../assets/illustrations/intro/intro-scene-1-expedition-teams.png';
 import scene2Img from '../../assets/illustrations/intro/intro-scene-2-secret-bosses-seasons.png';
@@ -85,7 +85,8 @@ const INTRO_SCENES: IntroScene[] = [
     id: 3,
     chapter: '세 번째 이야기 · 함께 넘는 8자 줄넘기',
     image: scene3Img,
-    imageAlt: '두 친구가 긴 줄을 돌리고 팀원들이 차례로 달려 들어가 8자를 그리며 함께 넘는 8자 줄넘기',
+    imageAlt:
+      '두 친구가 긴 줄을 돌리고 팀원들이 차례로 달려 들어가 8자를 그리며 함께 넘는 8자 줄넘기',
     lines: [
       '그럼 원정대의 힘은 어디에서 나올까?',
       '바로 여러분이 다 함께 넘는 8자 줄넘기란다!',
@@ -97,7 +98,11 @@ const INTRO_SCENES: IntroScene[] = [
     scroll: {
       title: '팀 포인트(P) 얻는 법',
       items: [
-        { icon: '🪢', label: '경기 참가', text: '8자 줄넘기 경기에 참가하면 세 팀 모두 30P' },
+        {
+          icon: '🪢',
+          label: '경기 참가',
+          text: '8자 줄넘기 경기에 참가하면 세 팀 모두 30P',
+        },
         { icon: '🏆', label: '순위 보너스', text: '1위 +30P · 2위 +20P · 3위 +10P' },
         { icon: '🌱', label: '성장 보너스', text: '지난 경기보다 기록이 오르면 +20P' },
         { icon: '🎖️', label: '메달', text: '선생님이 주신 메달 1개마다 +10P' },
@@ -107,9 +112,17 @@ const INTRO_SCENES: IntroScene[] = [
     extraScroll: {
       title: '포인트 쓰는 곳',
       items: [
-        { icon: '⚔️', label: '병력 구매', text: '병력 한 명에 30P (몇 명이든 살 수 있어요)' },
+        {
+          icon: '⚔️',
+          label: '병력 구매',
+          text: '병력 한 명에 30P (몇 명이든 살 수 있어요)',
+        },
         { icon: '🔍', label: '비밀 힌트', text: '100P · 시즌마다 한 번만 살 수 있어요' },
-        { icon: '🔄', label: '새 시즌', text: '시즌이 바뀌면 포인트는 0P부터 다시 시작해요' },
+        {
+          icon: '🔄',
+          label: '새 시즌',
+          text: '시즌이 바뀌면 포인트는 0P부터 다시 시작해요',
+        },
       ],
     },
   },
@@ -129,20 +142,48 @@ const INTRO_SCENES: IntroScene[] = [
     scroll: {
       title: '4대 병력과 영웅 카드',
       items: [
-        { icon: '🏹', label: '도토리 탐험가', text: '멀리서 활을 쏘는 날쌘 원거리 공격수' },
+        {
+          icon: '🏹',
+          label: '도토리 탐험가',
+          text: '멀리서 활을 쏘는 날쌘 원거리 공격수',
+        },
         { icon: '🔨', label: '숲속 해머단', text: '통나무 망치를 든 묵직한 근접 공격수' },
-        { icon: '🛡️', label: '잎사귀 수호자', text: '넓은 잎사귀 방패로 물리 공격을 막아요' },
-        { icon: '✨', label: '별빛 요정', text: '신비로운 별빛 보호막으로 마법 공격을 막아요' },
-        { icon: '🃏', label: '영웅 카드', text: '소환하면 원정대 전체에 강력한 축복이 내려요' },
+        {
+          icon: '🛡️',
+          label: '잎사귀 수호자',
+          text: '넓은 잎사귀 방패로 물리 공격을 막아요',
+        },
+        {
+          icon: '✨',
+          label: '별빛 요정',
+          text: '신비로운 별빛 보호막으로 마법 공격을 막아요',
+        },
+        {
+          icon: '🃏',
+          label: '영웅 카드',
+          text: '소환하면 원정대 전체에 강력한 축복이 내려요',
+        },
       ],
     },
     extraScrollAfter: 5,
     extraScroll: {
       title: '원정대장의 전략 메모',
       items: [
-        { icon: '⚔️', label: '공격 상성', text: '어떤 보스냐에 따라 유난히 큰 힘을 발휘하는 병사가 있어요!' },
-        { icon: '🛡️', label: '방어 병사 필수', text: '공격뿐 아니라 보스의 공격을 막아낼 방패와 보호막도 꼭 챙겨야 해요!' },
-        { icon: '📜', label: '비밀 힌트(100P)', text: '보스의 주 공격 유형과 알맞은 방어 병력을 미리 엿볼 수 있어요!' },
+        {
+          icon: '⚔️',
+          label: '공격 상성',
+          text: '어떤 보스냐에 따라 유난히 큰 힘을 발휘하는 병사가 있어요!',
+        },
+        {
+          icon: '🛡️',
+          label: '방어 병사 필수',
+          text: '공격뿐 아니라 보스의 공격을 막아낼 방패와 보호막도 꼭 챙겨야 해요!',
+        },
+        {
+          icon: '📜',
+          label: '비밀 힌트(100P)',
+          text: '보스의 주 공격 유형과 알맞은 방어 병력을 미리 엿볼 수 있어요!',
+        },
       ],
     },
   },
@@ -150,7 +191,8 @@ const INTRO_SCENES: IntroScene[] = [
     id: 5,
     chapter: '마지막 이야기 · 함께 잠재우는 날',
     image: scene5Img,
-    imageAlt: '세 원정대 팀이 협동하여 거대한 보스를 온화하게 정화하는 감동적인 최종 대전',
+    imageAlt:
+      '세 원정대 팀이 협동하여 거대한 보스를 온화하게 정화하는 감동적인 최종 대전',
     lines: [
       '마침내, 비밀 보스가 모습을 드러내는 날이 왔단다.',
       '걱정하지 마렴. 보스는 못된 괴물이 아니라, 잠이 덜 깬 숲의 친구거든.',
@@ -197,6 +239,8 @@ function buildBeats(): Beat[] {
   return beats;
 }
 
+const INTRO_BEATS = buildBeats();
+
 interface IntroStorybookModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -227,9 +271,9 @@ export default function IntroStorybookModal({
   onClose,
   onComplete,
 }: IntroStorybookModalProps) {
-  const beats = useMemo(buildBeats, []);
+  const beats = INTRO_BEATS;
   const [beatIdx, setBeatIdx] = useState(0);
-  const [count, setCount] = useState(0);
+  const [typewriter, setTypewriter] = useState({ beatIdx: 0, count: 0 });
   const [turn, setTurn] = useState<PageTurn | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -244,29 +288,30 @@ export default function IntroStorybookModal({
   const sceneIdx = beat.scene;
   const scene = INTRO_SCENES[sceneIdx];
   const text = beat.kind === 'line' ? beat.text : '';
+  const reducedMotion =
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+  const count = reducedMotion
+    ? text.length
+    : typewriter.beatIdx === beatIdx
+      ? Math.min(typewriter.count, text.length)
+      : 0;
   const typing = text.length > 0 && count < text.length;
   const isLast = beatIdx === beats.length - 1;
 
   // 자막 타자기 효과
   useEffect(() => {
-    setCount(0);
-    if (!text) return undefined;
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) {
-      setCount(text.length);
-      return undefined;
-    }
-    const timer = window.setInterval(() => {
-      setCount((c) => {
-        if (c >= text.length) {
-          window.clearInterval(timer);
-          return c;
-        }
-        return c + 1;
+    if (!text || reducedMotion || count >= text.length) return undefined;
+    const timer = window.setTimeout(() => {
+      setTypewriter((current) => {
+        const currentCount = current.beatIdx === beatIdx ? current.count : 0;
+        return {
+          beatIdx,
+          count: Math.min(currentCount + 1, text.length),
+        };
       });
     }, TYPE_MS);
-    return () => window.clearInterval(timer);
-  }, [beatIdx, text]);
+    return () => window.clearTimeout(timer);
+  }, [beatIdx, count, reducedMotion, text]);
 
   // 전체화면 + 배경음악 (열릴 때 시작, 닫힐 때 정리)
   useEffect(() => {
@@ -324,30 +369,27 @@ export default function IntroStorybookModal({
     if (bgmRef.current) bgmRef.current.muted = muted;
   }, [muted]);
 
-  const goTo = useCallback(
-    (next: number) => {
-      const target = Math.max(0, Math.min(beats.length - 1, next));
-      if (target === beatIdx) return;
-      const fromScene = beats[beatIdx].scene;
-      const toScene = beats[target].scene;
-      if (fromScene !== toScene) {
-        turnKey.current += 1;
-        setTurn({ from: fromScene, to: toScene, key: turnKey.current });
-        if (turnTimer.current) window.clearTimeout(turnTimer.current);
-        turnTimer.current = window.setTimeout(() => setTurn(null), TURN_MS + 80);
-        if (!muted) playOnce(pageUrl, 0.45);
-      } else if (!muted) {
-        playOnce(tapUrl, 0.22);
-      }
-      setBeatIdx(target);
-    },
-    [beatIdx, beats, muted],
-  );
+  const goTo = (next: number) => {
+    const target = Math.max(0, Math.min(beats.length - 1, next));
+    if (target === beatIdx) return;
+    const fromScene = beats[beatIdx].scene;
+    const toScene = beats[target].scene;
+    if (fromScene !== toScene) {
+      turnKey.current += 1;
+      setTurn({ from: fromScene, to: toScene, key: turnKey.current });
+      if (turnTimer.current) window.clearTimeout(turnTimer.current);
+      turnTimer.current = window.setTimeout(() => setTurn(null), TURN_MS + 80);
+      if (!muted) playOnce(pageUrl, 0.45);
+    } else if (!muted) {
+      playOnce(tapUrl, 0.22);
+    }
+    setBeatIdx(target);
+  };
 
-  const advance = useCallback(() => {
+  const advance = () => {
     if (turn) return;
     if (typing) {
-      setCount(text.length);
+      setTypewriter({ beatIdx, count: text.length });
       return;
     }
     if (isLast) {
@@ -356,29 +398,31 @@ export default function IntroStorybookModal({
       return;
     }
     goTo(beatIdx + 1);
-  }, [turn, typing, text.length, isLast, muted, onComplete, onClose, goTo, beatIdx]);
+  };
 
-  const back = useCallback(() => {
+  const back = () => {
     if (turn) return;
     goTo(beatIdx - 1);
-  }, [turn, goTo, beatIdx]);
+  };
+
+  const handleKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    if (event.key === 'ArrowRight' || event.key === ' ' || event.key === 'Enter') {
+      event.preventDefault();
+      advance();
+    } else if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      back();
+    } else if (event.key === 'Escape') {
+      onClose();
+    }
+  });
 
   useEffect(() => {
     if (!isOpen) return undefined;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
-        e.preventDefault();
-        advance();
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        back();
-      } else if (e.key === 'Escape') {
-        onClose();
-      }
-    };
+    const onKey = (event: KeyboardEvent) => handleKeyDown(event);
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [isOpen, advance, back, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -430,7 +474,9 @@ export default function IntroStorybookModal({
 
       {/* 장 제목 카드 */}
       <div className="sb-chapter" key={`chapter-${sceneIdx}`}>
-        <span className="sb-chapter-orn" aria-hidden="true">❦</span>
+        <span className="sb-chapter-orn" aria-hidden="true">
+          ❦
+        </span>
         <span>{scene.chapter}</span>
       </div>
 
@@ -468,11 +514,17 @@ export default function IntroStorybookModal({
             <span className="sb-rod sb-rod-top" aria-hidden="true" />
             <div className="sb-parchment">
               <h2>{beat.rules.title}</h2>
-              <span className="sb-flourish" aria-hidden="true">❦ ❦ ❦</span>
+              <span className="sb-flourish" aria-hidden="true">
+                ❦ ❦ ❦
+              </span>
               <ul>
                 {beat.rules.items.map((item, i) => (
                   <li key={item.text} style={{ ['--i' as string]: i }}>
-                    {item.icon && <span className="sb-seal" aria-hidden="true">{item.icon}</span>}
+                    {item.icon && (
+                      <span className="sb-seal" aria-hidden="true">
+                        {item.icon}
+                      </span>
+                    )}
                     <span>
                       {item.label && <strong>{item.label}</strong>}
                       {item.text}

@@ -4,12 +4,22 @@ import { currentSeasonIndex } from '../expedition/operations';
 
 export const medalSymbols = ['star', 'leaf', 'heart', 'flag'] as const;
 export type MedalSymbol = (typeof medalSymbols)[number];
+export const DEFAULT_MEDAL_COLOR = '#2d6a4f';
+export const medalColors = [
+  { name: '숲 초록', value: DEFAULT_MEDAL_COLOR },
+  { name: '하늘 파랑', value: '#397aa8' },
+  { name: '포도 보라', value: '#8064a8' },
+  { name: '꽃 분홍', value: '#c66f91' },
+  { name: '노을 주황', value: '#c96f3d' },
+  { name: '햇살 금빛', value: '#b88a2f' },
+] as const;
 export interface MedalDefinition {
   id: string;
   name: string;
   description: string;
   symbol: MedalSymbol;
   image: string;
+  color?: string;
   active: boolean;
 }
 export interface MedalAward {
@@ -53,6 +63,8 @@ export const validMedalImage = (value: unknown): value is string =>
   (value === '' ||
     (/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/.test(value) &&
       value.length <= 280000));
+export const validMedalColor = (value: unknown): value is string =>
+  typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
 function definition(value: unknown): value is MedalDefinition {
   return (
     object(value) &&
@@ -65,6 +77,7 @@ function definition(value: unknown): value is MedalDefinition {
     value.description.length <= 300 &&
     medalSymbols.includes(value.symbol as MedalSymbol) &&
     validMedalImage(value.image) &&
+    (value.color === undefined || validMedalColor(value.color)) &&
     typeof value.active === 'boolean'
   );
 }
@@ -74,7 +87,16 @@ export function readMedals(id: string): MedalStore {
   const raw = localStorage.getItem(medalKey(id));
   if (raw === null) return emptyStore(id);
   try {
-    const value: unknown = JSON.parse(raw);
+    return parseMedalStore(JSON.parse(raw), id);
+  } catch {
+    throw new Error(
+      '훈장 기록을 읽을 수 없어요. 원본은 보존했어요. 다른 저장 내용을 확인해 주세요.',
+    );
+  }
+}
+
+export function parseMedalStore(value: unknown, id: string): MedalStore {
+  try {
     if (
       !object(value) ||
       value.version !== 1 ||
@@ -156,7 +178,7 @@ export function saveMedal(id: string, input: MedalDefinition): MedalStore {
   };
   if (!definition(next))
     throw new Error(
-      '훈장 이름은 40자, 설명은 300자 이내로 입력하고 올바른 아이콘이나 이미지를 골라 주세요.',
+      '훈장 이름은 40자, 설명은 300자 이내로 입력하고 올바른 색상을 골라 주세요.',
     );
   if (store.definitions.some((item) => item.id !== next.id && item.name === next.name))
     throw new Error('같은 이름의 훈장이 있어요. 다른 이름을 입력해 주세요.');

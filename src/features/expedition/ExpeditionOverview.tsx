@@ -9,6 +9,8 @@ import { currentSeasonIndex, operationHref, previewHistory } from './operations'
 import TeamMembers, { RosterLegend } from './TeamMembers';
 import { companionProgress, medalPoints } from '../medals/model';
 import type { MedalStore } from '../medals/model';
+import type { EconomyStore } from '../economy/model';
+import { teamEconomySummary } from '../economy/model';
 
 export default function ExpeditionOverview({
   plan,
@@ -16,12 +18,16 @@ export default function ExpeditionOverview({
   onRecord,
   onStudent,
   medals,
+  economy,
+  onEconomy,
 }: {
   plan: Preparation;
   store: PracticeStore | null;
   onRecord: () => void;
   onStudent: (student: StudentPlan) => void;
   medals: MedalStore | null;
+  economy: EconomyStore | null;
+  onEconomy: (teamIndex: number) => void;
 }) {
   const seasonIndex = currentSeasonIndex(plan);
   const season = plan.seasons[seasonIndex];
@@ -87,6 +93,13 @@ export default function ExpeditionOverview({
           const points = summary.points.get(`team-${index}`);
           const medalTotal = medals ? medalPoints(medals, index, seasonIndex) : null;
           const progress = medals ? companionProgress(medals, index) : null;
+          const economySummary = teamEconomySummary(
+            plan,
+            { practice: store, medals },
+            economy,
+            index,
+            seasonIndex,
+          );
           const total =
             points === null || medalTotal === null ? null : (points ?? 0) + medalTotal;
           const jumpers = (plan.jumpers?.[index] ?? []).filter((jumper) =>
@@ -145,6 +158,17 @@ export default function ExpeditionOverview({
                     : ''}
                 </p>
               )}
+              <button
+                type="button"
+                className="preparation-secondary economy-team-button"
+                disabled={!store || !medals || !economy}
+                onClick={() => onEconomy(index)}
+              >
+                팀 준비 · 잔액{' '}
+                {economySummary.balance === null
+                  ? '확인 필요'
+                  : `${economySummary.balance.toLocaleString()}P`}
+              </button>
             </article>
           );
         })}
@@ -156,8 +180,8 @@ export default function ExpeditionOverview({
         </p>
       )}
       <p className="operation-local-note">
-        이 브라우저의 경기·훈장 연습 기록 기준이에요. 공식 포인트 잔액·누적 승점은 아직
-        연결 전이며, 연습 획득 합계는 사용할 수 있는 잔액이 아니에요.
+        이 브라우저의 경기·훈장·구매 연습 기록 기준이에요. 팀 준비의 잔액과 구매는 로컬
+        기능 검증용이며 서버 공식 장부·누적 승점은 아직 연결 전이에요.
       </p>
       <section className="operation-history" aria-labelledby="operation-history-heading">
         <div className="operation-section-heading">

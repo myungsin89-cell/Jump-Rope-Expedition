@@ -1,598 +1,759 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>줄넘기 원정대 · 1차 핵심 효과음(18종) 검토 플레이어 (개선판)</title>
-  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-  <style>
-    :root {
-      --forest: #173E2C;
-      --forest-guide: #3D7A55;
-      --leaf-young: #8BBF93;
-      --paper: #FBFBF7;
-      --mist: #E4EADF;
-      --torch: #E4A83A;
-      --card-bg: #FFFFFF;
-      --text-muted: #5A6B5F;
-      --rare: #2B6CB0;
-      --legendary: #B7791F;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>줄넘기 원정대 · 1차 핵심 효과음(18종) 검토 플레이어 (개선판)</title>
+    <link
+      rel="stylesheet"
+      as="style"
+      crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+    />
+    <style>
+      :root {
+        --forest: #173e2c;
+        --forest-guide: #3d7a55;
+        --leaf-young: #8bbf93;
+        --paper: #fbfbf7;
+        --mist: #e4eadf;
+        --torch: #e4a83a;
+        --card-bg: #ffffff;
+        --text-muted: #5a6b5f;
+        --rare: #2b6cb0;
+        --legendary: #b7791f;
+      }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-    body {
-      font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: var(--paper);
-      color: var(--forest);
-      padding: 40px 20px 80px;
-      line-height: 1.6;
-    }
+      body {
+        font-family:
+          'Pretendard Variable',
+          Pretendard,
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        background-color: var(--paper);
+        color: var(--forest);
+        padding: 40px 20px 80px;
+        line-height: 1.6;
+      }
 
-    .container {
-      max-width: 980px;
-      margin: 0 auto;
-    }
+      .container {
+        max-width: 980px;
+        margin: 0 auto;
+      }
 
-    header {
-      margin-bottom: 24px;
-      border-bottom: 2px solid var(--mist);
-      padding-bottom: 16px;
-    }
+      header {
+        margin-bottom: 24px;
+        border-bottom: 2px solid var(--mist);
+        padding-bottom: 16px;
+      }
 
-    .badge {
-      display: inline-block;
-      background-color: #E2EDE3;
-      color: var(--forest-guide);
-      padding: 4px 12px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
+      .badge {
+        display: inline-block;
+        background-color: #e2ede3;
+        color: var(--forest-guide);
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
 
-    h1 {
-      font-size: 26px;
-      font-weight: 800;
-      color: var(--forest);
-      margin-bottom: 6px;
-    }
+      h1 {
+        font-size: 26px;
+        font-weight: 800;
+        color: var(--forest);
+        margin-bottom: 6px;
+      }
 
-    p.subtitle {
-      font-size: 15px;
-      color: var(--text-muted);
-    }
+      p.subtitle {
+        font-size: 15px;
+        color: var(--text-muted);
+      }
 
-    .change-highlight {
-      background: #FFFDF5;
-      border: 1.5px solid var(--torch);
-      border-radius: 12px;
-      padding: 16px 20px;
-      margin-bottom: 28px;
-      font-size: 14px;
-      color: #4A3A10;
-    }
+      .change-highlight {
+        background: #fffdf5;
+        border: 1.5px solid var(--torch);
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 28px;
+        font-size: 14px;
+        color: #4a3a10;
+      }
 
-    .change-highlight ul {
-      margin: 8px 0 0 20px;
-    }
+      .change-highlight ul {
+        margin: 8px 0 0 20px;
+      }
 
-    .change-highlight li {
-      margin-bottom: 4px;
-    }
+      .change-highlight li {
+        margin-bottom: 4px;
+      }
 
-    .section-title {
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--forest);
-      margin: 32px 0 16px 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+      .section-title {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--forest);
+        margin: 32px 0 16px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 14px;
-    }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 14px;
+      }
 
-    .sfx-card {
-      background: var(--card-bg);
-      border: 1.5px solid var(--mist);
-      border-radius: 12px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      transition: all 0.15s ease;
-      cursor: pointer;
-      user-select: none;
-    }
+      .sfx-card {
+        background: var(--card-bg);
+        border: 1.5px solid var(--mist);
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: all 0.15s ease;
+        cursor: pointer;
+        user-select: none;
+      }
 
-    .sfx-card:hover {
-      border-color: var(--forest-guide);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(23, 62, 44, 0.08);
-    }
+      .sfx-card:hover {
+        border-color: var(--forest-guide);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(23, 62, 44, 0.08);
+      }
 
-    .sfx-card:active, .sfx-card.active {
-      transform: scale(0.98);
-      background: #F2F7F3;
-      border-color: var(--torch);
-    }
+      .sfx-card:active,
+      .sfx-card.active {
+        transform: scale(0.98);
+        background: #f2f7f3;
+        border-color: var(--torch);
+      }
 
-    .sfx-card.updated {
-      border-color: #C9B273;
-      background: #FDFEFA;
-    }
+      .sfx-card.updated {
+        border-color: #c9b273;
+        background: #fdfefa;
+      }
 
-    .sfx-id {
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--forest-guide);
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+      .sfx-id {
+        font-size: 11px;
+        font-weight: 800;
+        color: var(--forest-guide);
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
 
-    .tag-upd {
-      font-size: 10px;
-      background: var(--torch);
-      color: #2b1f02;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: 800;
-    }
+      .tag-upd {
+        font-size: 10px;
+        background: var(--torch);
+        color: #2b1f02;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 800;
+      }
 
-    .sfx-name {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--forest);
-      margin-bottom: 6px;
-      word-break: break-all;
-    }
+      .sfx-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--forest);
+        margin-bottom: 6px;
+        word-break: break-all;
+      }
 
-    .sfx-desc {
-      font-size: 12px;
-      color: var(--text-muted);
-      line-height: 1.45;
-      margin-bottom: 12px;
-      flex-grow: 1;
-    }
+      .sfx-desc {
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.45;
+        margin-bottom: 12px;
+        flex-grow: 1;
+      }
 
-    .sfx-bottom {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 11px;
-      font-weight: 700;
-      color: #7A8E7E;
-    }
+      .sfx-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 11px;
+        font-weight: 700;
+        color: #7a8e7e;
+      }
 
-    .play-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--forest);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      transition: background 0.15s ease;
-    }
+      .play-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--forest);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        transition: background 0.15s ease;
+      }
 
-    .sfx-card:hover .play-icon {
-      background: var(--torch);
-      color: #1a1202;
-    }
+      .sfx-card:hover .play-icon {
+        background: var(--torch);
+        color: #1a1202;
+      }
 
-    /* 영웅 카드 공개 시뮬레이터 */
-    .hero-simulator {
-      background: linear-gradient(135deg, #FBFBF9 0%, #EEF4EE 100%);
-      border: 2px solid var(--forest-guide);
-      border-radius: 16px;
-      padding: 24px;
-      margin-top: 36px;
-    }
+      /* 영웅 카드 공개 시뮬레이터 */
+      .hero-simulator {
+        background: linear-gradient(135deg, #fbfbf9 0%, #eef4ee 100%);
+        border: 2px solid var(--forest-guide);
+        border-radius: 16px;
+        padding: 24px;
+        margin-top: 36px;
+      }
 
-    .hero-simulator h3 {
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--forest);
-      margin-bottom: 6px;
-    }
+      .hero-simulator h3 {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--forest);
+        margin-bottom: 6px;
+      }
 
-    .hero-simulator p {
-      font-size: 14px;
-      color: var(--text-muted);
-      margin-bottom: 18px;
-    }
+      .hero-simulator p {
+        font-size: 14px;
+        color: var(--text-muted);
+        margin-bottom: 18px;
+      }
 
-    .sim-buttons {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
+      .sim-buttons {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+      }
 
-    .sim-btn {
-      padding: 12px 20px;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 800;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.15s ease;
-    }
+      .sim-btn {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 800;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.15s ease;
+      }
 
-    .sim-btn-common {
-      background: var(--forest);
-      color: #fff;
-    }
-    .sim-btn-rare {
-      background: var(--rare);
-      color: #fff;
-    }
-    .sim-btn-legendary {
-      background: var(--legendary);
-      color: #fff;
-    }
-    .sim-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
-    }
+      .sim-btn-common {
+        background: var(--forest);
+        color: #fff;
+      }
+      .sim-btn-rare {
+        background: var(--rare);
+        color: #fff;
+      }
+      .sim-btn-legendary {
+        background: var(--legendary);
+        color: #fff;
+      }
+      .sim-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+      }
 
-    .sim-stage-tracker {
-      display: flex;
-      gap: 8px;
-      background: #FFFFFF;
-      padding: 12px 16px;
-      border-radius: 10px;
-      border: 1px solid var(--mist);
-      align-items: center;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-muted);
-    }
+      .sim-stage-tracker {
+        display: flex;
+        gap: 8px;
+        background: #ffffff;
+        padding: 12px 16px;
+        border-radius: 10px;
+        border: 1px solid var(--mist);
+        align-items: center;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-muted);
+      }
 
-    .stage-item {
-      padding: 4px 10px;
-      border-radius: 6px;
-      background: var(--mist);
-      transition: all 0.2s ease;
-    }
-    .stage-item.current {
-      background: var(--torch);
-      color: #1a1202;
-      transform: scale(1.05);
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <div class="badge">줄넘기 원정대 · 피드백 반영 완료</div>
-      <h1>핵심 효과음 18종 사운드 패드 (개선판)</h1>
-      <p class="subtitle">선생님의 피드백(길이 연장, 볼륨·선명도 보강, 영웅 테마 모티프 통일)을 전면 반영했습니다.</p>
-    </header>
+      .stage-item {
+        padding: 4px 10px;
+        border-radius: 6px;
+        background: var(--mist);
+        transition: all 0.2s ease;
+      }
+      .stage-item.current {
+        background: var(--torch);
+        color: #1a1202;
+        transform: scale(1.05);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="badge">줄넘기 원정대 · 피드백 반영 완료</div>
+        <h1>핵심 효과음 18종 사운드 패드 (개선판)</h1>
+        <p class="subtitle">
+          선생님의 피드백(길이 연장, 볼륨·선명도 보강, 영웅 테마 모티프 통일)을 전면
+          반영했습니다.
+        </p>
+      </header>
 
-    <div class="change-highlight">
-      <strong>✨ 피드백 개선 요약:</strong>
-      <ul>
-        <li><strong>[UI-07 순위 공개]:</strong> 1.4초 ➔ <strong>2.8초</strong>로 연장 (긴장감 있는 말렛 롤 ➔ 웅장한 호른/플루트 축하 팡파르)</li>
-        <li><strong>[UI-08 메달 수여]:</strong> 1.15초 ➔ <strong>2.5초</strong>로 연장 (감미로운 하프 아르페지오 ➔ 황금 성당 차임벨의 풍성한 잔향)</li>
-        <li><strong>[PR-02 힌트 구매 & PR-03 힌트 열람]:</strong> 음량·음색 전면 재설계 (선명한 코인 찰랑 + 두꺼운 고지도 펼침 + 신비로운 패드 스웰)</li>
-        <li><strong>[HR-03 카드 뒤집기]:</strong> 날렵한 바람 가르는 훽 소리와 탁자에 딱 안착하는 타격 스냅 대폭 강화</li>
-        <li><strong>[영웅 카드 공개 (HR-04, 05, 06)]:</strong> <strong>동일한 시그니처 멜로디(도-솔-라-높은도)</strong>를 공유하되, 일반(나뭇잎/숲) ➔ 희귀(푸른 마법/칼림바) ➔ 전설(지면 강타/금빛 브라스 & 차임 폭포수)로 층위를 업그레이드!</li>
-      </ul>
+      <div class="change-highlight">
+        <strong>✨ 피드백 개선 요약:</strong>
+        <ul>
+          <li>
+            <strong>[UI-07 순위 공개]:</strong> 1.4초 ➔ <strong>2.8초</strong>로 연장
+            (긴장감 있는 말렛 롤 ➔ 웅장한 호른/플루트 축하 팡파르)
+          </li>
+          <li>
+            <strong>[UI-08 메달 수여]:</strong> 1.15초 ➔ <strong>2.5초</strong>로 연장
+            (감미로운 하프 아르페지오 ➔ 황금 성당 차임벨의 풍성한 잔향)
+          </li>
+          <li>
+            <strong>[PR-02 힌트 구매 & PR-03 힌트 열람]:</strong> 음량·음색 전면 재설계
+            (선명한 코인 찰랑 + 두꺼운 고지도 펼침 + 신비로운 패드 스웰)
+          </li>
+          <li>
+            <strong>[HR-03 카드 뒤집기]:</strong> 날렵한 바람 가르는 훽 소리와 탁자에 딱
+            안착하는 타격 스냅 대폭 강화
+          </li>
+          <li>
+            <strong>[영웅 카드 공개 (HR-04, 05, 06)]:</strong>
+            <strong>동일한 시그니처 멜로디(도-솔-라-높은도)</strong>를 공유하되,
+            일반(나뭇잎/숲) ➔ 희귀(푸른 마법/칼림바) ➔ 전설(지면 강타/금빛 브라스 & 차임
+            폭포수)로 층위를 업그레이드!
+          </li>
+        </ul>
+      </div>
+
+      <!-- 1. 공통 UI -->
+      <div class="section-title">🔘 1. 공통 UI (8종)</div>
+      <div class="grid">
+        <div class="sfx-card" onclick="playSfx('ui-01', this)">
+          <div>
+            <div class="sfx-id"><span>UI-01</span></div>
+            <div class="sfx-name">sfx_ui_tap</div>
+            <div class="sfx-desc">일반 버튼 선택 (산뜻하고 따뜻한 우드블록 탭)</div>
+          </div>
+          <div class="sfx-bottom">
+            <span>0.14초</span>
+            <div class="play-icon">▶</div>
+          </div>
+          <audio id="ui-01" src="sfx/ui/sfx_ui_tap.wav" preload="auto"></audio>
+        </div>
+
+        <div class="sfx-card" onclick="playSfx('ui-02', this)">
+          <div>
+            <div class="sfx-id"><span>UI-02</span></div>
+            <div class="sfx-name">sfx_ui_confirm</div>
+            <div class="sfx-desc">저장·확정 성공 (우드 탭 + 상향 칼림바 딩동)</div>
+          </div>
+          <div class="sfx-bottom">
+            <span>0.55초</span>
+            <div class="play-icon">▶</div>
+          </div>
+          <audio id="ui-02" src="sfx/ui/sfx_ui_confirm.wav" preload="auto"></audio>
+        </div>
+
+        <div class="sfx-card" onclick="playSfx('ui-03', this)">
+          <div>
+            <div class="sfx-id"><span>UI-03</span></div>
+            <div class="sfx-name">sfx_ui_cancel</div>
+            <div class="sfx-desc">취소·닫기 (부드러운 하향 마림바)</div>
+          </div>
+          <div class="sfx-bottom">
+            <span>0.38초</span>
+            <div class="play-icon">▶</div>
+          </div>
+          <audio id="ui-03" src="sfx/ui/sfx_ui_cancel.wav" preload="auto"></audio>
+        </div>
+
+        <div class="sfx-card" onclick="playSfx('ui-04', this)">
+          <div>
+            <div class="sfx-id"><span>UI-04</span></div>
+            <div class="sfx-name">sfx_ui_warning</div>
+            <div class="sfx-desc">
+              확인이 필요한 주의 안내 (우든 노크 + 목관 5도 화음)
+            </div>
+          </div>
+          <div class="sfx-bottom">
+            <span>0.70초</span>
+            <div class="play-icon">▶</div>
+          </div>
+          <audio id="ui-04" src="sfx/ui/sfx_ui_warning.wav" preload="auto"></audio>
+        </div>
+
+        <div class="sfx-card" onclick="playSfx('ui-05', this)">
+          <div>
+            <div class="sfx-id"><span>UI-05</span></div>
+            <div class="sfx-name">sfx_ui_error_soft</div>
+            <div class="sfx-desc">입력 오류, 행동 불가 (온화한 더블 우드 둔탁음)</div>
+          </div>
+          <div class="sfx-bottom">
+            <span>0.48초</span>
+            <div class="play-icon">▶</div>
+          </div>
+          <audio id="ui-05" src="sfx/ui/sfx_ui_error_soft.wav" preload="auto"></audio>
+        </div>
+
+        <div class="sfx-card" onclick="playSfx('ui-06', this)">
+          <div>
+            <div class="sfx-id"><span>UI-06</span></div>
+            <div class="sfx-name">sfx_points_gain</div>
+            <div class="sfx-desc">
+              팀 포인트 획득 (구르는 도토리 벨 + 상승 글로켄슈필)
+            </div>
+          </div>
+          <div class="sfx-bottom">
+            <span>0.90초</span>
+            <div class="play-icon">▶</div>
+          </div>
+          <audio id="ui-06" src="sfx/ui/sfx_ui_points_gain.wav" preload="auto"></audio>
+        </div>
+
+        <div class="sfx-card updated" onclick="playSfx('ui-07', this)">
+          <div>
+            <div class="sfx-id">
+              <span>UI-07</span><span class="tag-upd">2.8초 확장</span>
+            </div>
+            <div class="sfx-name">sfx_rank_reveal</div>
+            <div class="sfx-desc">
+              경기 순위 공개 (긴장감 있는 말렛 롤 ➔ 웅장한 호른/플루트 축하 팡파르)
+            </div>
+          </div>
+          <div class="sfx-bottom">
+            <span>2.80초</span>
+            <div class="play-icon">▶</div>
+          </div>
+          <audio id="ui-07" src="sfx/ui/sfx_ui_rank_reveal.wav" preload="auto"></audio>
+        </div>
+
+        <div class="sfx-card updated" onclick="playSfx('ui-08', this)">
+          <div>
+            <div class="sfx-id">
+              <span>UI-08</span><span class="tag-upd">2.5초 확장</span>
+            </div>
+            <div class="sfx-name">sfx_medal_award</div>
+            <div class="sfx-desc">
+              메달 지급 (하프 아르페지오 ➔ 황금빛 차임벨 화음의 풍성한 잔향)
+            </div>
+          </div>
+          <div class="sfx-bottom">
+            <span>2.50초</span>
+            <div class="play-icon">▶</div>
+          </div>
+          <audio id="ui-08" src="sfx/ui/sfx_ui_medal_award.wav" preload="auto"></audio>
+        </div>
+      </div>
+
+      <!-- 2. 구매와 준비 -->
+      <div class="section-title">🛒 2. 구매와 준비 (3종)</div>
+      <div class="grid">
+        <div class="sfx-card" onclick="playSfx('pr-01', this)">
+          <div>
+            <div class="sfx-id"><span>PR-01</span></div>
+            <div class="sfx-name">sfx_unit_purchase</div>
+            <div class="sfx-desc">병력 구매 및 즉시 배치 (행진 발자국 + 안착 결속음)</div>
+          </div>
+          <div class="sfx-bottom">
+            <span>1.00초</span>
+            <div class="play-icon">▶</div>
+          </div>
+          <audio
+            id="pr-01"
+            src="sfx/preparation/sfx_unit_purchase.wav"
+            preload="auto"
+          ></audio>
+        </div>
+
+        <div class="sfx-card updated" onclick="playSfx('pr-02', this)">
+          <div>
+            <div class="sfx-id">
+              <span>PR-02</span><span class="tag-upd">선명도 대폭 개선</span>
+            </div>
+            <div class="sfx-name">sfx_hint_purchase</div>
+            <div class="sfx-desc">
+              보스 힌트 구매 (또렷한 코인 찰랑 + 고지도 두루마리 펼침 + 호기심 칼림바)
+            </div>
+          </div>
+          <div class="sfx-bottom">
+            <span>1.10초</span>
+            <div class="play-icon">▶</div>
+          </div>
+          <audio
+            id="pr-02"
+            src="sfx/preparation/sfx_hint_purchase.wav"
+            preload="auto"
+          ></audio>
+        </div>
+
+        <div class="sfx-card updated" onclick="playSfx('pr-03', this)">
+          <div>
+            <div class="sfx-id">
+              <span>PR-03</span><span class="tag-upd">선명도 대폭 개선</span>
+            </div>
+            <div class="sfx-name">sfx_hint_reveal</div>
+            <div class="sfx-desc">
+              비밀 힌트 열람 (신비로운 패드 스웰 + 훈풍 + 영롱한 리디안 차임)
+            </div>
+          </div>
+          <div class="sfx-bottom">
+            <span>1.60초</span>
+            <div class="play-icon">▶</div>
+          </div>
+          <audio
+            id="pr-03"
+            src="sfx/preparation/sfx_hint_reveal.wav"
+            preload="auto"
+          ></audio>
+        </div>
+      </div>
+
+      <!-- 3. 영웅 카드 개별 사운드 -->
+      <div class="section-title">🃏 3. 영웅 카드 공개 단계별 사운드 (7종)</div>
+      <div class="grid">
+        <div class="sfx-card" onclick="playSfx('hr-01', this)">
+          <div>
+            <div class="sfx-id"><span>HR-01</span></div>
+            <div class="sfx-name">sfx_hero_card_shake</div>
+            <div class="sfx-desc">봉인 카드 흔들림 (나무 카드의 떨림 진동음)</div>
+          </div>
+          <div class="sfx-bottom">
+            <span>0.90초</span>
+            <div class="play-icon">▶</div>
+          </div>
+          <audio id="hr-01" src="sfx/hero/sfx_hero_card_shake.wav" preload="auto"></audio>
+        </div>
+
+        <div class="sfx-card" onclick="playSfx('hr-02', this)">
+          <div>
+            <div class="sfx-id"><span>HR-02</span></div>
+            <div class="sfx-name">sfx_hero_card_glow</div>
+            <div class="sfx-desc">카드에 빛이 모임 (마법 입자 상승 스윕 + 별빛 벨)</div>
+          </div>
+          <div class="sfx-bottom">
+            <span>1.45초</span>
+            <div class="play-icon">▶</div>
+          </div>
+          <audio id="hr-02" src="sfx/hero/sfx_hero_card_glow.wav" preload="auto"></audio>
+        </div>
+
+        <div class="sfx-card updated" onclick="playSfx('hr-03', this)">
+          <div>
+            <div class="sfx-id">
+              <span>HR-03</span><span class="tag-upd">타격 스냅 강화</span>
+            </div>
+            <div class="sfx-name">sfx_hero_card_flip</div>
+            <div class="sfx-desc">
+              카드 뒤집기 (날렵한 공기 회전 휙 + 탁자에 안착하는 단단한 스냅)
+            </div>
+          </div>
+          <div class="sfx-bottom">
+            <span>0.60초</span>
+            <div class="play-icon">▶</div>
+          </div>
+          <audio id="hr-03" src="sfx/hero/sfx_hero_card_flip.wav" preload="auto"></audio>
+        </div>
+
+        <div class="sfx-card updated" onclick="playSfx('hr-04', this)">
+          <div>
+            <div class="sfx-id">
+              <span>HR-04 (일반)</span><span class="tag-upd">공통 테마 기본</span>
+            </div>
+            <div class="sfx-name">st_hero_common_reveal</div>
+            <div class="sfx-desc">
+              일반 등급: [공통 테마 멜로디] + 숲빛 나뭇잎 흩날림 & 경쾌한 우드블록
+            </div>
+          </div>
+          <div class="sfx-bottom">
+            <span>2.40초</span>
+            <div class="play-icon">▶</div>
+          </div>
+          <audio
+            id="hr-04"
+            src="sfx/hero/st_hero_common_reveal.wav"
+            preload="auto"
+          ></audio>
+        </div>
+
+        <div class="sfx-card updated" onclick="playSfx('hr-05', this)">
+          <div>
+            <div class="sfx-id">
+              <span>HR-05 (희귀)</span><span class="tag-upd">공통 테마 + 마법</span>
+            </div>
+            <div class="sfx-name">st_hero_rare_reveal</div>
+            <div class="sfx-desc">
+              희귀 등급: [공통 테마 멜로디] + 푸른 마법 펄스 & 옥타브 칼림바 레이어
+            </div>
+          </div>
+          <div class="sfx-bottom">
+            <span>2.80초</span>
+            <div class="play-icon">▶</div>
+          </div>
+          <audio id="hr-05" src="sfx/hero/st_hero_rare_reveal.wav" preload="auto"></audio>
+        </div>
+
+        <div class="sfx-card updated" onclick="playSfx('hr-06', this)">
+          <div>
+            <div class="sfx-id">
+              <span>HR-06 (전설)</span><span class="tag-upd">공통 테마 + 웅장</span>
+            </div>
+            <div class="sfx-name">st_hero_legendary_reveal</div>
+            <div class="sfx-desc">
+              전설 등급: [공통 테마 멜로디] + 지면 강타 서브 & 금빛 브라스 & 차임 폭포수
+            </div>
+          </div>
+          <div class="sfx-bottom">
+            <span>3.60초</span>
+            <div class="play-icon">▶</div>
+          </div>
+          <audio
+            id="hr-06"
+            src="sfx/hero/st_hero_legendary_reveal.wav"
+            preload="auto"
+          ></audio>
+        </div>
+
+        <div class="sfx-card" onclick="playSfx('hr-07', this)">
+          <div>
+            <div class="sfx-id"><span>HR-07</span></div>
+            <div class="sfx-name">sfx_hero_added</div>
+            <div class="sfx-desc">도감/보관함 저장 (우든 인장 스탬프 쿵 + 록 차임)</div>
+          </div>
+          <div class="sfx-bottom">
+            <span>1.00초</span>
+            <div class="play-icon">▶</div>
+          </div>
+          <audio id="hr-07" src="sfx/hero/sfx_hero_added.wav" preload="auto"></audio>
+        </div>
+      </div>
+
+      <!-- 4. 영웅 카드 공개 6~8초 풀 연출 시뮬레이터 -->
+      <div class="hero-simulator">
+        <h3>🎬 영웅 카드 공개 연속 연출 시뮬레이터 (개선판)</h3>
+        <p>
+          동일한 영웅 시그니처 멜로디(도-솔-라-높은도)를 바탕으로, 등급별 효과 레이어가
+          어떻게 업그레이드되는지 들어보세요!
+        </p>
+
+        <div class="sim-buttons">
+          <button class="sim-btn sim-btn-common" onclick="runHeroSequence('common')">
+            🌿 일반 영웅 카드 개봉 (기본 테마 + 나뭇잎)
+          </button>
+          <button class="sim-btn sim-btn-rare" onclick="runHeroSequence('rare')">
+            💎 희귀 영웅 카드 개봉 (기본 테마 + 푸른 마법/칼림바)
+          </button>
+          <button
+            class="sim-btn sim-btn-legendary"
+            onclick="runHeroSequence('legendary')"
+          >
+            👑 전설 영웅 카드 개봉 (기본 테마 + 지면강타/금빛브라스)
+          </button>
+        </div>
+
+        <div class="sim-stage-tracker" id="stage-tracker">
+          <div class="stage-item" id="stage-shake">1. 봉인 흔들림</div>
+          <span>➔</span>
+          <div class="stage-item" id="stage-glow">2. 마법 빛 모임</div>
+          <span>➔</span>
+          <div class="stage-item" id="stage-flip">3. 카드 뒤집기 (스냅)</div>
+          <span>➔</span>
+          <div class="stage-item" id="stage-reveal">4. 영웅 시그니처 멜로디!</div>
+          <span>➔</span>
+          <div class="stage-item" id="stage-added">5. 보관함 안착</div>
+        </div>
+      </div>
     </div>
 
-    <!-- 1. 공통 UI -->
-    <div class="section-title">🔘 1. 공통 UI (8종)</div>
-    <div class="grid">
-      <div class="sfx-card" onclick="playSfx('ui-01', this)">
-        <div>
-          <div class="sfx-id"><span>UI-01</span></div>
-          <div class="sfx-name">sfx_ui_tap</div>
-          <div class="sfx-desc">일반 버튼 선택 (산뜻하고 따뜻한 우드블록 탭)</div>
-        </div>
-        <div class="sfx-bottom"><span>0.14초</span><div class="play-icon">▶</div></div>
-        <audio id="ui-01" src="sfx/ui/sfx_ui_tap.wav" preload="auto"></audio>
-      </div>
-
-      <div class="sfx-card" onclick="playSfx('ui-02', this)">
-        <div>
-          <div class="sfx-id"><span>UI-02</span></div>
-          <div class="sfx-name">sfx_ui_confirm</div>
-          <div class="sfx-desc">저장·확정 성공 (우드 탭 + 상향 칼림바 딩동)</div>
-        </div>
-        <div class="sfx-bottom"><span>0.55초</span><div class="play-icon">▶</div></div>
-        <audio id="ui-02" src="sfx/ui/sfx_ui_confirm.wav" preload="auto"></audio>
-      </div>
-
-      <div class="sfx-card" onclick="playSfx('ui-03', this)">
-        <div>
-          <div class="sfx-id"><span>UI-03</span></div>
-          <div class="sfx-name">sfx_ui_cancel</div>
-          <div class="sfx-desc">취소·닫기 (부드러운 하향 마림바)</div>
-        </div>
-        <div class="sfx-bottom"><span>0.38초</span><div class="play-icon">▶</div></div>
-        <audio id="ui-03" src="sfx/ui/sfx_ui_cancel.wav" preload="auto"></audio>
-      </div>
-
-      <div class="sfx-card" onclick="playSfx('ui-04', this)">
-        <div>
-          <div class="sfx-id"><span>UI-04</span></div>
-          <div class="sfx-name">sfx_ui_warning</div>
-          <div class="sfx-desc">확인이 필요한 주의 안내 (우든 노크 + 목관 5도 화음)</div>
-        </div>
-        <div class="sfx-bottom"><span>0.70초</span><div class="play-icon">▶</div></div>
-        <audio id="ui-04" src="sfx/ui/sfx_ui_warning.wav" preload="auto"></audio>
-      </div>
-
-      <div class="sfx-card" onclick="playSfx('ui-05', this)">
-        <div>
-          <div class="sfx-id"><span>UI-05</span></div>
-          <div class="sfx-name">sfx_ui_error_soft</div>
-          <div class="sfx-desc">입력 오류, 행동 불가 (온화한 더블 우드 둔탁음)</div>
-        </div>
-        <div class="sfx-bottom"><span>0.48초</span><div class="play-icon">▶</div></div>
-        <audio id="ui-05" src="sfx/ui/sfx_ui_error_soft.wav" preload="auto"></audio>
-      </div>
-
-      <div class="sfx-card" onclick="playSfx('ui-06', this)">
-        <div>
-          <div class="sfx-id"><span>UI-06</span></div>
-          <div class="sfx-name">sfx_points_gain</div>
-          <div class="sfx-desc">팀 포인트 획득 (구르는 도토리 벨 + 상승 글로켄슈필)</div>
-        </div>
-        <div class="sfx-bottom"><span>0.90초</span><div class="play-icon">▶</div></div>
-        <audio id="ui-06" src="sfx/ui/sfx_ui_points_gain.wav" preload="auto"></audio>
-      </div>
-
-      <div class="sfx-card updated" onclick="playSfx('ui-07', this)">
-        <div>
-          <div class="sfx-id"><span>UI-07</span><span class="tag-upd">2.8초 확장</span></div>
-          <div class="sfx-name">sfx_rank_reveal</div>
-          <div class="sfx-desc">경기 순위 공개 (긴장감 있는 말렛 롤 ➔ 웅장한 호른/플루트 축하 팡파르)</div>
-        </div>
-        <div class="sfx-bottom"><span>2.80초</span><div class="play-icon">▶</div></div>
-        <audio id="ui-07" src="sfx/ui/sfx_ui_rank_reveal.wav" preload="auto"></audio>
-      </div>
-
-      <div class="sfx-card updated" onclick="playSfx('ui-08', this)">
-        <div>
-          <div class="sfx-id"><span>UI-08</span><span class="tag-upd">2.5초 확장</span></div>
-          <div class="sfx-name">sfx_medal_award</div>
-          <div class="sfx-desc">메달 지급 (하프 아르페지오 ➔ 황금빛 차임벨 화음의 풍성한 잔향)</div>
-        </div>
-        <div class="sfx-bottom"><span>2.50초</span><div class="play-icon">▶</div></div>
-        <audio id="ui-08" src="sfx/ui/sfx_ui_medal_award.wav" preload="auto"></audio>
-      </div>
-    </div>
-
-    <!-- 2. 구매와 준비 -->
-    <div class="section-title">🛒 2. 구매와 준비 (3종)</div>
-    <div class="grid">
-      <div class="sfx-card" onclick="playSfx('pr-01', this)">
-        <div>
-          <div class="sfx-id"><span>PR-01</span></div>
-          <div class="sfx-name">sfx_unit_purchase</div>
-          <div class="sfx-desc">병력 구매 및 즉시 배치 (행진 발자국 + 안착 결속음)</div>
-        </div>
-        <div class="sfx-bottom"><span>1.00초</span><div class="play-icon">▶</div></div>
-        <audio id="pr-01" src="sfx/preparation/sfx_unit_purchase.wav" preload="auto"></audio>
-      </div>
-
-      <div class="sfx-card updated" onclick="playSfx('pr-02', this)">
-        <div>
-          <div class="sfx-id"><span>PR-02</span><span class="tag-upd">선명도 대폭 개선</span></div>
-          <div class="sfx-name">sfx_hint_purchase</div>
-          <div class="sfx-desc">보스 힌트 구매 (또렷한 코인 찰랑 + 고지도 두루마리 펼침 + 호기심 칼림바)</div>
-        </div>
-        <div class="sfx-bottom"><span>1.10초</span><div class="play-icon">▶</div></div>
-        <audio id="pr-02" src="sfx/preparation/sfx_hint_purchase.wav" preload="auto"></audio>
-      </div>
-
-      <div class="sfx-card updated" onclick="playSfx('pr-03', this)">
-        <div>
-          <div class="sfx-id"><span>PR-03</span><span class="tag-upd">선명도 대폭 개선</span></div>
-          <div class="sfx-name">sfx_hint_reveal</div>
-          <div class="sfx-desc">비밀 힌트 열람 (신비로운 패드 스웰 + 훈풍 + 영롱한 리디안 차임)</div>
-        </div>
-        <div class="sfx-bottom"><span>1.60초</span><div class="play-icon">▶</div></div>
-        <audio id="pr-03" src="sfx/preparation/sfx_hint_reveal.wav" preload="auto"></audio>
-      </div>
-    </div>
-
-    <!-- 3. 영웅 카드 개별 사운드 -->
-    <div class="section-title">🃏 3. 영웅 카드 공개 단계별 사운드 (7종)</div>
-    <div class="grid">
-      <div class="sfx-card" onclick="playSfx('hr-01', this)">
-        <div>
-          <div class="sfx-id"><span>HR-01</span></div>
-          <div class="sfx-name">sfx_hero_card_shake</div>
-          <div class="sfx-desc">봉인 카드 흔들림 (나무 카드의 떨림 진동음)</div>
-        </div>
-        <div class="sfx-bottom"><span>0.90초</span><div class="play-icon">▶</div></div>
-        <audio id="hr-01" src="sfx/hero/sfx_hero_card_shake.wav" preload="auto"></audio>
-      </div>
-
-      <div class="sfx-card" onclick="playSfx('hr-02', this)">
-        <div>
-          <div class="sfx-id"><span>HR-02</span></div>
-          <div class="sfx-name">sfx_hero_card_glow</div>
-          <div class="sfx-desc">카드에 빛이 모임 (마법 입자 상승 스윕 + 별빛 벨)</div>
-        </div>
-        <div class="sfx-bottom"><span>1.45초</span><div class="play-icon">▶</div></div>
-        <audio id="hr-02" src="sfx/hero/sfx_hero_card_glow.wav" preload="auto"></audio>
-      </div>
-
-      <div class="sfx-card updated" onclick="playSfx('hr-03', this)">
-        <div>
-          <div class="sfx-id"><span>HR-03</span><span class="tag-upd">타격 스냅 강화</span></div>
-          <div class="sfx-name">sfx_hero_card_flip</div>
-          <div class="sfx-desc">카드 뒤집기 (날렵한 공기 회전 휙 + 탁자에 안착하는 단단한 스냅)</div>
-        </div>
-        <div class="sfx-bottom"><span>0.60초</span><div class="play-icon">▶</div></div>
-        <audio id="hr-03" src="sfx/hero/sfx_hero_card_flip.wav" preload="auto"></audio>
-      </div>
-
-      <div class="sfx-card updated" onclick="playSfx('hr-04', this)">
-        <div>
-          <div class="sfx-id"><span>HR-04 (일반)</span><span class="tag-upd">공통 테마 기본</span></div>
-          <div class="sfx-name">st_hero_common_reveal</div>
-          <div class="sfx-desc">일반 등급: [공통 테마 멜로디] + 숲빛 나뭇잎 흩날림 & 경쾌한 우드블록</div>
-        </div>
-        <div class="sfx-bottom"><span>2.40초</span><div class="play-icon">▶</div></div>
-        <audio id="hr-04" src="sfx/hero/st_hero_common_reveal.wav" preload="auto"></audio>
-      </div>
-
-      <div class="sfx-card updated" onclick="playSfx('hr-05', this)">
-        <div>
-          <div class="sfx-id"><span>HR-05 (희귀)</span><span class="tag-upd">공통 테마 + 마법</span></div>
-          <div class="sfx-name">st_hero_rare_reveal</div>
-          <div class="sfx-desc">희귀 등급: [공통 테마 멜로디] + 푸른 마법 펄스 & 옥타브 칼림바 레이어</div>
-        </div>
-        <div class="sfx-bottom"><span>2.80초</span><div class="play-icon">▶</div></div>
-        <audio id="hr-05" src="sfx/hero/st_hero_rare_reveal.wav" preload="auto"></audio>
-      </div>
-
-      <div class="sfx-card updated" onclick="playSfx('hr-06', this)">
-        <div>
-          <div class="sfx-id"><span>HR-06 (전설)</span><span class="tag-upd">공통 테마 + 웅장</span></div>
-          <div class="sfx-name">st_hero_legendary_reveal</div>
-          <div class="sfx-desc">전설 등급: [공통 테마 멜로디] + 지면 강타 서브 & 금빛 브라스 & 차임 폭포수</div>
-        </div>
-        <div class="sfx-bottom"><span>3.60초</span><div class="play-icon">▶</div></div>
-        <audio id="hr-06" src="sfx/hero/st_hero_legendary_reveal.wav" preload="auto"></audio>
-      </div>
-
-      <div class="sfx-card" onclick="playSfx('hr-07', this)">
-        <div>
-          <div class="sfx-id"><span>HR-07</span></div>
-          <div class="sfx-name">sfx_hero_added</div>
-          <div class="sfx-desc">도감/보관함 저장 (우든 인장 스탬프 쿵 + 록 차임)</div>
-        </div>
-        <div class="sfx-bottom"><span>1.00초</span><div class="play-icon">▶</div></div>
-        <audio id="hr-07" src="sfx/hero/sfx_hero_added.wav" preload="auto"></audio>
-      </div>
-    </div>
-
-    <!-- 4. 영웅 카드 공개 6~8초 풀 연출 시뮬레이터 -->
-    <div class="hero-simulator">
-      <h3>🎬 영웅 카드 공개 연속 연출 시뮬레이터 (개선판)</h3>
-      <p>
-        동일한 영웅 시그니처 멜로디(도-솔-라-높은도)를 바탕으로, 등급별 효과 레이어가 어떻게 업그레이드되는지 들어보세요!
-      </p>
-
-      <div class="sim-buttons">
-        <button class="sim-btn sim-btn-common" onclick="runHeroSequence('common')">
-          🌿 일반 영웅 카드 개봉 (기본 테마 + 나뭇잎)
-        </button>
-        <button class="sim-btn sim-btn-rare" onclick="runHeroSequence('rare')">
-          💎 희귀 영웅 카드 개봉 (기본 테마 + 푸른 마법/칼림바)
-        </button>
-        <button class="sim-btn sim-btn-legendary" onclick="runHeroSequence('legendary')">
-          👑 전설 영웅 카드 개봉 (기본 테마 + 지면강타/금빛브라스)
-        </button>
-      </div>
-
-      <div class="sim-stage-tracker" id="stage-tracker">
-        <div class="stage-item" id="stage-shake">1. 봉인 흔들림</div>
-        <span>➔</span>
-        <div class="stage-item" id="stage-glow">2. 마법 빛 모임</div>
-        <span>➔</span>
-        <div class="stage-item" id="stage-flip">3. 카드 뒤집기 (스냅)</div>
-        <span>➔</span>
-        <div class="stage-item" id="stage-reveal">4. 영웅 시그니처 멜로디!</div>
-        <span>➔</span>
-        <div class="stage-item" id="stage-added">5. 보관함 안착</div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    function playSfx(id, cardEl) {
-      const audio = document.getElementById(id);
-      if (audio) {
-        audio.currentTime = 0;
-        audio.play();
-        if (cardEl) {
-          cardEl.classList.add('active');
-          setTimeout(() => cardEl.classList.remove('active'), 250);
+    <script>
+      function playSfx(id, cardEl) {
+        const audio = document.getElementById(id);
+        if (audio) {
+          audio.currentTime = 0;
+          audio.play();
+          if (cardEl) {
+            cardEl.classList.add('active');
+            setTimeout(() => cardEl.classList.remove('active'), 250);
+          }
         }
       }
-    }
 
-    let simTimeouts = [];
+      let simTimeouts = [];
 
-    function clearSim() {
-      simTimeouts.forEach(t => clearTimeout(t));
-      simTimeouts = [];
-      document.querySelectorAll('.stage-item').forEach(el => el.classList.remove('current'));
-    }
+      function clearSim() {
+        simTimeouts.forEach((t) => clearTimeout(t));
+        simTimeouts = [];
+        document
+          .querySelectorAll('.stage-item')
+          .forEach((el) => el.classList.remove('current'));
+      }
 
-    function runHeroSequence(grade) {
-      clearSim();
+      function runHeroSequence(grade) {
+        clearSim();
 
-      const stageShake = document.getElementById('stage-shake');
-      const stageGlow = document.getElementById('stage-glow');
-      const stageFlip = document.getElementById('stage-flip');
-      const stageReveal = document.getElementById('stage-reveal');
-      const stageAdded = document.getElementById('stage-added');
+        const stageShake = document.getElementById('stage-shake');
+        const stageGlow = document.getElementById('stage-glow');
+        const stageFlip = document.getElementById('stage-flip');
+        const stageReveal = document.getElementById('stage-reveal');
+        const stageAdded = document.getElementById('stage-added');
 
-      // Step 1: 0.0s - Shake
-      stageShake.classList.add('current');
-      playSfx('hr-01');
+        // Step 1: 0.0s - Shake
+        stageShake.classList.add('current');
+        playSfx('hr-01');
 
-      // Step 2: 0.85s - Glow
-      simTimeouts.push(setTimeout(() => {
-        stageShake.classList.remove('current');
-        stageGlow.classList.add('current');
-        playSfx('hr-02');
-      }, 850));
+        // Step 2: 0.85s - Glow
+        simTimeouts.push(
+          setTimeout(() => {
+            stageShake.classList.remove('current');
+            stageGlow.classList.add('current');
+            playSfx('hr-02');
+          }, 850),
+        );
 
-      // Step 3: 2.1s - Flip (Snappy)
-      simTimeouts.push(setTimeout(() => {
-        stageGlow.classList.remove('current');
-        stageFlip.classList.add('current');
-        playSfx('hr-03');
-      }, 2100));
+        // Step 3: 2.1s - Flip (Snappy)
+        simTimeouts.push(
+          setTimeout(() => {
+            stageGlow.classList.remove('current');
+            stageFlip.classList.add('current');
+            playSfx('hr-03');
+          }, 2100),
+        );
 
-      // Step 4: 2.6s - Reveal
-      simTimeouts.push(setTimeout(() => {
-        stageFlip.classList.remove('current');
-        stageReveal.classList.add('current');
-        if (grade === 'common') {
-          playSfx('hr-04');
-        } else if (grade === 'rare') {
-          playSfx('hr-05');
-        } else if (grade === 'legendary') {
-          playSfx('hr-06');
-        }
-      }, 2600));
+        // Step 4: 2.6s - Reveal
+        simTimeouts.push(
+          setTimeout(() => {
+            stageFlip.classList.remove('current');
+            stageReveal.classList.add('current');
+            if (grade === 'common') {
+              playSfx('hr-04');
+            } else if (grade === 'rare') {
+              playSfx('hr-05');
+            } else if (grade === 'legendary') {
+              playSfx('hr-06');
+            }
+          }, 2600),
+        );
 
-      // Step 5: Reveal finish -> Sfx Added
-      const addedDelay = grade === 'common' ? 5100 : (grade === 'rare' ? 5500 : 6300);
-      simTimeouts.push(setTimeout(() => {
-        stageReveal.classList.remove('current');
-        stageAdded.classList.add('current');
-        playSfx('hr-07');
-      }, addedDelay));
+        // Step 5: Reveal finish -> Sfx Added
+        const addedDelay = grade === 'common' ? 5100 : grade === 'rare' ? 5500 : 6300;
+        simTimeouts.push(
+          setTimeout(() => {
+            stageReveal.classList.remove('current');
+            stageAdded.classList.add('current');
+            playSfx('hr-07');
+          }, addedDelay),
+        );
 
-      // Cleanup
-      simTimeouts.push(setTimeout(() => {
-        stageAdded.classList.remove('current');
-      }, addedDelay + 1200));
-    }
-  </script>
-</body>
+        // Cleanup
+        simTimeouts.push(
+          setTimeout(() => {
+            stageAdded.classList.remove('current');
+          }, addedDelay + 1200),
+        );
+      }
+    </script>
+  </body>
 </html>

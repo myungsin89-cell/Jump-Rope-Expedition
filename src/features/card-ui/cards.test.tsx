@@ -12,7 +12,9 @@ describe('UnitCard (병력 카드 컴포넌트 검증)', () => {
   it('병력의 이름, 역할, 설명, 고정 가격(30P)을 정확히 렌더링해야 한다', () => {
     render(<UnitCard unit={sampleUnit} />);
 
-    expect(screen.getByRole('heading', { level: 3, name: '도토리 탐험가' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 3, name: '도토리 탐험가' }),
+    ).toBeInTheDocument();
     expect(screen.getByText('원거리 공격')).toBeInTheDocument();
     expect(screen.getByText('기본 공격 100')).toBeInTheDocument();
     expect(screen.getByText('30P')).toBeInTheDocument();
@@ -46,7 +48,9 @@ describe('UnitCard (병력 카드 컴포넌트 검증)', () => {
 describe('HeroCard (영웅 카드 컴포넌트 검증)', () => {
   const commonHero: HeroDefinition = HEROES_CATALOG[0]; // 로빈 (일반)
   const rareHero: HeroDefinition = HEROES_CATALOG.find((h) => h.rarity === 'rare')!; // 아르코
-  const legendaryHero: HeroDefinition = HEROES_CATALOG.find((h) => h.rarity === 'legendary')!; // 아스트라
+  const legendaryHero: HeroDefinition = HEROES_CATALOG.find(
+    (h) => h.rarity === 'legendary',
+  )!; // 아스트라
 
   it('공개된 카드는 이름, 한글 등급(일반/희귀/전설), 효과 문구를 정확히 렌더링해야 한다', () => {
     const { rerender } = render(<HeroCard hero={commonHero} state="revealed" />);

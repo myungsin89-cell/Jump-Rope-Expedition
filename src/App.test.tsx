@@ -3,6 +3,12 @@ import { afterEach, beforeEach, vi } from 'vitest';
 
 import App from './App';
 
+const authState = vi.hoisted(() => ({ status: 'authenticated' }));
+
+vi.mock('./features/auth/AuthContext', () => ({
+  useAuth: () => authState,
+}));
+
 vi.mock('./components/IntroStorybookModal', () => ({
   default: ({ onClose }: { onClose: () => void }) => (
     <div role="dialog" aria-label="줄넘기 원정대 이야기책">
@@ -17,6 +23,7 @@ vi.mock('./features/preparation/PreparationWorkspace', () => ({
 
 describe('App', () => {
   beforeEach(() => {
+    authState.status = 'authenticated';
     window.history.replaceState(null, '', '/');
     localStorage.clear();
     vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
@@ -41,5 +48,17 @@ describe('App', () => {
       await screen.findByRole('heading', { name: '우리의 원정' }),
     ).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('requires a teacher login for teacher routes', async () => {
+    authState.status = 'anonymous';
+    window.location.hash = '#/preparations';
+
+    render(<App />);
+
+    expect(
+      await screen.findByRole('heading', { name: '교사 로그인' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/학생은 가입하지 않아요/)).toBeInTheDocument();
   });
 });

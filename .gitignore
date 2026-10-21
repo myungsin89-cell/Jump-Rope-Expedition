@@ -11,5 +11,7 @@ coverage/
 supabase/.branches/
 supabase/.temp/
 artifacts/
+debug.log
+슈퍼베이스 value.hwp
 assets/audio/masters/
 assets/audio/concepts/

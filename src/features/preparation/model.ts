@@ -435,3 +435,28 @@ export function savePreparation(plan: Preparation): SavedPreparation {
 export function saveGamePreparation(plan: Preparation): SavedPreparation {
   return persistPlan(plan);
 }
+
+export function mergeServerPreparations(
+  incoming: SavedPreparation[],
+): SavedPreparation[] {
+  if (
+    !incoming.every(
+      (item) =>
+        isPreparation(item) &&
+        typeof item.savedAt === 'string' &&
+        Number.isFinite(Date.parse(item.savedAt)),
+    )
+  )
+    throw new Error('서버 원정 자료를 확인해 주세요.');
+  const merged = new Map(readPreparations().map((item) => [item.id, item]));
+  incoming.forEach((item) => {
+    const local = merged.get(item.id);
+    if (!local || Date.parse(item.savedAt) > Date.parse(local.savedAt))
+      merged.set(item.id, item);
+  });
+  const result = [...merged.values()].sort(
+    (left, right) => Date.parse(right.savedAt) - Date.parse(left.savedAt),
+  );
+  localStorage.setItem(SAVED_KEY, JSON.stringify(result));
+  return result;
+}

@@ -201,7 +201,10 @@ function isSavedPractice(value: unknown, classId: string): value is SavedPractic
 export function readPracticeStore(classId: string): PracticeStore {
   const raw = localStorage.getItem(practiceKey(classId));
   if (raw === null) return { version: 1, classId, draft: null, history: [] };
-  const value: unknown = JSON.parse(raw);
+  return parsePracticeStore(JSON.parse(raw), classId);
+}
+
+export function parsePracticeStore(value: unknown, classId: string): PracticeStore {
   if (
     !isRecord(value) ||
     value.version !== 1 ||

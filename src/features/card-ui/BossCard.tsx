@@ -57,7 +57,9 @@ export default function BossCard(props: BossCardProps) {
               ) : (
                 <div key={slotIdx} className="jre-boss-hint-slot is-locked">
                   <div className="jre-boss-hint-slot-header">
-                    <span className="jre-boss-hint-badge is-locked">🔒 단서 {slotIdx + 1}</span>
+                    <span className="jre-boss-hint-badge is-locked">
+                      🔒 단서 {slotIdx + 1}
+                    </span>
                     <span className="jre-boss-hint-status is-locked">잠김</span>
                   </div>
                   <p className="jre-boss-hint-locked-text">
@@ -105,7 +107,11 @@ export default function BossCard(props: BossCardProps) {
 
       <div className="jre-card-media jre-card-media-boss">
         {imageError ? (
-          <div className="jre-card-image-fallback" role="img" aria-label="보스 이미지를 불러오지 못했어요">
+          <div
+            className="jre-card-image-fallback"
+            role="img"
+            aria-label="보스 이미지를 불러오지 못했어요"
+          >
             <span aria-hidden="true">🌋</span>
             <span>보스 이미지를 불러오지 못했어요</span>
           </div>

@@ -8,19 +8,8 @@ import {
 type Environment = {
   SUPABASE_URL?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
-  CLASSROOM_OWNER_KEY?: string;
   ALLOWED_ORIGINS?: string;
 };
-async function sameSecret(a: string, b: string): Promise<boolean> {
-  const digest = async (value: string) =>
-    new Uint8Array(
-      await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)),
-    );
-  const [left, right] = await Promise.all([digest(a), digest(b)]);
-  let difference = 0;
-  for (let i = 0; i < left.length; i++) difference |= left[i] ^ right[i];
-  return difference === 0;
-}
 export function createBoardHandler(env: Environment, fetcher: typeof fetch = fetch) {
   const allowed = new Set(
     (env.ALLOWED_ORIGINS ?? '')
@@ -34,7 +23,7 @@ export function createBoardHandler(env: Environment, fetcher: typeof fetch = fet
       origin && allowed.has(origin)
         ? {
             'Access-Control-Allow-Origin': origin,
-            'Access-Control-Allow-Headers': 'content-type,x-classroom-owner-key',
+            'Access-Control-Allow-Headers': 'authorization,content-type',
             'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
             Vary: 'Origin',
           }
@@ -81,23 +70,20 @@ export function createBoardHandler(env: Environment, fetcher: typeof fetch = fet
       }
       if (origin && !allowed.has(origin))
         return respond({ error: 'Forbidden origin' }, 403);
-      if (!env.CLASSROOM_OWNER_KEY || env.CLASSROOM_OWNER_KEY.length < 32)
-        return respond({ error: 'Owner publishing is not configured' }, 503);
-      const key = request.headers.get('x-classroom-owner-key') ?? '';
-      if (key.length > 512 || !(await sameSecret(key, env.CLASSROOM_OWNER_KEY)))
+      const authorization = request.headers.get('authorization') ?? '';
+      if (!authorization.startsWith('Bearer ') || authorization.length > 4096)
         return respond({ error: 'Unauthorized' }, 401);
-      if (request.method === 'GET') {
-        const id = url.searchParams.get('publicationId');
-        if (id && !isUuid(id)) return respond({ error: 'Invalid ID' }, 400);
-        const response = await rest(
-          id
-            ? `classroom_preparations?id=eq.${id}&select=preparation,updated_at&limit=1`
-            : 'classroom_preparations?select=id,updated_at&order=updated_at.desc',
-        );
-        return response.ok
-          ? respond(await response.json())
-          : respond({ error: 'Backup unavailable' }, 503);
-      }
+      const authResponse = await fetcher(`${env.SUPABASE_URL}/auth/v1/user`, {
+        headers: {
+          apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+          Authorization: authorization,
+        },
+      });
+      if (!authResponse.ok) return respond({ error: 'Unauthorized' }, 401);
+      const authUser = await authResponse.json();
+      if (!authUser || typeof authUser !== 'object' || !isUuid(authUser.id))
+        return respond({ error: 'Unauthorized' }, 401);
+      if (request.method === 'GET') return respond({ error: 'Method not allowed' }, 405);
       if (Number(request.headers.get('content-length') ?? 0) > 200000)
         return respond({ error: 'Payload too large' }, 413);
       const raw = await request.text();
@@ -117,11 +103,14 @@ export function createBoardHandler(env: Environment, fetcher: typeof fetch = fet
       } catch {
         return respond({ error: 'Invalid preparation' }, 400);
       }
+      if (!('action' in value) || value.action !== 'publish')
+        return respond({ error: 'Invalid action' }, 400);
       const time = new Date().toISOString();
       const boards = plan.teams.map((_, index) => studentBoardData(plan, index, time));
-      const response = await rest('rpc/publish_student_boards', {
+      const response = await rest('rpc/publish_student_boards_v2', {
         method: 'POST',
         body: JSON.stringify({
+          p_owner_id: authUser.id,
           p_publication_id: plan.id,
           p_preparation: plan,
           p_boards: boards,

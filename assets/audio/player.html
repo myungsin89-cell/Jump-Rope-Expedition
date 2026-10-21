@@ -1,354 +1,401 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>줄넘기 원정대 · 인트로 BGM & 출발 스팅어 플레이어</title>
-  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-  <style>
-    :root {
-      --forest: #173E2C;
-      --forest-guide: #3D7A55;
-      --leaf-young: #8BBF93;
-      --paper: #FBFBF7;
-      --mist: #E4EADF;
-      --torch: #E4A83A;
-      --card-bg: #FFFFFF;
-      --text-muted: #5A6B5F;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>줄넘기 원정대 · 인트로 BGM & 출발 스팅어 플레이어</title>
+    <link
+      rel="stylesheet"
+      as="style"
+      crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+    />
+    <style>
+      :root {
+        --forest: #173e2c;
+        --forest-guide: #3d7a55;
+        --leaf-young: #8bbf93;
+        --paper: #fbfbf7;
+        --mist: #e4eadf;
+        --torch: #e4a83a;
+        --card-bg: #ffffff;
+        --text-muted: #5a6b5f;
+      }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-    body {
-      font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: var(--paper);
-      color: var(--forest);
-      padding: 40px 20px;
-      line-height: 1.6;
-    }
+      body {
+        font-family:
+          'Pretendard Variable',
+          Pretendard,
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        background-color: var(--paper);
+        color: var(--forest);
+        padding: 40px 20px;
+        line-height: 1.6;
+      }
 
-    .container {
-      max-width: 840px;
-      margin: 0 auto;
-    }
+      .container {
+        max-width: 840px;
+        margin: 0 auto;
+      }
 
-    header {
-      margin-bottom: 28px;
-      border-bottom: 2px solid var(--mist);
-      padding-bottom: 16px;
-    }
+      header {
+        margin-bottom: 28px;
+        border-bottom: 2px solid var(--mist);
+        padding-bottom: 16px;
+      }
 
-    .badge {
-      display: inline-block;
-      background-color: var(--mist);
-      color: var(--forest-guide);
-      padding: 4px 12px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
+      .badge {
+        display: inline-block;
+        background-color: var(--mist);
+        color: var(--forest-guide);
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
 
-    h1 {
-      font-size: 26px;
-      font-weight: 800;
-      color: var(--forest);
-      margin-bottom: 6px;
-    }
+      h1 {
+        font-size: 26px;
+        font-weight: 800;
+        color: var(--forest);
+        margin-bottom: 6px;
+      }
 
-    p.subtitle {
-      font-size: 15px;
-      color: var(--text-muted);
-    }
+      p.subtitle {
+        font-size: 15px;
+        color: var(--text-muted);
+      }
 
-    .card {
-      background: var(--card-bg);
-      border: 2px solid var(--mist);
-      border-radius: 16px;
-      padding: 24px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 12px rgba(23, 62, 44, 0.04);
-    }
+      .card {
+        background: var(--card-bg);
+        border: 2px solid var(--mist);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 12px rgba(23, 62, 44, 0.04);
+      }
 
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
 
-    .card-title {
-      font-size: 19px;
-      font-weight: 700;
-      color: var(--forest);
-    }
+      .card-title {
+        font-size: 19px;
+        font-weight: 700;
+        color: var(--forest);
+      }
 
-    .tag {
-      font-size: 12px;
-      font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 6px;
-      background: var(--mist);
-      color: var(--forest);
-    }
+      .tag {
+        font-size: 12px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 6px;
+        background: var(--mist);
+        color: var(--forest);
+      }
 
-    .controls-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 16px;
-      flex-wrap: wrap;
-    }
+      .controls-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 16px;
+        flex-wrap: wrap;
+      }
 
-    .btn {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.15s ease;
-    }
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.15s ease;
+      }
 
-    .btn-primary {
-      background: var(--forest);
-      color: #fff;
-    }
-    .btn-primary:hover {
-      background: var(--forest-guide);
-    }
+      .btn-primary {
+        background: var(--forest);
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background: var(--forest-guide);
+      }
 
-    .btn-torch {
-      background: var(--torch);
-      color: #1a1202;
-    }
-    .btn-torch:hover {
-      background: #c98e28;
-    }
+      .btn-torch {
+        background: var(--torch);
+        color: #1a1202;
+      }
+      .btn-torch:hover {
+        background: #c98e28;
+      }
 
-    .btn-outline {
-      background: transparent;
-      border: 1.5px solid var(--forest-guide);
-      color: var(--forest-guide);
-    }
-    .btn-outline.active {
-      background: var(--forest-guide);
-      color: #fff;
-    }
+      .btn-outline {
+        background: transparent;
+        border: 1.5px solid var(--forest-guide);
+        color: var(--forest-guide);
+      }
+      .btn-outline.active {
+        background: var(--forest-guide);
+        color: #fff;
+      }
 
-    .progress-bar-wrap {
-      width: 100%;
-      height: 8px;
-      background: var(--mist);
-      border-radius: 999px;
-      overflow: hidden;
-      margin: 14px 0 8px 0;
-      cursor: pointer;
-    }
+      .progress-bar-wrap {
+        width: 100%;
+        height: 8px;
+        background: var(--mist);
+        border-radius: 999px;
+        overflow: hidden;
+        margin: 14px 0 8px 0;
+        cursor: pointer;
+      }
 
-    .progress-bar {
-      height: 100%;
-      width: 0%;
-      background: var(--forest-guide);
-      transition: width 0.1s linear;
-    }
+      .progress-bar {
+        height: 100%;
+        width: 0%;
+        background: var(--forest-guide);
+        transition: width 0.1s linear;
+      }
 
-    .time-display {
-      font-size: 13px;
-      color: var(--text-muted);
-      display: flex;
-      justify-content: space-between;
-      font-variant-numeric: tabular-nums;
-    }
+      .time-display {
+        font-size: 13px;
+        color: var(--text-muted);
+        display: flex;
+        justify-content: space-between;
+        font-variant-numeric: tabular-nums;
+      }
 
-    .simulation-box {
-      background: linear-gradient(135deg, #F4F8F3 0%, #E8F2EA 100%);
-      border: 2px dashed var(--leaf-young);
-      border-radius: 16px;
-      padding: 24px;
-      margin-top: 24px;
-    }
+      .simulation-box {
+        background: linear-gradient(135deg, #f4f8f3 0%, #e8f2ea 100%);
+        border: 2px dashed var(--leaf-young);
+        border-radius: 16px;
+        padding: 24px;
+        margin-top: 24px;
+      }
 
-    .simulation-box h3 {
-      font-size: 17px;
-      margin-bottom: 8px;
-      color: var(--forest);
-    }
+      .simulation-box h3 {
+        font-size: 17px;
+        margin-bottom: 8px;
+        color: var(--forest);
+      }
 
-    .simulation-box p {
-      font-size: 14px;
-      color: var(--text-muted);
-      margin-bottom: 16px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <div class="badge">줄넘기 원정대 · 3단계 완성본</div>
-      <h1>인트로 BGM & 출발 스팅어 플레이어</h1>
-      <p class="subtitle">선택해 주신 시안 A(아침의 원정)를 바탕으로 완성된 60초 무한 루프 BGM과 출발 스팅어입니다.</p>
-    </header>
+      .simulation-box p {
+        font-size: 14px;
+        color: var(--text-muted);
+        margin-bottom: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="badge">줄넘기 원정대 · 3단계 완성본</div>
+        <h1>인트로 BGM & 출발 스팅어 플레이어</h1>
+        <p class="subtitle">
+          선택해 주신 시안 A(아침의 원정)를 바탕으로 완성된 60초 무한 루프 BGM과 출발
+          스팅어입니다.
+        </p>
+      </header>
 
-    <!-- BGM-01 카드 -->
-    <div class="card" id="bgm-card">
-      <div class="card-header">
-        <div class="card-title">🌲 BGM-01 : bgm_title_forest_departure_loop</div>
-        <span class="tag">60.00초 · 완전 무한 루프</span>
+      <!-- BGM-01 카드 -->
+      <div class="card" id="bgm-card">
+        <div class="card-header">
+          <div class="card-title">🌲 BGM-01 : bgm_title_forest_departure_loop</div>
+          <span class="tag">60.00초 · 완전 무한 루프</span>
+        </div>
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 12px">
+          G Major / BPM 104 · 어쿠스틱 핑거피킹, 목관 플루트 선율, 나무 타악기, 온화한
+          베이스와 잔잔한 숲의 잔향이 틱 잡음 없이 자연스럽게 이어집니다.
+        </p>
+
+        <div class="progress-bar-wrap" onclick="seekBgm(event)">
+          <div class="progress-bar" id="bgm-progress"></div>
+        </div>
+        <div class="time-display">
+          <span id="bgm-current">0:00</span>
+          <span id="bgm-total">1:00</span>
+        </div>
+
+        <div class="controls-row">
+          <button class="btn btn-primary" id="bgm-play-btn" onclick="toggleBgm()">
+            ▶ BGM 재생
+          </button>
+          <button class="btn btn-outline active" id="loop-btn" onclick="toggleLoop()">
+            🔁 무한 반복 활성화
+          </button>
+          <span style="font-size: 13px; color: var(--text-muted); margin-left: auto">
+            음량:
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value="0.65"
+              oninput="setBgmVolume(this.value)"
+            />
+          </span>
+        </div>
+        <audio
+          id="bgm-audio"
+          src="bgm/bgm_title_forest_departure_loop.wav"
+          loop
+          preload="auto"
+        ></audio>
       </div>
-      <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 12px;">
-        G Major / BPM 104 · 어쿠스틱 핑거피킹, 목관 플루트 선율, 나무 타악기, 온화한 베이스와 잔잔한 숲의 잔향이 틱 잡음 없이 자연스럽게 이어집니다.
-      </p>
 
-      <div class="progress-bar-wrap" onclick="seekBgm(event)">
-        <div class="progress-bar" id="bgm-progress"></div>
-      </div>
-      <div class="time-display">
-        <span id="bgm-current">0:00</span>
-        <span id="bgm-total">1:00</span>
+      <!-- ST-01 카드 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">✨ ST-01 : st_title_start</div>
+          <span class="tag">2.20초 · 출발 스팅어</span>
+        </div>
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 12px">
+          시작 버튼을 누르는 순간 BGM-01의 메인 선율을 상향 도약으로 화답하며 울려 퍼지는
+          경쾌한 출발 신호음입니다.
+        </p>
+
+        <div class="controls-row">
+          <button class="btn btn-torch" onclick="playStinger()">
+            🔔 스팅어 1회 재생
+          </button>
+        </div>
+        <audio id="st-audio" src="stingers/st_title_start.wav" preload="auto"></audio>
       </div>
 
-      <div class="controls-row">
-        <button class="btn btn-primary" id="bgm-play-btn" onclick="toggleBgm()">
-          ▶ BGM 재생
+      <!-- 원정 출발 인터랙션 시뮬레이션 -->
+      <div class="simulation-box">
+        <h3>🚀 실제 게임 시작 연출 시뮬레이션</h3>
+        <p>
+          표지 화면에서 BGM이 흐르다가 학생/교사가 <strong>[원정 출발]</strong> 버튼을
+          눌렀을 때, BGM이 0.4초간 자연스럽게 페이드아웃되며 ST-01 출발음이 겹쳐지는 실제
+          인게임 오디오 흐름을 미리 체험해 보세요.
+        </p>
+        <button
+          class="btn btn-primary"
+          style="background: var(--forest-guide); font-size: 15px"
+          onclick="simulateStartTransition()"
+        >
+          🚩 [원정 출발] 버튼 시뮬레이션 실행
         </button>
-        <button class="btn btn-outline active" id="loop-btn" onclick="toggleLoop()">
-          🔁 무한 반복 활성화
-        </button>
-        <span style="font-size: 13px; color: var(--text-muted); margin-left: auto;">
-          음량: <input type="range" min="0" max="1" step="0.05" value="0.65" oninput="setBgmVolume(this.value)">
-        </span>
+        <span
+          id="sim-status"
+          style="
+            margin-left: 14px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--forest);
+          "
+        ></span>
       </div>
-      <audio id="bgm-audio" src="bgm/bgm_title_forest_departure_loop.wav" loop preload="auto"></audio>
     </div>
 
-    <!-- ST-01 카드 -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">✨ ST-01 : st_title_start</div>
-        <span class="tag">2.20초 · 출발 스팅어</span>
-      </div>
-      <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 12px;">
-        시작 버튼을 누르는 순간 BGM-01의 메인 선율을 상향 도약으로 화답하며 울려 퍼지는 경쾌한 출발 신호음입니다.
-      </p>
+    <script>
+      const bgm = document.getElementById('bgm-audio');
+      const st = document.getElementById('st-audio');
+      const bgmPlayBtn = document.getElementById('bgm-play-btn');
+      const loopBtn = document.getElementById('loop-btn');
+      const bgmProgress = document.getElementById('bgm-progress');
+      const bgmCurrent = document.getElementById('bgm-current');
+      const simStatus = document.getElementById('sim-status');
 
-      <div class="controls-row">
-        <button class="btn btn-torch" onclick="playStinger()">
-          🔔 스팅어 1회 재생
-        </button>
-      </div>
-      <audio id="st-audio" src="stingers/st_title_start.wav" preload="auto"></audio>
-    </div>
+      bgm.volume = 0.65;
+      st.volume = 0.85;
 
-    <!-- 원정 출발 인터랙션 시뮬레이션 -->
-    <div class="simulation-box">
-      <h3>🚀 실제 게임 시작 연출 시뮬레이션</h3>
-      <p>
-        표지 화면에서 BGM이 흐르다가 학생/교사가 <strong>[원정 출발]</strong> 버튼을 눌렀을 때,
-        BGM이 0.4초간 자연스럽게 페이드아웃되며 ST-01 출발음이 겹쳐지는 실제 인게임 오디오 흐름을 미리 체험해 보세요.
-      </p>
-      <button class="btn btn-primary" style="background: var(--forest-guide); font-size: 15px;" onclick="simulateStartTransition()">
-        🚩 [원정 출발] 버튼 시뮬레이션 실행
-      </button>
-      <span id="sim-status" style="margin-left: 14px; font-size: 13px; font-weight: 700; color: var(--forest);"></span>
-    </div>
-  </div>
-
-  <script>
-    const bgm = document.getElementById('bgm-audio');
-    const st = document.getElementById('st-audio');
-    const bgmPlayBtn = document.getElementById('bgm-play-btn');
-    const loopBtn = document.getElementById('loop-btn');
-    const bgmProgress = document.getElementById('bgm-progress');
-    const bgmCurrent = document.getElementById('bgm-current');
-    const simStatus = document.getElementById('sim-status');
-
-    bgm.volume = 0.65;
-    st.volume = 0.85;
-
-    function formatTime(sec) {
-      const m = Math.floor(sec / 60);
-      const s = Math.floor(sec % 60);
-      return `${m}:${s < 10 ? '0' : ''}${s}`;
-    }
-
-    function toggleBgm() {
-      if (bgm.paused) {
-        bgm.play();
-        bgmPlayBtn.innerText = '⏸ BGM 일시정지';
-      } else {
-        bgm.pause();
-        bgmPlayBtn.innerText = '▶ BGM 재생';
-      }
-    }
-
-    function toggleLoop() {
-      bgm.loop = !bgm.loop;
-      if (bgm.loop) {
-        loopBtn.classList.add('active');
-        loopBtn.innerText = '🔁 무한 반복 활성화';
-      } else {
-        loopBtn.classList.remove('active');
-        loopBtn.innerText = '➡️ 1회만 재생';
-      }
-    }
-
-    function setBgmVolume(val) {
-      bgm.volume = parseFloat(val);
-    }
-
-    function playStinger() {
-      st.currentTime = 0;
-      st.play();
-    }
-
-    function seekBgm(e) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const pos = (e.clientX - rect.left) / rect.width;
-      bgm.currentTime = pos * (bgm.duration || 60);
-    }
-
-    bgm.addEventListener('timeupdate', () => {
-      if (bgm.duration) {
-        const pct = (bgm.currentTime / bgm.duration) * 100;
-        bgmProgress.style.width = pct + '%';
-        bgmCurrent.innerText = formatTime(bgm.currentTime);
-      }
-    });
-
-    // 시작 전환 연출 시뮬레이션
-    function simulateStartTransition() {
-      simStatus.innerText = 'BGM 페이드아웃 및 출발 스팅어 전환 중...';
-      if (bgm.paused) {
-        bgm.volume = 0.65;
-        bgm.play();
+      function formatTime(sec) {
+        const m = Math.floor(sec / 60);
+        const s = Math.floor(sec % 60);
+        return `${m}:${s < 10 ? '0' : ''}${s}`;
       }
 
-      // 0.4초 페이드아웃
-      const startVol = bgm.volume;
-      const fadeSteps = 10;
-      let step = 0;
-      
-      // 동시에 스팅어 재생
-      st.currentTime = 0;
-      st.play();
-
-      const timer = setInterval(() => {
-        step++;
-        bgm.volume = Math.max(0, startVol * (1 - step / fadeSteps));
-        if (step >= fadeSteps) {
-          clearInterval(timer);
+      function toggleBgm() {
+        if (bgm.paused) {
+          bgm.play();
+          bgmPlayBtn.innerText = '⏸ BGM 일시정지';
+        } else {
           bgm.pause();
-          bgm.volume = 0.65;
           bgmPlayBtn.innerText = '▶ BGM 재생';
-          simStatus.innerText = '✅ 다음 화면(지도/시즌) 진입 완료!';
-          setTimeout(() => { simStatus.innerText = ''; }, 3000);
         }
-      }, 40);
-    }
-  </script>
-</body>
+      }
+
+      function toggleLoop() {
+        bgm.loop = !bgm.loop;
+        if (bgm.loop) {
+          loopBtn.classList.add('active');
+          loopBtn.innerText = '🔁 무한 반복 활성화';
+        } else {
+          loopBtn.classList.remove('active');
+          loopBtn.innerText = '➡️ 1회만 재생';
+        }
+      }
+
+      function setBgmVolume(val) {
+        bgm.volume = parseFloat(val);
+      }
+
+      function playStinger() {
+        st.currentTime = 0;
+        st.play();
+      }
+
+      function seekBgm(e) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const pos = (e.clientX - rect.left) / rect.width;
+        bgm.currentTime = pos * (bgm.duration || 60);
+      }
+
+      bgm.addEventListener('timeupdate', () => {
+        if (bgm.duration) {
+          const pct = (bgm.currentTime / bgm.duration) * 100;
+          bgmProgress.style.width = pct + '%';
+          bgmCurrent.innerText = formatTime(bgm.currentTime);
+        }
+      });
+
+      // 시작 전환 연출 시뮬레이션
+      function simulateStartTransition() {
+        simStatus.innerText = 'BGM 페이드아웃 및 출발 스팅어 전환 중...';
+        if (bgm.paused) {
+          bgm.volume = 0.65;
+          bgm.play();
+        }
+
+        // 0.4초 페이드아웃
+        const startVol = bgm.volume;
+        const fadeSteps = 10;
+        let step = 0;
+
+        // 동시에 스팅어 재생
+        st.currentTime = 0;
+        st.play();
+
+        const timer = setInterval(() => {
+          step++;
+          bgm.volume = Math.max(0, startVol * (1 - step / fadeSteps));
+          if (step >= fadeSteps) {
+            clearInterval(timer);
+            bgm.pause();
+            bgm.volume = 0.65;
+            bgmPlayBtn.innerText = '▶ BGM 재생';
+            simStatus.innerText = '✅ 다음 화면(지도/시즌) 진입 완료!';
+            setTimeout(() => {
+              simStatus.innerText = '';
+            }, 3000);
+          }
+        }, 40);
+      }
+    </script>
+  </body>
 </html>

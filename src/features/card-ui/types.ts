@@ -68,4 +68,3 @@ export type BossCardProps =
       onSelect?: () => void;
       className?: string;
     };
-

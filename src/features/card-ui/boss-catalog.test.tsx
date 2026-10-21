@@ -42,9 +42,11 @@ describe('BossCard (보스 카드 컴포넌트 검증)', () => {
   it('비밀 상태(hidden)에서는 보스 이름과 약점이 DOM에 노출되지 않아야 한다', () => {
     const { container } = render(
       <BossCard
-        hintsRevealed={['땅속 깊은 잠에서 깨어난 거인은 가벼운 바람이나 작은 화살에는 눈 하나 깜짝하지 않네.']}
+        hintsRevealed={[
+          '땅속 깊은 잠에서 깨어난 거인은 가벼운 바람이나 작은 화살에는 눈 하나 깜짝하지 않네.',
+        ]}
         state="hidden"
-      />
+      />,
     );
 
     expect(screen.getByText('비밀 보스')).toBeInTheDocument();
@@ -58,9 +60,11 @@ describe('BossCard (보스 카드 컴포넌트 검증)', () => {
   it('비밀 상태에서는 3개의 단서 슬롯이 고정 표시되며 해금 상태와 잠금 상태가 구분되어야 한다', () => {
     render(
       <BossCard
-        hintsRevealed={['땅속 깊은 잠에서 깨어난 거인은 가벼운 바람이나 작은 화살에는 눈 하나 깜짝하지 않네.']}
+        hintsRevealed={[
+          '땅속 깊은 잠에서 깨어난 거인은 가벼운 바람이나 작은 화살에는 눈 하나 깜짝하지 않네.',
+        ]}
         state="hidden"
-      />
+      />,
     );
 
     // 진행률 표시
@@ -76,7 +80,9 @@ describe('BossCard (보스 카드 컴포넌트 검증)', () => {
     expect(screen.getByText('🔒 단서 3')).toBeInTheDocument();
     const lockedLabels = screen.getAllByText('잠김');
     expect(lockedLabels).toHaveLength(2);
-    const lockedNotices = screen.getAllByText('줄넘기 협동 포인트로 수수께끼를 풀어보세요');
+    const lockedNotices = screen.getAllByText(
+      '줄넘기 협동 포인트로 수수께끼를 풀어보세요',
+    );
     expect(lockedNotices).toHaveLength(2);
   });
 });

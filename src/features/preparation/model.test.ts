@@ -5,6 +5,7 @@ import {
   createPreparation,
   DRAFT_KEY,
   LEGACY_SAVED_KEY,
+  mergeServerPreparations,
   readDraft,
   readPreparations,
   rosterNames,
@@ -143,6 +144,38 @@ describe('게임 화면에서 팀과 시즌 준비', () => {
 });
 
 describe('저장·복구와 이전 입력 보존', () => {
+  it('merges server preparations without replacing a newer local copy', () => {
+    const first = savePreparation(classPlan());
+    const localNewer = {
+      ...first,
+      className: '로컬 최신',
+      savedAt: '2026-10-22T00:00:00Z',
+    };
+    localStorage.setItem(SAVED_KEY, JSON.stringify([localNewer]));
+    const serverOlder = {
+      ...first,
+      className: '서버 과거',
+      savedAt: '2026-10-21T00:00:00Z',
+    };
+    const serverNew = {
+      ...savePreparation(classPlan()),
+      className: '서버 새 원정',
+      savedAt: '2026-10-23T00:00:00Z',
+    };
+    const merged = mergeServerPreparations([serverOlder, serverNew]);
+    expect(merged.map((plan) => plan.className)).toEqual(['서버 새 원정', '로컬 최신']);
+    expect(readPreparations()).toEqual(merged);
+  });
+
+  it('rejects malformed server preparations without changing local data', () => {
+    const local = savePreparation(classPlan());
+    const raw = localStorage.getItem(SAVED_KEY);
+    expect(() => mergeServerPreparations([{ ...local, savedAt: 'not-a-date' }])).toThrow(
+      '서버 원정 자료',
+    );
+    expect(localStorage.getItem(SAVED_KEY)).toBe(raw);
+  });
+
   it('keeps a draft, multiple classes and persisted team assignments', () => {
     const first = classPlan();
     writeDraft(first);

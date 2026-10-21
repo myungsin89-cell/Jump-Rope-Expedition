@@ -22,7 +22,7 @@ enabled = true
 site_url = "http://127.0.0.1:4173"
 additional_redirect_urls = ["http://localhost:4173"]
 jwt_expiry = 3600
-enable_signup = false
+enable_signup = true
 
 [functions.student-board]
 verify_jwt = false

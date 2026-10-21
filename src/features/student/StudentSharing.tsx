@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import type { Preparation } from '../preparation/model';
 import OperationModal from '../expedition/OperationModal';
 import { isUuid } from '../../shared/domain/studentBoard';
+import { supabase } from '../../shared/lib/supabase';
 import './student.css';
 
 interface SharedLink {
@@ -62,7 +63,6 @@ export default function StudentSharing({
   onClose: () => void;
 }) {
   const [links, setLinks] = useState(() => readLinks(plan.id));
-  const [ownerKey, setOwnerKey] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
@@ -71,12 +71,6 @@ export default function StudentSharing({
     import.meta.env.VITE_PUBLIC_APP_URL?.trim() || location.origin + location.pathname;
   const publish = async (rotate: boolean) => {
     if (!apiUrl) return;
-    if (ownerKey.length < 32) {
-      setError(
-        '선생님 전용 게시 키를 입력해 주세요. 서버에 설정한 32자 이상의 비공개 키예요.',
-      );
-      return;
-    }
     if (rotate && !window.confirm('이전 학생 QR을 무효화하고 새 QR을 만들까요?')) return;
     setBusy(true);
     setError('');
@@ -89,21 +83,25 @@ export default function StudentSharing({
         endpoint.protocol !== 'https:' &&
         !['localhost', '127.0.0.1'].includes(endpoint.hostname)
       )
-        throw new Error('게시 키 보호를 위해 HTTPS 서버 주소를 사용해 주세요.');
+        throw new Error('로그인 보호를 위해 HTTPS 서버 주소를 사용해 주세요.');
+      if (!supabase) throw new Error('Supabase 로그인이 아직 연결되지 않았어요.');
+      const { data, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !data.session)
+        throw new Error('교사 로그인이 만료됐어요. 다시 로그인해 주세요.');
       const response = await fetch(apiUrl, {
         method: 'POST',
         credentials: 'omit',
         signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
-          'x-classroom-owner-key': ownerKey,
+          Authorization: `Bearer ${data.session.access_token}`,
         },
-        body: JSON.stringify({ plan, rotate }),
+        body: JSON.stringify({ action: 'publish', plan, rotate }),
       });
       if (!response.ok)
         throw new Error(
           response.status === 401
-            ? '게시 키가 맞지 않아요. 학생에게 이 키를 공유하지 마세요.'
+            ? '교사 로그인이 만료됐어요. 다시 로그인해 주세요.'
             : '게시하지 못했어요. 서버 설정과 네트워크를 확인해 주세요.',
         );
       const value: unknown = await response.json();
@@ -170,17 +168,8 @@ export default function StudentSharing({
         </p>
       ) : (
         <>
-          <label htmlFor="student-publish-key">선생님 전용 게시 키</label>
-          <input
-            id="student-publish-key"
-            type="password"
-            autoComplete="off"
-            value={ownerKey}
-            onChange={(event) => setOwnerKey(event.target.value)}
-          />
           <p className="preparation-hint">
-            로그인 대신 사용하는 임시 게시 보호 키예요. 브라우저에 저장하거나 학생 QR에
-            넣지 않아요.
+            게시 변경은 로그인한 교사만 할 수 있어요. 학생에게는 원정대 QR만 공유합니다.
           </p>
           <div className="preparation-actions">
             <button

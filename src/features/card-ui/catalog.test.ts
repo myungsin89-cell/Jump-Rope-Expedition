@@ -21,12 +21,7 @@ describe('UNITS_CATALOG (병력 4종 카탈로그 검증)', () => {
 
   it('지시서의 4대 병력 이름과 일치해야 한다', () => {
     const names = UNITS_CATALOG.map((u) => u.name);
-    expect(names).toEqual([
-      '도토리 탐험가',
-      '숲속 해머단',
-      '잎사귀 수호자',
-      '별빛 요정',
-    ]);
+    expect(names).toEqual(['도토리 탐험가', '숲속 해머단', '잎사귀 수호자', '별빛 요정']);
   });
 });
 

@@ -11,6 +11,7 @@ import {
   readMedals,
   saveMedal,
   studentMedals,
+  validMedalColor,
   validMedalImage,
 } from './model';
 import type { MedalDefinition } from './model';
@@ -61,6 +62,11 @@ describe('로컬 훈장과 분리된 +10P 장부', () => {
     expect(validMedalImage('https://example.com/image.png')).toBe(false);
     expect(validMedalImage('data:image/png;base64,aGVsbG8=')).toBe(true);
     expect(validMedalImage(`data:image/png;base64,${'A'.repeat(280000)}`)).toBe(false);
+    expect(validMedalColor('#c96f3d')).toBe(true);
+    expect(validMedalColor('orange')).toBe(false);
+    expect(() =>
+      saveMedal(value.id, { ...medal, id: 'bad-color', color: 'red' }),
+    ).toThrow('색상');
   });
   it('writes one award and one fixed ten-point entry without a match', () => {
     const value = plan();

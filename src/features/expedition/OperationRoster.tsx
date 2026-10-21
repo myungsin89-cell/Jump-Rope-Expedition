@@ -290,6 +290,7 @@ export default function OperationRoster({
   onStudent,
   medals,
   onManageMedals,
+  hasEconomyEntries,
 }: {
   plan: Preparation;
   store: PracticeStore | null;
@@ -297,6 +298,7 @@ export default function OperationRoster({
   onStudent: (student: StudentPlan) => void;
   medals: MedalStore | null;
   onManageMedals: () => void;
+  hasEconomyEntries: boolean;
 }) {
   const [adding, setAdding] = useState(false);
   const [editingTeam, setEditingTeam] = useState<number | null>(null);
@@ -310,7 +312,11 @@ export default function OperationRoster({
     }
   };
   const locked =
-    !store || hasPracticeInputs(store) || !medals || medals.awards.length > 0;
+    !store ||
+    hasPracticeInputs(store) ||
+    !medals ||
+    medals.awards.length > 0 ||
+    hasEconomyEntries;
   const waiting = plan.students.filter(
     (student) => !plan.teams.some((team) => team.studentIds.includes(student.id)),
   );
@@ -329,7 +335,7 @@ export default function OperationRoster({
             disabled={!medals}
             onClick={onManageMedals}
           >
-            훈장 관리
+            훈장 만들기·수여
           </button>
           <button
             type="button"
@@ -369,8 +375,8 @@ export default function OperationRoster({
       </div>
       {locked && (
         <p className="operation-fine-print">
-          원정대 수는 경기 기록·훈장 수여 전에 정해 주세요. 기존 기록을 지우지 않도록 기록
-          이후의 수 변경은 아직 지원하지 않아요.
+          원정대 수는 경기 기록·훈장 수여·구매 전에 정해 주세요. 기존 기록을 지우지 않도록
+          기록 이후의 수 변경은 아직 지원하지 않아요.
         </p>
       )}
       {error && (

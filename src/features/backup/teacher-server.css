@@ -1,0 +1,81 @@
+.teacher-server-form {
+  display: grid;
+  gap: 12px;
+}
+
+.teacher-server-form > p:first-child {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.teacher-server-form label {
+  margin: 4px 0 0;
+  font-weight: 750;
+}
+
+.teacher-server-form input {
+  width: 100%;
+  min-height: 52px;
+  padding: 11px 13px;
+  border: 1px solid #9eafa3;
+  border-radius: 9px;
+  background: var(--prep-paper);
+  color: var(--forest-deep);
+  font: inherit;
+}
+
+.teacher-server-form input:focus-visible {
+  outline: 3px solid var(--mint-accent);
+  outline-offset: 2px;
+}
+
+.teacher-server-form small {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.teacher-server-error,
+.teacher-server-success {
+  margin: 4px 0 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.teacher-server-error {
+  border: 1px solid #a32924;
+  background: #fff7f3;
+  color: #a32924;
+}
+
+.teacher-server-success {
+  border: 1px solid var(--mint-border);
+  background: var(--mint-tint);
+  color: var(--forest-primary);
+}
+
+.teacher-server-actions,
+.teacher-server-heading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.teacher-server-actions {
+  margin-top: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--prep-line);
+}
+
+@media (max-width: 600px) {
+  .teacher-server-heading-actions {
+    width: 100%;
+  }
+
+  .teacher-server-heading-actions > * {
+    flex: 1 1 auto;
+  }
+}

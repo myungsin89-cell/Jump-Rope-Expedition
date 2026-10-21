@@ -209,6 +209,12 @@
   text-underline-offset: 5px;
 }
 
+.preparation-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .preparation-layout {
   display: grid;
   grid-template-columns: 290px minmax(0, 1fr);
@@ -1035,6 +1041,14 @@
 
 .preparation-fields {
   margin-top: 32px;
+}
+
+.teacher-server-registration {
+  margin-top: 28px;
+}
+
+.teacher-server-registration .preparation-hint {
+  margin: 10px 0 0;
 }
 
 .preparation-paper .preparation-class-roster {

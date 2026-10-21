@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import {
   createPreparation,
@@ -15,6 +15,13 @@ import { ErrorSummary, FieldError, ForestMap, PageFrame } from './PreparationUI'
 import ExpeditionBoard from '../expedition/ExpeditionBoard';
 import type { OperationPanel } from '../expedition/operations';
 import { currentSeasonIndex } from '../expedition/operations';
+import TeacherServerModal from '../backup/TeacherServerModal';
+import {
+  isTeacherBackupConfigured,
+  listTeacherBackups,
+  restoreTeacherBackups,
+  saveTeacherBackup,
+} from '../backup/teacherBackup';
 import './preparation.css';
 import '../expedition/operations.css';
 
@@ -45,21 +52,34 @@ function ClassRegistration() {
       );
     }
   };
-  const submit = (event: FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
     const nextErrors = validatePreparation(plan, 'class');
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
     setSaving(true);
+    let saved: SavedPreparation;
     try {
-      const saved = savePreparation(plan);
-      window.location.assign(`#/preparations/${saved.id}`);
+      saved = savePreparation(plan);
     } catch {
       setSaving(false);
       setStorageError(
         '학생 명단을 저장하지 못했어요. 내용을 남겨 두었으니 저장 공간을 확인하고 다시 시도해 주세요.',
       );
+      return;
     }
+    if (isTeacherBackupConfigured()) {
+      try {
+        await saveTeacherBackup(saved);
+      } catch (reason) {
+        setStorageError(
+          `브라우저에는 명단을 저장했지만 서버 저장을 마치지 못했어요. ${
+            reason instanceof Error ? reason.message : '잠시 후 다시 시도해 주세요.'
+          }`,
+        );
+      }
+    }
+    window.location.assign(`#/preparations/${saved.id}`);
   };
   return (
     <PageFrame
@@ -135,7 +155,7 @@ function ClassRegistration() {
             </button>
           </div>
           <p className="preparation-save-hint">
-            입력 내용은 이 브라우저에 자동 보관돼요.
+            입력 내용은 이 브라우저와 로그인한 교사 계정에 함께 저장돼요.
           </p>
         </form>
       )}
@@ -150,7 +170,7 @@ function PreparationLibrary({
   id?: string;
   panel?: OperationPanel;
 }) {
-  const [loaded] = useState(() => {
+  const [loaded, setLoaded] = useState(() => {
     try {
       return { all: readPreparations(), draft: readDraft(), error: '' };
     } catch {
@@ -162,6 +182,36 @@ function PreparationLibrary({
       };
     }
   });
+  const [restoring, setRestoring] = useState(false);
+  const [serverNotice, setServerNotice] = useState(() =>
+    isTeacherBackupConfigured()
+      ? '서버 자료를 확인하고 있어요…'
+      : 'Supabase 서버 연결을 확인해 주세요.',
+  );
+  useEffect(() => {
+    let active = true;
+    if (!isTeacherBackupConfigured()) return;
+    void listTeacherBackups()
+      .then((backups) => {
+        if (!active) return;
+        const all = restoreTeacherBackups(backups);
+        setLoaded((current) => ({ ...current, all }));
+        setServerNotice(
+          backups.length
+            ? `교사 계정의 원정 ${backups.length}개를 동기화했어요.`
+            : '이 계정에 저장된 원정이 아직 없어요.',
+        );
+      })
+      .catch((reason) => {
+        if (!active) return;
+        setServerNotice(
+          reason instanceof Error ? reason.message : '서버 자료를 불러오지 못했어요.',
+        );
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
   const saved = id ? loaded.all.find((plan) => plan.id === id) : undefined;
   if (saved)
     return (
@@ -178,9 +228,18 @@ function PreparationLibrary({
       subtitle="함께할 원정을 선택해 주세요."
       landscape
       headingAside={
-        <a className="preparation-primary" href="#/prepare">
-          {loaded.draft ? '명단 이어하기' : '원정 만들기'}
-        </a>
+        <div className="teacher-server-heading-actions">
+          <button
+            type="button"
+            className="preparation-secondary"
+            onClick={() => setRestoring(true)}
+          >
+            서버 명단 불러오기
+          </button>
+          <a className="preparation-primary" href="#/prepare">
+            {loaded.draft ? '명단 이어하기' : '원정 만들기'}
+          </a>
+        </div>
       }
       brandSubtitle="선생님 원정실"
       aside={
@@ -191,6 +250,9 @@ function PreparationLibrary({
         </p>
       }
     >
+      <p className="operation-local-note" role="status">
+        {serverNotice}
+      </p>
       {loaded.error ? (
         <p className="preparation-storage-error" role="alert">
           {loaded.error}
@@ -258,6 +320,13 @@ function PreparationLibrary({
             )
           )}
         </>
+      )}
+      {restoring && (
+        <TeacherServerModal
+          mode="restore"
+          onClose={() => setRestoring(false)}
+          onRestored={(all) => setLoaded((current) => ({ ...current, all }))}
+        />
       )}
     </PageFrame>
   );

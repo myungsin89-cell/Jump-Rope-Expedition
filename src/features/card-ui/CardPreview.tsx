@@ -35,13 +35,18 @@ export default function CardPreview() {
         <header className="jre-preview-banner">
           <div className="jre-preview-banner-text">
             <strong>카드 디자인 미리보기 · 실제 팀 정보가 아닙니다</strong>
-            <span>개발 검토용 카탈로그 화면이며, 실제 팀 잔액이나 획득 기록이 아닙니다.</span>
+            <span>
+              개발 검토용 카탈로그 화면이며, 실제 팀 잔액이나 획득 기록이 아닙니다.
+            </span>
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <span className="jre-card-tag" style={{ background: '#e8f5ed' }}>
               총 19종 (병력 4 + 영웅 15)
             </span>
-            <span className="jre-card-tag" style={{ background: '#faebd0', color: '#6e4307' }}>
+            <span
+              className="jre-card-tag"
+              style={{ background: '#faebd0', color: '#6e4307' }}
+            >
               보스 5종 추가
             </span>
           </div>
@@ -79,11 +84,7 @@ export default function CardPreview() {
             </h2>
 
             {/* 등급 필터 버튼 그룹 */}
-            <div
-              aria-label="영웅 등급 필터"
-              className="jre-preview-filters"
-              role="group"
-            >
+            <div aria-label="영웅 등급 필터" className="jre-preview-filters" role="group">
               <button
                 aria-pressed={filter === 'all'}
                 className="jre-preview-filter-btn"
@@ -170,14 +171,18 @@ export default function CardPreview() {
         </section>
 
         {/* 학생용 비밀 보스 & 3단계 순차 해금 시스템 예시 */}
-        <section className="jre-preview-section" aria-labelledby="secret-boss-section-title">
+        <section
+          className="jre-preview-section"
+          aria-labelledby="secret-boss-section-title"
+        >
           <div className="jre-preview-section-header">
             <h2 className="jre-preview-section-title" id="secret-boss-section-title">
               <span>🌫️</span>
               <span>학생용 비밀 보스 (3단계 순차적 수수께끼 해금 시스템)</span>
             </h2>
             <span style={{ fontSize: '0.85rem', color: '#556c5e' }}>
-              *보스 정체와 약점은 숨겨져 있으며, 줄넘기 포인트로 1단계부터 순차적으로 해금합니다.
+              *보스 정체와 약점은 숨겨져 있으며, 줄넘기 포인트로 1단계부터 순차적으로
+              해금합니다.
             </span>
           </div>
 

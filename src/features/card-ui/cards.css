@@ -30,7 +30,9 @@
   box-sizing: border-box;
   color: #2b1b0e;
   font-family: var(--font-ui, system-ui, sans-serif);
-  transition: transform 160ms ease, box-shadow 160ms ease;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .jre-card:hover {
@@ -238,7 +240,9 @@
 /* [희귀 · Rare] 신비로운 마법 사파이어/청록 테두리 & 크리스탈 구분선 */
 .jre-card-hero.rarity-rare {
   border-color: #16536e;
-  box-shadow: 2px 4px 0 rgba(22, 83, 110, 0.35), 0 0 12px rgba(75, 160, 195, 0.2);
+  box-shadow:
+    2px 4px 0 rgba(22, 83, 110, 0.35),
+    0 0 12px rgba(75, 160, 195, 0.2);
 }
 .jre-card-hero.rarity-rare::after {
   border-color: rgba(75, 160, 195, 0.45);
@@ -264,7 +268,9 @@
 .jre-card-hero.rarity-legendary {
   border-color: #b87c10;
   border-width: 3px;
-  box-shadow: 3px 5px 0 rgba(140, 92, 10, 0.4), 0 0 16px rgba(245, 185, 45, 0.3);
+  box-shadow:
+    3px 5px 0 rgba(140, 92, 10, 0.4),
+    0 0 16px rgba(245, 185, 45, 0.3);
 }
 .jre-card-hero.rarity-legendary::after {
   top: 3px;
@@ -284,7 +290,14 @@
 }
 .jre-card-hero.rarity-legendary .jre-card-divider {
   height: 4px;
-  background: linear-gradient(90deg, #fceecb 0%, #c48a1b 25%, #ffd700 50%, #c48a1b 75%, #fceecb 100%);
+  background: linear-gradient(
+    90deg,
+    #fceecb 0%,
+    #c48a1b 25%,
+    #ffd700 50%,
+    #c48a1b 75%,
+    #fceecb 100%
+  );
   box-shadow: 0 1px 3px rgba(184, 124, 16, 0.35);
 }
 .jre-card-hero.rarity-legendary .jre-card-tag {
@@ -355,7 +368,9 @@
 
 .jre-card-boss.is-selected {
   border-color: #d49511;
-  box-shadow: 0 0 0 3px rgba(212, 149, 17, 0.4), 2px 4px 8px rgba(44, 28, 14, 0.35);
+  box-shadow:
+    0 0 0 3px rgba(212, 149, 17, 0.4),
+    2px 4px 8px rgba(44, 28, 14, 0.35);
 }
 
 .jre-card-boss .jre-card-header {
@@ -684,7 +699,7 @@
   background: #eef5f0;
 }
 
-.jre-preview-filter-btn[aria-pressed="true"] {
+.jre-preview-filter-btn[aria-pressed='true'] {
   background: #1b4332;
   color: #ffffff;
   box-shadow: 1px 2px 0 rgba(18, 46, 34, 0.3);

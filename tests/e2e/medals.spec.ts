@@ -4,11 +4,11 @@ import { seedOperation } from './operation-fixture';
 
 async function createMedal(page: Page) {
   await page.getByRole('link', { name: '명단', exact: true }).click();
-  await page.getByRole('button', { name: '훈장 관리', exact: true }).click();
+  await page.getByRole('button', { name: '훈장 만들기·수여', exact: true }).click();
   await expect(page.getByText('아직 만든 훈장이 없어요.', { exact: true })).toBeVisible();
   await page.getByLabel('훈장 이름', { exact: true }).fill('도움의 손길');
-  await page.getByLabel('설명', { exact: true }).fill('함께 준비한 친구에게');
-  await page.getByLabel('아이콘', { exact: true }).selectOption('leaf');
+  await page.getByLabel('설명·수여 기준', { exact: true }).fill('함께 준비한 친구에게');
+  await page.getByRole('button', { name: '포도 보라 훈장', exact: true }).click();
   await page.getByRole('button', { name: '훈장 저장', exact: true }).click();
   await expect(
     page.getByRole('button', { name: '도움의 손길 수정', exact: true }),
@@ -22,14 +22,7 @@ async function openStudent(page: Page, number: number) {
   await page.getByRole('heading', { name: /^받은 훈장/ }).click();
 }
 async function giveMedal(page: Page) {
-  await page
-    .getByLabel('수여할 훈장', { exact: true })
-    .selectOption({ label: '도움의 손길' });
-  await page.getByRole('button', { name: '훈장 주기', exact: true }).click();
-  await expect(page.getByRole('dialog').getByRole('status')).toContainText(
-    '반복 수여도 각각 10P',
-  );
-  await page.getByRole('button', { name: '수여 확정 (+10P)', exact: true }).click();
+  await page.getByRole('button', { name: '도움의 손길 훈장 수여', exact: true }).click();
   await expect(page.getByRole('dialog').getByRole('status')).toContainText(
     '훈장을 주었어요',
   );
@@ -39,9 +32,25 @@ test('creates a custom medal and gives repeated awards with icons, history and e
 }) => {
   await seedOperation(page);
   await createMedal(page);
+  await page.getByRole('button', { name: '훈장 만들기·수여', exact: true }).click();
+  await page.getByRole('tab', { name: '2. 학생에게 수여', exact: true }).click();
+  await page.screenshot({ path: 'artifacts/medal-quick-award-desktop.png' });
+  for (let count = 0; count < 2; count++) {
+    await page
+      .getByLabel('받을 학생', { exact: true })
+      .selectOption({ label: '1번 가상학생 1 · 초록 원정대' });
+    await page
+      .getByRole('button', {
+        name: '가상학생 1에게 훈장 수여 (+10P)',
+        exact: true,
+      })
+      .click();
+    await expect(page.getByRole('dialog').getByRole('status')).toContainText(
+      '훈장을 주었어요',
+    );
+  }
+  await page.getByRole('button', { name: '닫기', exact: true }).click();
   await openStudent(page, 1);
-  await giveMedal(page);
-  await giveMedal(page);
   await expect(page.getByText('도움의 손길 · 2회', { exact: true })).toBeVisible();
   await page.getByText('수여 이력', { exact: true }).click();
   await expect(
@@ -107,10 +116,6 @@ test('retries failed awards once and preserves individual history when a student
   await seedOperation(page);
   await createMedal(page);
   await openStudent(page, 1);
-  await page
-    .getByLabel('수여할 훈장', { exact: true })
-    .selectOption({ label: '도움의 손길' });
-  await page.getByRole('button', { name: '훈장 주기', exact: true }).click();
   await page.evaluate(() => {
     const original = Storage.prototype.setItem;
     let failOnce = true;
@@ -122,7 +127,7 @@ test('retries failed awards once and preserves individual history when a student
       return original.call(this, key, value);
     };
   });
-  await page.getByRole('button', { name: '수여 확정 (+10P)', exact: true }).click();
+  await page.getByRole('button', { name: '도움의 손길 훈장 수여', exact: true }).click();
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText(
     '수여하지 못했어요',
   );
@@ -133,7 +138,7 @@ test('retries failed awards once and preserves individual history when a student
           .entries,
     ),
   ).toEqual([]);
-  await page.getByRole('button', { name: '수여 확정 (+10P)', exact: true }).click();
+  await page.getByRole('button', { name: '도움의 손길 훈장 수여', exact: true }).click();
   await page.getByRole('button', { name: '닫기', exact: true }).click();
   await page.getByRole('button', { name: '2 원정대 대원 편성', exact: true }).click();
   await page.getByRole('checkbox', { name: '1번 가상학생 1 편성', exact: true }).check();
@@ -166,18 +171,12 @@ test('edits and deactivates definitions without rewriting historical awards', as
   await openStudent(page, 1);
   await giveMedal(page);
   await page.getByRole('button', { name: '닫기', exact: true }).click();
-  await page.getByRole('button', { name: '훈장 관리', exact: true }).click();
+  await page.getByRole('button', { name: '훈장 만들기·수여', exact: true }).click();
   await page.getByRole('button', { name: '도움의 손길 수정', exact: true }).click();
   await page.getByLabel('훈장 이름', { exact: true }).fill('따뜻한 도움');
-  const image = await page.locator('.medal-preview').screenshot();
-  await page
-    .getByLabel('직접 만든 이미지 (선택)', { exact: true })
-    .setInputFiles({ name: 'custom.png', mimeType: 'image/png', buffer: image });
-  await expect(
-    page.getByRole('button', { name: '훈장 저장', exact: true }),
-  ).toBeEnabled();
-  await expect(page.locator('.medal-preview img')).toBeVisible();
-  await page.getByRole('button', { name: '훈장 저장', exact: true }).click();
+  await page.getByRole('button', { name: '노을 주황 훈장', exact: true }).click();
+  await expect(page.locator('.medal-large-preview .medal-icon')).toBeVisible();
+  await page.getByRole('button', { name: '변경 저장', exact: true }).click();
   page.once('dialog', (dialog) => dialog.accept());
   await page.getByRole('button', { name: '따뜻한 도움 사용 중지', exact: true }).click();
   await expect(
@@ -186,7 +185,9 @@ test('edits and deactivates definitions without rewriting historical awards', as
   await page.getByRole('button', { name: '닫기', exact: true }).click();
   await openStudent(page, 1);
   await expect(page.getByText('도움의 손길 · 1회', { exact: true })).toBeVisible();
-  await expect(page.getByLabel('수여할 훈장', { exact: true })).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: '따뜻한 도움 훈장 수여', exact: true }),
+  ).toHaveCount(0);
   expect(
     await page.evaluate(() => {
       const value = JSON.parse(
@@ -195,10 +196,10 @@ test('edits and deactivates definitions without rewriting historical awards', as
       return {
         snapshot: value.awards[0].medal.name,
         active: value.definitions[0].active,
-        image: value.definitions[0].image.startsWith('data:image/png;'),
+        color: value.definitions[0].color,
       };
     }),
-  ).toEqual({ snapshot: '도움의 손길', active: false, image: true });
+  ).toEqual({ snapshot: '도움의 손길', active: false, color: '#c96f3d' });
 });
 
 test('keeps medal flows usable on mobile and does not guess points for unassigned students', async ({
@@ -212,7 +213,9 @@ test('keeps medal flows usable on mobile and does not guess points for unassigne
   await page.getByRole('button', { name: '1명 추가하기', exact: true }).click();
   await page.getByRole('button', { name: '31번 미배정 친구 상세', exact: true }).click();
   await page.getByRole('heading', { name: /^받은 훈장/ }).click();
-  await expect(page.getByLabel('수여할 훈장', { exact: true })).toBeDisabled();
+  await expect(
+    page.getByRole('button', { name: '도움의 손길 훈장 수여', exact: true }),
+  ).toBeDisabled();
   await expect(page.getByRole('dialog')).toContainText('미배정 학생의 포인트 귀속');
   await page.getByRole('button', { name: '닫기', exact: true }).click();
   await openStudent(page, 1);
@@ -238,7 +241,7 @@ test('protects malformed local medal records and leaves other expedition data re
   await expect(page.locator('.operation-team').first()).toContainText('확인 필요');
   await page.getByRole('link', { name: '명단', exact: true }).click();
   await expect(
-    page.getByRole('button', { name: '훈장 관리', exact: true }),
+    page.getByRole('button', { name: '훈장 만들기·수여', exact: true }),
   ).toBeDisabled();
   await expect(page.locator('.operation-roster-list > li')).toHaveCount(30);
   expect(

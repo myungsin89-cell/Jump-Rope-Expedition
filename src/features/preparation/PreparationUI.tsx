@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import type { FieldErrors } from './model';
 import forestCover from '../../../assets/illustrations/title-screen-cover-v1.png';
+import TeacherSessionButton from '../auth/TeacherSessionButton';
 
 export function ForestMap() {
   return (
@@ -127,9 +128,12 @@ export function PageFrame({
         <a className="preparation-brand" href="#/">
           줄넘기 원정대<span>{brandSubtitle}</span>
         </a>
-        <a className="preparation-home" href={backHref}>
-          {backLabel}
-        </a>
+        <div className="preparation-header-actions">
+          <a className="preparation-home" href={backHref}>
+            {backLabel}
+          </a>
+          <TeacherSessionButton />
+        </div>
       </header>
       <div className="preparation-layout">
         <aside className="preparation-sidebar">

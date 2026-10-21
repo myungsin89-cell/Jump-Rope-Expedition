@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { PageFrame, ErrorSummary } from '../preparation/PreparationUI';
 import {
@@ -26,6 +26,11 @@ import type { MedalStore } from '../medals/model';
 import MedalManager from '../medals/MedalManager';
 import '../medals/medals.css';
 import StudentSharing from '../student/StudentSharing';
+import { readEconomy } from '../economy/model';
+import type { EconomyStore } from '../economy/model';
+import TeamEconomyModal from '../economy/TeamEconomyModal';
+import TeacherServerModal from '../backup/TeacherServerModal';
+import { saveTeacherBackup } from '../backup/teacherBackup';
 
 export default function ExpeditionBoard({
   initial,
@@ -62,11 +67,47 @@ export default function ExpeditionBoard({
   });
   const [managingMedals, setManagingMedals] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [backingUp, setBackingUp] = useState(false);
+  const [serverStatus, setServerStatus] = useState('서버 동기화 준비 중…');
+  const [economyTeam, setEconomyTeam] = useState<number | null>(null);
+  const [economy, setEconomy] = useState(() => {
+    try {
+      return { store: readEconomy(initial.id) as EconomyStore | null, error: '' };
+    } catch (reason) {
+      return {
+        store: null,
+        error:
+          reason instanceof Error
+            ? reason.message
+            : '포인트·구매 기록을 읽지 못했어요. 원본은 보존했어요.',
+      };
+    }
+  });
   const updateMedals = (store: MedalStore) => setMedals({ store, error: '' });
+  const updateEconomy = (store: EconomyStore) => setEconomy({ store, error: '' });
   const [errors, setErrors] = useState<FieldErrors>({});
   const [notice, setNotice] = useState('');
   const [student, setStudent] = useState<StudentPlan | null>(null);
   const [seasonEditor, setSeasonEditor] = useState(() => currentSeasonIndex(initial));
+  useEffect(() => {
+    if (loaded.error || medals.error || economy.error) return;
+    let active = true;
+    const timeout = window.setTimeout(() => {
+      if (active) setServerStatus('변경 내용을 서버에 저장하는 중…');
+      void saveTeacherBackup(plan)
+        .then(() => {
+          if (active) setServerStatus('서버 저장 완료');
+        })
+        .catch(() => {
+          if (active)
+            setServerStatus('서버 저장을 기다리고 있어요. 로컬 자료는 보관됐어요.');
+        });
+    }, 900);
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+    };
+  }, [plan, loaded.error, medals.error, medals.store, economy.error, economy.store]);
   const save = (next: Preparation) => {
     try {
       saveGamePreparation(next);
@@ -136,13 +177,22 @@ export default function ExpeditionBoard({
       backLabel="원정 목록"
       brandSubtitle="선생님 원정실"
       headingAside={
-        <button
-          type="button"
-          className="preparation-secondary"
-          onClick={() => setSharing(true)}
-        >
-          학생 화면 공유
-        </button>
+        <div className="teacher-server-heading-actions">
+          <button
+            type="button"
+            className="preparation-secondary"
+            onClick={() => setBackingUp(true)}
+          >
+            서버 저장
+          </button>
+          <button
+            type="button"
+            className="preparation-secondary"
+            onClick={() => setSharing(true)}
+          >
+            학생 화면 공유
+          </button>
+        </div>
       }
     >
       <nav className="operation-nav" aria-label="원정 메뉴">
@@ -176,6 +226,11 @@ export default function ExpeditionBoard({
           {medals.error}
         </p>
       )}
+      {economy.error && (
+        <p className="preparation-storage-error" role="alert">
+          {economy.error}
+        </p>
+      )}
       {initialPanel === 'overview' ? (
         <ExpeditionOverview
           plan={plan}
@@ -183,6 +238,8 @@ export default function ExpeditionBoard({
           onRecord={openRecords}
           onStudent={setStudent}
           medals={medals.store}
+          economy={economy.store}
+          onEconomy={setEconomyTeam}
         />
       ) : initialPanel === 'roster' ? (
         <OperationRoster
@@ -192,6 +249,11 @@ export default function ExpeditionBoard({
           onStudent={setStudent}
           medals={medals.store}
           onManageMedals={() => setManagingMedals(true)}
+          hasEconomyEntries={Boolean(
+            economy.error ||
+            economy.store?.purchases.length ||
+            economy.store?.reversals.length,
+          )}
         />
       ) : (
         <form onSubmit={chooseSeason} noValidate>
@@ -210,13 +272,18 @@ export default function ExpeditionBoard({
             lockOrder={Boolean(
               (loaded.store && hasPracticeInputs(loaded.store)) ||
               medals.store?.awards.length ||
-              medals.error,
+              medals.error ||
+              economy.error ||
+              economy.store?.purchases.length ||
+              economy.store?.reversals.length,
             )}
             minSeasonCount={Math.max(
               1,
               ...(loaded.store?.history.map((entry) => entry.seasonIndex + 1) ?? []),
               loaded.store?.draft ? loaded.store.draft.seasonIndex + 1 : 1,
               ...(medals.store?.awards.map((award) => award.seasonIndex + 1) ?? []),
+              ...(economy.store?.purchases.map((purchase) => purchase.seasonIndex + 1) ??
+                []),
             )}
           />
           <div className="preparation-actions">
@@ -248,15 +315,30 @@ export default function ExpeditionBoard({
       )}
       {managingMedals && medals.store && (
         <MedalManager
+          plan={plan}
           store={medals.store}
           onChange={updateMedals}
           onClose={() => setManagingMedals(false)}
         />
       )}
       {sharing && <StudentSharing plan={plan} onClose={() => setSharing(false)} />}
+      {backingUp && (
+        <TeacherServerModal mode="save" plan={plan} onClose={() => setBackingUp(false)} />
+      )}
+      {economyTeam !== null && loaded.store && medals.store && economy.store && (
+        <TeamEconomyModal
+          key={`${economyTeam}-${currentSeasonIndex(plan)}`}
+          plan={plan}
+          practice={loaded.store}
+          medals={medals.store}
+          store={economy.store}
+          teamIndex={economyTeam}
+          onChange={updateEconomy}
+          onClose={() => setEconomyTeam(null)}
+        />
+      )}
       <p className="operation-save-note">
-        변경 내용은 이 브라우저에 자동 저장돼요. 기기 간 연결과 공식 보상은 아직 준비
-        중이에요.
+        변경 내용은 이 브라우저와 교사 계정에 자동 저장돼요. {serverStatus}
       </p>
     </PageFrame>
   );

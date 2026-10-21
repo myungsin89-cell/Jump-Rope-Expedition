@@ -23,6 +23,8 @@ import {
 import type { PracticeDraft, PracticeJumper, PracticeStore } from './practiceModel';
 import '../preparation/preparation.css';
 import './matches.css';
+import TeacherSessionButton from '../auth/TeacherSessionButton';
+import { saveTeacherBackup } from '../backup/teacherBackup';
 
 type Phase = 'jumpers' | 'records' | 'review' | 'saved';
 const PHASE_TITLES: Record<Phase, string> = {
@@ -50,12 +52,15 @@ function MatchFrame({ plan, children }: { plan?: Preparation; children: ReactNod
         <a className="preparation-brand" href="#/">
           줄넘기 원정대<span>선생님 기록판</span>
         </a>
-        <a
-          className="preparation-home"
-          href={plan ? `#/preparations/${plan.id}` : '#/preparations'}
-        >
-          현황으로
-        </a>
+        <div className="preparation-header-actions">
+          <a
+            className="preparation-home"
+            href={plan ? `#/preparations/${plan.id}` : '#/preparations'}
+          >
+            현황으로
+          </a>
+          <TeacherSessionButton />
+        </div>
       </header>
       <div id="match-content" className="match-content" tabIndex={-1}>
         {children}
@@ -222,6 +227,11 @@ function MatchBoard({ plan }: { plan: Preparation }) {
         setStore(savePractice(draft));
         setStorageError('');
         setPhase('saved');
+        void saveTeacherBackup(plan).catch(() => {
+          setStorageError(
+            '기록은 이 브라우저에 저장했지만 서버 동기화를 기다리고 있어요. 원정 현황에서 다시 저장할 수 있어요.',
+          );
+        });
       } catch {
         setStorageError(
           '연습 기록을 저장하지 못했어요. 입력 내용은 그대로 남아 있어요. 다시 저장해 주세요.',
