@@ -76,7 +76,7 @@ test('creates downloadable team-labeled QR images for published boards', async (
   );
 });
 
-test('previews a read-only student team and browses real unit and hero cards without exposing the boss', async ({
+test('previews a student team board with shop and forces and browses real unit and hero cards without exposing the boss', async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -168,6 +168,8 @@ test('previews a read-only student team and browses real unit and hero cards wit
     .first()
     .click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('초록 원정대');
+  await expect(page.getByText('원정대 게시판 · 상점과 병력')).toBeVisible();
+  await expect(page.getByText('읽기 전용')).toHaveCount(0);
   await expect(page.locator('.student-team-card')).toHaveCount(3);
   await expect(
     page.locator('.student-team-card li, .student-team-card .student-captain-slot'),
@@ -194,6 +196,8 @@ test('previews a read-only student team and browses real unit and hero cards wit
   });
   await page.getByRole('button', { name: '상점', exact: true }).click();
   await expect(page.locator('.student-wallet')).toBeVisible();
+  await expect(page.getByRole('button', { name: /병력 구매하기/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /힌트 구매하기/ })).toBeVisible();
   await expect(page.locator('.jre-card-unit')).toHaveCount(0);
   await page.getByRole('button', { name: /병력 구매하기/ }).click();
   await expect(page.locator('.jre-card-unit')).toHaveCount(4);
@@ -209,12 +213,14 @@ test('previews a read-only student team and browses real unit and hero cards wit
     fullPage: true,
   });
   await page.getByRole('button', { name: '상점', exact: true }).click();
+  await expect(page.getByRole('button', { name: /힌트 구매하기/ })).toBeVisible();
   await page.getByRole('button', { name: /힌트 구매하기/ }).click();
+  await expect(page.locator('.student-hint-purchase')).toBeVisible();
   await expect(page.locator('.student-hint-purchase')).toContainText(
     '구매 전에는 내용이 가려져 있어요',
   );
   await expect(page.getByRole('button', { name: '실제 QR에서 구매' })).toBeDisabled();
-  await page.getByRole('button', { name: /^원정대 병력/ }).click();
+  await page.getByRole('button', { name: /원정대 병력/ }).click();
   await expect(page.locator('.student-owned-heroes .jre-card-hero')).toHaveCount(1);
   await expect(page.locator('.student-sealed-hero')).toHaveCount(1);
   await expect(page.locator('.student-card-grid .jre-card-hero')).toHaveCount(1);
@@ -265,10 +271,12 @@ test('plays one scheduled hero reveal across a live team board', async ({ page }
     });
   });
   await page.goto(`/#/team/${token}`);
+  await expect(page.getByText('원정대 게시판 · 상점과 병력')).toBeVisible();
+  await expect(page.getByText('읽기 전용')).toHaveCount(0);
   await expect(
     page.getByRole('heading', { level: 1, name: '초록 원정대' }),
   ).toBeVisible();
-  await page.getByRole('button', { name: /^원정대 병력/ }).click();
+  await page.getByRole('button', { name: /원정대 병력/ }).click();
   const reveal = page.locator('.student-live-reveal');
   await expect(reveal).toBeVisible({ timeout: 8_000 });
   await expect(reveal).toContainText('새로운 영웅이 합류했습니다');
@@ -322,13 +330,66 @@ test('buys a unit on the live board and shows it in expedition forces', async ({
   });
   page.on('dialog', (dialog) => void dialog.accept());
   await page.goto(`/#/team/${token}`);
+  await expect(page.getByText('원정대 게시판 · 상점과 병력')).toBeVisible();
+  await expect(page.getByText('읽기 전용')).toHaveCount(0);
   await page.getByRole('button', { name: '상점', exact: true }).click();
   await expect(page.locator('.student-wallet')).toContainText('100P');
+  await expect(page.getByRole('button', { name: /병력 구매하기/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /힌트 구매하기/ })).toBeVisible();
   await page.getByRole('button', { name: /병력 구매하기/ }).click();
   await page.locator('.student-shop-item').first().getByRole('button').click();
   await expect(page.getByRole('status')).toContainText('구매 완료');
   await expect(page.locator('.student-wallet')).toContainText('70P');
-  await page.getByRole('button', { name: /^원정대 병력/ }).click();
+  await page.getByRole('button', { name: /원정대 병력/ }).click();
   await expect(page.locator('.student-owned-units .jre-card-unit')).toHaveCount(1);
   await expect(page.getByLabel('도토리 탐험가 1장')).toBeVisible();
+});
+
+test('reveals a sealed hero card on the live board when clicked', async ({ page }) => {
+  const token = '55555555-5555-4555-8555-555555555555';
+  let revealed = false;
+  const payload = () => ({
+    version: 1,
+    expeditionName: '별빛 원정',
+    teamName: '초록 원정대',
+    teamIndex: 0,
+    seasonNumber: 1,
+    publishedAt: new Date().toISOString(),
+    members: [{ name: '가람', number: 1, captain: true, jumper: false }],
+    heroes: [{ slot: 1, revealed, ...(revealed ? { heroId: 'H03' } : {}) }],
+    economy: {
+      earnedPoints: 100,
+      teacherSpentPoints: 0,
+      balance: 100,
+      inventory: { UNIT_01: 0, UNIT_02: 0, UNIT_03: 0, UNIT_04: 0 },
+      hintPurchased: false,
+    },
+  });
+  await page.route('**/functions/v1/student-board*', async (route) => {
+    if (route.request().method() === 'POST') {
+      const body = route.request().postDataJSON();
+      expect(body.action).toBe('reveal-hero');
+      expect(body.slot).toBe(1);
+      revealed = true;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ reveal: { slot: 1, heroId: 'H03' } }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(payload()),
+    });
+  });
+  await page.goto(`/#/team/${token}`);
+  await expect(page.getByText('원정대 게시판 · 상점과 병력')).toBeVisible();
+  await expect(page.getByText('읽기 전용')).toHaveCount(0);
+  await page.getByRole('button', { name: /원정대 병력/ }).click();
+  const unsealButton = page.getByRole('button', { name: '눌러서 함께 개봉해요' });
+  await expect(unsealButton).toBeVisible();
+  await unsealButton.click();
+  await expect(page.locator('.student-owned-heroes .jre-card-hero')).toHaveCount(1);
 });

@@ -244,7 +244,7 @@ export default function StudentBoard({ route }: { route: string }) {
       )}
       <header className="student-top">
         <a href="#/">줄넘기 원정대</a>
-        <span>둘러보기 · 읽기 전용</span>
+        <span>원정대 게시판 · 상점과 병력</span>
         {preview && <a href={`#/preparations/${previewParts[2]}`}>교사 화면으로</a>}
       </header>
       {preview && (
