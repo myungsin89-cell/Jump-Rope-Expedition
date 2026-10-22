@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Preparation, StudentPlan } from '../preparation/model';
 import { awardBlockReason, awardMedal, studentMedals } from './model';
+import { recordOfficialMedalAward } from './officialMedals';
 import type { MedalStore } from './model';
 import MedalIcon from './MedalIcon';
 
@@ -27,6 +28,12 @@ export default function StudentMedals({
   const give = (medalId: string) => {
     try {
       const result = awardMedal(plan, student.id, medalId, requestId);
+      const latestAward = result.awards.find((item) => item.id === requestId);
+      if (latestAward) {
+        void recordOfficialMedalAward(plan, latestAward).catch(() => {
+          /* Server recording is best-effort alongside local authoritative store */
+        });
+      }
       const medal = active.find((item) => item.id === medalId);
       onChange(result);
       setRequestId(crypto.randomUUID());

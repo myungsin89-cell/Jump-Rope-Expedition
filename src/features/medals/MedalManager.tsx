@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import OperationModal from '../expedition/OperationModal';
 import type { Preparation } from '../preparation/model';
 import MedalIcon from './MedalIcon';
+import { recordOfficialMedalAward } from './officialMedals';
 import {
   awardBlockReason,
   awardMedal,
@@ -98,6 +99,12 @@ export default function MedalManager({
     if (!selected || !student) return;
     try {
       const next = awardMedal(plan, student.id, selected.id, requestId);
+      const latestAward = next.awards.find((item) => item.id === requestId);
+      if (latestAward) {
+        void recordOfficialMedalAward(plan, latestAward).catch(() => {
+          /* Server recording is best-effort alongside local authoritative store */
+        });
+      }
       onChange(next);
       setRequestId(crypto.randomUUID());
       setStudentId('');
