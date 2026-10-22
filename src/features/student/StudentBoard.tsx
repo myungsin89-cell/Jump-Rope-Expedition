@@ -19,8 +19,37 @@ import { purchaseStudentItem, revealStudentHero } from './studentBoardClient';
 import forest from '../../../assets/illustrations/title-screen-cover-v1.png';
 import './student.css';
 
+function MemberMedals({ member }: { member: StudentBoardMember }) {
+  if (!member.medals.length) return null;
+  return (
+    <span
+      className="student-name-medals"
+      aria-label={`받은 훈장 ${member.medals.length}개`}
+    >
+      {member.medals.slice(0, 3).map((medal, index) => (
+        <span title={medal.name} key={`${medal.awardedAt}-${medal.name}-${index}`}>
+          <MedalIcon
+            decorative
+            medal={{
+              id: `${medal.name}-${index}`,
+              name: medal.name,
+              description: medal.description,
+              symbol: medal.symbol,
+              image: '',
+              color: medal.color,
+              active: true,
+            }}
+          />
+        </span>
+      ))}
+      {member.medals.length > 3 && <b>+{member.medals.length - 3}</b>}
+    </span>
+  );
+}
+
 export default function StudentBoard({ route }: { route: string }) {
   const [panel, setPanel] = useState<'teams' | 'shop' | 'forces'>('teams');
+  const [shopView, setShopView] = useState<'menu' | 'units' | 'hint'>('menu');
   const [data, setData] = useState<StudentBoardData | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -262,7 +291,10 @@ export default function StudentBoard({ route }: { route: string }) {
                   key={tab.id}
                   type="button"
                   aria-pressed={panel === tab.id}
-                  onClick={() => setPanel(tab.id)}
+                  onClick={() => {
+                    setPanel(tab.id);
+                    if (tab.id === 'shop') setShopView('menu');
+                  }}
                 >
                   {tab.name}
                   {tab.id === 'forces' && sealedHeroes > 0 && (
@@ -292,44 +324,70 @@ export default function StudentBoard({ route }: { route: string }) {
                   </button>
                 </div>
                 <div className="student-team-grid">
-                  {data.teams.map((team) => (
-                    <section
-                      key={team.teamIndex}
-                      className={`student-team-card${team.teamIndex === data.teamIndex ? ' is-own-team' : ''}`}
-                    >
-                      <header>
-                        <h3>{team.name}</h3>
-                        {team.teamIndex === data.teamIndex && <span>우리 원정대</span>}
-                      </header>
-                      <ol>
-                        {team.members.map((member) => (
-                          <li
-                            key={member.number}
-                            className={member.jumper ? 'is-jumper' : ''}
+                  {data.teams.map((team) => {
+                    const captain = team.members.find((member) => member.captain);
+                    const members = team.members.filter((member) => !member.captain);
+                    return (
+                      <section
+                        key={team.teamIndex}
+                        className={`student-team-card${team.teamIndex === data.teamIndex ? ' is-own-team' : ''}`}
+                      >
+                        <header>
+                          <h3>{team.name}</h3>
+                          {team.teamIndex === data.teamIndex && <span>우리 원정대</span>}
+                        </header>
+                        {captain && (
+                          <div
+                            className={`student-captain-slot${captain.jumper ? ' is-jumper' : ''}`}
                           >
+                            <span className="student-captain-label">원정대장</span>
                             <button
                               type="button"
-                              aria-label={`${member.number}번 ${member.name}${member.captain ? ' 원정대장' : ''}${member.jumper ? ' 도전점퍼' : ''} 기록 보기`}
+                              aria-label={`${captain.number}번 ${captain.name} 원정대장 기록 보기`}
                               onClick={() =>
-                                setSelectedMember({ teamName: team.name, member })
+                                setSelectedMember({
+                                  teamName: team.name,
+                                  member: captain,
+                                })
                               }
                             >
-                              <span>{String(member.number).padStart(2, '0')}</span>
+                              <span>{String(captain.number).padStart(2, '0')}</span>
                               <strong className="student-member-name">
-                                {member.name}
+                                {captain.name}
                               </strong>
-                              {member.captain && (
-                                <span className="student-role">원정대장</span>
-                              )}
-                              {(member.medals.length > 0 || member.growth.length > 0) && (
-                                <small>기록 보기</small>
-                              )}
+                              <MemberMedals member={captain} />
+                              {(captain.medals.length > 0 ||
+                                captain.growth.length > 0) && <small>기록 보기</small>}
                             </button>
-                          </li>
-                        ))}
-                      </ol>
-                    </section>
-                  ))}
+                          </div>
+                        )}
+                        <ol>
+                          {members.map((member) => (
+                            <li
+                              key={member.number}
+                              className={member.jumper ? 'is-jumper' : ''}
+                            >
+                              <button
+                                type="button"
+                                aria-label={`${member.number}번 ${member.name}${member.jumper ? ' 도전점퍼' : ''} 기록 보기`}
+                                onClick={() =>
+                                  setSelectedMember({ teamName: team.name, member })
+                                }
+                              >
+                                <span>{String(member.number).padStart(2, '0')}</span>
+                                <strong className="student-member-name">
+                                  {member.name}
+                                </strong>
+                                <MemberMedals member={member} />
+                                {(member.medals.length > 0 ||
+                                  member.growth.length > 0) && <small>기록 보기</small>}
+                              </button>
+                            </li>
+                          ))}
+                        </ol>
+                      </section>
+                    );
+                  })}
                 </div>
                 <p className="student-help">
                   학생 이름을 누르면 받은 훈장과 성장 기록을 볼 수 있어요.
@@ -343,14 +401,15 @@ export default function StudentBoard({ route }: { route: string }) {
               <section aria-label="원정대 상점">
                 <div className="student-section-heading">
                   <h2>상점</h2>
-                  <span>
-                    보유 포인트 <strong>{data.economy?.balance ?? 0}P</strong>
-                  </span>
                 </div>
-                <p className="student-help">
-                  병력 카드와 비밀 보스 힌트를 고를 수 있어요. 구매하면 우리 원정대
-                  포인트가 차감돼요.
-                </p>
+                <div className="student-wallet" aria-label="우리 원정대 보유 포인트">
+                  <span>우리 원정대 보유 포인트</span>
+                  <strong>
+                    {data.economy?.balance ?? 0}
+                    <b>P</b>
+                  </strong>
+                  <small>구매하면 원정대 공용 포인트에서 차감됩니다.</small>
+                </div>
                 {actionNotice && (
                   <p className="student-action-notice" role="status">
                     {actionNotice}
@@ -361,62 +420,107 @@ export default function StudentBoard({ route }: { route: string }) {
                     {actionError}
                   </p>
                 )}
-                <div className="student-card-grid student-shop-grid">
-                  {UNITS_CATALOG.map((unit) => (
-                    <div className="student-shop-item" key={unit.id}>
-                      <UnitCard unit={unit} />
+                {shopView === 'menu' ? (
+                  <div className="student-shop-menu">
+                    <button type="button" onClick={() => setShopView('units')}>
+                      <span aria-hidden="true">⚔</span>
+                      <strong>병력 구매하기</strong>
+                      <small>30P · 전투에 함께할 병력 카드를 골라요</small>
+                    </button>
+                    <button type="button" onClick={() => setShopView('hint')}>
+                      <span aria-hidden="true">?</span>
+                      <strong>힌트 구매하기</strong>
+                      <small>100P · 이번 시즌 보스의 비밀을 확인해요</small>
+                    </button>
+                  </div>
+                ) : shopView === 'units' ? (
+                  <>
+                    <div className="student-shop-subheading">
+                      <button type="button" onClick={() => setShopView('menu')}>
+                        ← 상점으로
+                      </button>
+                      <div>
+                        <h3>병력 카드 구매</h3>
+                        <p>원하는 병력을 골라 구매하세요. 한 장에 30P예요.</p>
+                      </div>
+                    </div>
+                    <div className="student-card-grid student-shop-grid">
+                      {UNITS_CATALOG.map((unit) => (
+                        <div className="student-shop-item" key={unit.id}>
+                          <UnitCard unit={unit} />
+                          <button
+                            type="button"
+                            disabled={
+                              preview ||
+                              !data.economy ||
+                              purchasingItem !== null ||
+                              data.economy.balance < unit.price
+                            }
+                            onClick={() =>
+                              void buyItem(
+                                unit.id as EconomyItemId,
+                                unit.name,
+                                unit.price,
+                              )
+                            }
+                          >
+                            {preview
+                              ? '실제 QR에서 구매'
+                              : data.economy && data.economy.balance < unit.price
+                                ? '포인트 부족'
+                                : purchasingItem === unit.id
+                                  ? '구매 중…'
+                                  : `${unit.price}P 구매`}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="student-shop-subheading">
+                      <button type="button" onClick={() => setShopView('menu')}>
+                        ← 상점으로
+                      </button>
+                      <div>
+                        <h3>비밀 보스 힌트</h3>
+                        <p>한 시즌에 한 번, 구매한 원정대에게만 공개돼요.</p>
+                      </div>
+                    </div>
+                    <article className="student-hint-card student-hint-purchase">
+                      <span aria-hidden="true">?</span>
+                      <strong>이번 시즌 비밀 힌트</strong>
+                      <p>
+                        구매 전에는 내용이 가려져 있어요. 구매하면 이 카드에서 바로 확인할
+                        수 있어요.
+                      </p>
+                      {data.economy?.hintPurchased && data.economy.hint && (
+                        <p className="student-hint-answer">{data.economy.hint}</p>
+                      )}
                       <button
                         type="button"
                         disabled={
                           preview ||
                           !data.economy ||
+                          data.economy.hintPurchased ||
                           purchasingItem !== null ||
-                          data.economy.balance < unit.price
+                          data.economy.balance < 100
                         }
-                        onClick={() =>
-                          void buyItem(unit.id as EconomyItemId, unit.name, unit.price)
-                        }
+                        onClick={() => void buyItem('BOSS_HINT', '비밀 보스 힌트', 100)}
                       >
-                        {preview
-                          ? '실제 QR에서 구매'
-                          : data.economy && data.economy.balance < unit.price
-                            ? '포인트 부족'
-                            : purchasingItem === unit.id
-                              ? '구매 중…'
-                              : `${unit.price}P 구매`}
+                        {data.economy?.hintPurchased
+                          ? '구매 완료 · 힌트 공개됨'
+                          : preview
+                            ? '실제 QR에서 구매'
+                            : data.economy && data.economy.balance < 100
+                              ? '포인트 부족'
+                              : purchasingItem === 'BOSS_HINT'
+                                ? '구매 중…'
+                                : '100P로 힌트 구매'}
                       </button>
-                    </div>
-                  ))}
-                  <article className="student-hint-card">
-                    <span aria-hidden="true">?</span>
-                    <strong>비밀 보스 힌트</strong>
-                    <p>구매한 원정대만 이번 시즌 보스의 특징을 확인할 수 있어요.</p>
-                    {data.economy?.hintPurchased && data.economy.hint && (
-                      <p className="student-hint-answer">{data.economy.hint}</p>
-                    )}
-                    <button
-                      type="button"
-                      disabled={
-                        preview ||
-                        !data.economy ||
-                        data.economy.hintPurchased ||
-                        purchasingItem !== null ||
-                        data.economy.balance < 100
-                      }
-                      onClick={() => void buyItem('BOSS_HINT', '비밀 보스 힌트', 100)}
-                    >
-                      {data.economy?.hintPurchased
-                        ? '구매 완료'
-                        : preview
-                          ? '실제 QR에서 구매'
-                          : data.economy && data.economy.balance < 100
-                            ? '포인트 부족'
-                            : purchasingItem === 'BOSS_HINT'
-                              ? '구매 중…'
-                              : '100P 구매'}
-                    </button>
-                  </article>
-                </div>
+                    </article>
+                  </>
+                )}
               </section>
             ) : (
               <section aria-label="우리 원정대 병력과 영웅">
