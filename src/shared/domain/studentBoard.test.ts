@@ -22,12 +22,21 @@ function plan() {
   return value;
 }
 describe('student-only preparation snapshot', () => {
-  it('publishes only a single team and excludes teacher settings, boss and multipliers', () => {
+  it('publishes all team rosters and excludes teacher settings, boss and multipliers', () => {
     const value = plan();
     const board = studentBoardData(value, 0);
     expect(board.members).toEqual([
-      { name: '동명이인', number: 1, captain: true, jumper: true },
+      {
+        name: '동명이인',
+        number: 1,
+        captain: true,
+        jumper: true,
+        medals: [],
+        growth: [],
+      },
     ]);
+    expect(board.teams).toHaveLength(3);
+    expect(board.teams[1].members[0].name).toBe('동명이인');
     const text = JSON.stringify(board);
     for (const word of [
       'bossId',
@@ -55,23 +64,25 @@ describe('student-only preparation snapshot', () => {
   it('publishes only this team sealed count and revealed hero identities', () => {
     const value = plan();
     const board = studentBoardData(value, 0, '2026-10-22T00:00:00.000Z', {
-      expeditionId: value.id,
-      rewards: [
-        { id: 'sealed-1', teamIndex: 0, seasonIndex: 0, heroId: 'H01' },
-        {
-          id: 'reveal-2',
-          teamIndex: 0,
-          seasonIndex: 0,
-          heroId: 'H02',
-          revealedAt: '2026-10-22T00:00:00.000Z',
-        },
-        {
-          teamIndex: 1,
-          seasonIndex: 0,
-          heroId: 'H15',
-          revealedAt: '2026-10-22T00:00:00.000Z',
-        },
-      ],
+      heroes: {
+        expeditionId: value.id,
+        rewards: [
+          { id: 'sealed-1', teamIndex: 0, seasonIndex: 0, heroId: 'H01' },
+          {
+            id: 'reveal-2',
+            teamIndex: 0,
+            seasonIndex: 0,
+            heroId: 'H02',
+            revealedAt: '2026-10-22T00:00:00.000Z',
+          },
+          {
+            teamIndex: 1,
+            seasonIndex: 0,
+            heroId: 'H15',
+            revealedAt: '2026-10-22T00:00:00.000Z',
+          },
+        ],
+      },
     });
     expect(board.heroes).toEqual([
       { slot: 1, revealed: false },

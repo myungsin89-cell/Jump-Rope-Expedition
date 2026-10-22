@@ -89,6 +89,87 @@ describe('student sharing API boundary', () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
+  it('lets an exact team token request one sealed hero reveal without teacher login', async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input, init) => {
+      expect(String(input)).toContain('rpc/reveal_student_hero_authority');
+      expect(JSON.parse(String(init?.body))).toEqual({ p_token: token, p_slot: 2 });
+      return json({
+        eventId: 'reward-2',
+        slot: 2,
+        heroId: 'H09',
+        startedAt: '2026-10-22T00:00:02.500Z',
+      });
+    });
+    const response = await createBoardHandler(
+      env,
+      fetcher,
+    )(request({ action: 'reveal-hero', token, slot: 2 }, ''));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toHaveProperty('reveal.heroId', 'H09');
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets a team token buy one allowlisted shop item without teacher login', async () => {
+    const requestId = '22222222-2222-4222-8222-222222222222';
+    const fetcher = vi.fn<typeof fetch>(async (input, init) => {
+      expect(String(input)).toContain('rpc/purchase_student_team_item');
+      expect(JSON.parse(String(init?.body))).toEqual({
+        p_token: token,
+        p_request_id: requestId,
+        p_item_id: 'UNIT_02',
+      });
+      return json({ requestId, itemId: 'UNIT_02', price: 30, balance: 70 });
+    });
+    const response = await createBoardHandler(
+      env,
+      fetcher,
+    )(request({ action: 'purchase', token, requestId, itemId: 'UNIT_02' }, ''));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toHaveProperty('purchase.balance', 70);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it('overlays server purchases onto the public board balance and inventory', async () => {
+    const value = plan();
+    const board = studentBoardData(value, 0, undefined, {
+      economy: { version: 1, expeditionId: value.id, purchases: [], reversals: [] },
+    });
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url.includes('student_boards?'))
+        return json([
+          {
+            payload: board,
+            owner_id: userId,
+            publication_id: value.id,
+            team_index: 0,
+          },
+        ]);
+      if (url.includes('hero_reward_tokens?')) return json([]);
+      if (url.includes('student_team_accounts?'))
+        return json([
+          {
+            earned_points: 100,
+            teacher_spent_points: 0,
+            base_inventory: { UNIT_01: 0, UNIT_02: 0, UNIT_03: 0, UNIT_04: 0 },
+            base_hint_purchased: false,
+            hint_text: '비밀 힌트',
+          },
+        ]);
+      if (url.includes('student_team_purchases?'))
+        return json([{ item_id: 'UNIT_03', price: 30 }]);
+      return json({}, { status: 404 });
+    });
+    const response = await createBoardHandler(
+      env,
+      fetcher,
+    )(new Request(`https://edge.test/student-board?token=${token}`));
+    const result = await response.json();
+    expect(response.status).toBe(200);
+    expect(result.economy).toMatchObject({ balance: 70, teacherSpentPoints: 30 });
+    expect(result.economy.inventory.UNIT_03).toBe(1);
+  });
+
   it('publishes allowlisted snapshots under the authenticated teacher owner', async () => {
     const value = plan();
     const fetcher = authenticatedFetcher(async (url, init) => {

@@ -1,4 +1,8 @@
 import type { HeroStore } from '../heroes/model';
+import type { MedalStore } from '../medals/model';
+import type { PracticeStore } from '../matches/practiceModel';
+import type { EconomyStore } from '../economy/model';
+import type { EconomyItemId, StudentBoardPurchase } from '../economy/model';
 import type { Preparation } from '../preparation/model';
 import { isUuid } from '../../shared/domain/studentBoard';
 import { supabase } from '../../shared/lib/supabase';
@@ -33,9 +37,97 @@ export function readStudentLinks(expeditionId: string): SharedLink[] {
   }
 }
 
+export async function revealStudentHero(
+  token: string,
+  slot: number,
+  signal?: AbortSignal,
+) {
+  const apiUrl = import.meta.env.VITE_BOARD_API_URL?.trim();
+  if (!apiUrl) throw new Error('학생 화면 서버가 아직 연결되지 않았어요.');
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    credentials: 'omit',
+    signal,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'reveal-hero', token, slot }),
+  });
+  if (!response.ok)
+    throw new Error(
+      response.status === 409
+        ? '이 영웅 카드를 지금 개봉할 수 없어요. 새로고침 후 다시 시도해 주세요.'
+        : '영웅 카드 개봉 서버에 연결하지 못했어요.',
+    );
+  return response.json();
+}
+
+export async function purchaseStudentItem(
+  token: string,
+  itemId: EconomyItemId,
+  requestId: string,
+  signal?: AbortSignal,
+) {
+  const apiUrl = import.meta.env.VITE_BOARD_API_URL?.trim();
+  if (!apiUrl) throw new Error('학생 화면 서버가 아직 연결되지 않았어요.');
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    credentials: 'omit',
+    signal,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'purchase', token, itemId, requestId }),
+  });
+  if (!response.ok) {
+    let code = '';
+    try {
+      const body = (await response.json()) as { code?: string };
+      code = body.code ?? '';
+    } catch {
+      /* Keep the generic message. */
+    }
+    throw new Error(
+      code === 'INSUFFICIENT_POINTS'
+        ? '포인트가 부족해요.'
+        : code === 'HINT_ALREADY_PURCHASED'
+          ? '이번 시즌의 힌트는 이미 구매했어요.'
+          : code === 'SEASON_CLOSED'
+            ? '이미 종료된 시즌이라 구매할 수 없어요.'
+            : '구매를 완료하지 못했어요. 새로고침 후 다시 시도해 주세요.',
+    );
+  }
+  return response.json();
+}
+
+export async function fetchStudentBoardPurchases(
+  expeditionId: string,
+  signal?: AbortSignal,
+): Promise<StudentBoardPurchase[]> {
+  const apiUrl = import.meta.env.VITE_BOARD_API_URL?.trim();
+  if (!apiUrl || !supabase) return [];
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session) return [];
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    credentials: 'omit',
+    signal,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${data.session.access_token}`,
+    },
+    body: JSON.stringify({ action: 'list-purchases', expeditionId }),
+  });
+  if (!response.ok) throw new Error('학생 구매 기록을 불러오지 못했어요.');
+  const value: unknown = await response.json();
+  if (!value || typeof value !== 'object' || !('purchases' in value)) return [];
+  return Array.isArray(value.purchases)
+    ? (value.purchases as StudentBoardPurchase[])
+    : [];
+}
+
 export async function publishStudentBoards(
   plan: Preparation,
   heroes: HeroStore,
+  practice: PracticeStore,
+  medals: MedalStore,
+  economy: EconomyStore,
   rotate: boolean,
   signal?: AbortSignal,
 ): Promise<SharedLink[]> {
@@ -59,7 +151,15 @@ export async function publishStudentBoards(
       'Content-Type': 'application/json',
       Authorization: `Bearer ${data.session.access_token}`,
     },
-    body: JSON.stringify({ action: 'publish', plan, heroes, rotate }),
+    body: JSON.stringify({
+      action: 'publish',
+      plan,
+      heroes,
+      practice,
+      medals,
+      economy,
+      rotate,
+    }),
   });
   if (!response.ok)
     throw new Error(
@@ -99,9 +199,12 @@ export async function publishStudentBoards(
 export async function syncPublishedStudentBoards(
   plan: Preparation,
   heroes: HeroStore,
+  practice: PracticeStore,
+  medals: MedalStore,
+  economy: EconomyStore,
 ): Promise<boolean> {
   if (!import.meta.env.VITE_BOARD_API_URL?.trim()) return false;
   if (readStudentLinks(plan.id).length !== plan.teams.length) return false;
-  await publishStudentBoards(plan, heroes, false);
+  await publishStudentBoards(plan, heroes, practice, medals, economy, false);
   return true;
 }

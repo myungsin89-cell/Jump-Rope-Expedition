@@ -2,15 +2,66 @@ import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import type { Preparation } from '../preparation/model';
 import type { HeroStore } from '../heroes/model';
+import type { MedalStore } from '../medals/model';
+import type { PracticeStore } from '../matches/practiceModel';
+import type { EconomyStore } from '../economy/model';
 import OperationModal from '../expedition/OperationModal';
 import { publishStudentBoards, readStudentLinks } from './studentBoardClient';
 import './student.css';
-function TeamQr({ url }: { url: string }) {
+function qrFileName(expeditionName: string, teamName: string) {
+  return `${expeditionName}-${teamName}-원정대-게시판-QR.png`.replace(
+    /[<>:"/\\|?*]/g,
+    '-',
+  );
+}
+
+async function labeledQr(url: string, expeditionName: string, teamName: string) {
+  const qr = await QRCode.toDataURL(url, {
+    width: 360,
+    margin: 2,
+    errorCorrectionLevel: 'M',
+  });
+  const image = new Image();
+  await new Promise<void>((resolve, reject) => {
+    image.onload = () => resolve();
+    image.onerror = () => reject(new Error('QR image load failed'));
+    image.src = qr;
+  });
+  const canvas = document.createElement('canvas');
+  canvas.width = 420;
+  canvas.height = 480;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('QR 이미지를 만들 수 없어요.');
+  context.fillStyle = '#ffffff';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = '#173e2c';
+  context.textAlign = 'center';
+  context.font = '700 24px sans-serif';
+  context.fillText(teamName, canvas.width / 2, 38, 380);
+  context.fillStyle = '#5b6b62';
+  context.font = '15px sans-serif';
+  context.fillText(expeditionName, canvas.width / 2, 65, 380);
+  context.drawImage(image, 30, 82, 360, 360);
+  context.fillStyle = '#173e2c';
+  context.font = '700 14px sans-serif';
+  context.fillText('줄넘기 원정대 게시판', canvas.width / 2, 466, 380);
+  return canvas.toDataURL('image/png');
+}
+
+function TeamQr({
+  url,
+  expeditionName,
+  teamName,
+}: {
+  url: string;
+  expeditionName: string;
+  teamName: string;
+}) {
   const [image, setImage] = useState('');
   const [error, setError] = useState('');
   useEffect(() => {
     let cancelled = false;
-    QRCode.toDataURL(url, { width: 240, margin: 2, errorCorrectionLevel: 'M' })
+    labeledQr(url, expeditionName, teamName)
       .then((value) => {
         if (!cancelled) setImage(value);
       })
@@ -20,9 +71,14 @@ function TeamQr({ url }: { url: string }) {
     return () => {
       cancelled = true;
     };
-  }, [url]);
+  }, [expeditionName, teamName, url]);
   return image ? (
-    <img src={image} width={240} height={240} alt="학생 읽기 전용 원정대 QR" />
+    <div className="student-qr-download">
+      <img src={image} width={210} height={240} alt={`${teamName} 학생용 원정대 QR`} />
+      <a download={qrFileName(expeditionName, teamName)} href={image}>
+        {teamName} QR 다운로드
+      </a>
+    </div>
   ) : error ? (
     <p role="alert">{error}</p>
   ) : (
@@ -32,10 +88,16 @@ function TeamQr({ url }: { url: string }) {
 export default function StudentSharing({
   plan,
   heroes,
+  practice,
+  medals,
+  economy,
   onClose,
 }: {
   plan: Preparation;
   heroes: HeroStore;
+  practice: PracticeStore;
+  medals: MedalStore;
+  economy: EconomyStore;
   onClose: () => void;
 }) {
   const [links, setLinks] = useState(() => readStudentLinks(plan.id));
@@ -55,7 +117,15 @@ export default function StudentSharing({
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 15000);
     try {
-      const next = await publishStudentBoards(plan, heroes, rotate, controller.signal);
+      const next = await publishStudentBoards(
+        plan,
+        heroes,
+        practice,
+        medals,
+        economy,
+        rotate,
+        controller.signal,
+      );
       setLinks(next);
       setNotice(
         '학생 화면에 현재 명단을 게시했어요. 학생은 새로고침하면 확인할 수 있어요.',
@@ -79,8 +149,8 @@ export default function StudentSharing({
       }}
     >
       <p className="preparation-hint">
-        학생용 읽기 전용 화면이에요. 명단과 병력·영웅 카드만 볼 수 있고, 명단
-        수정·구매·기록 입력은 제공하지 않아요.
+        학생용 원정대 게시판이에요. 명단 수정과 기록 입력은 할 수 없고, 각 원정대는 자기
+        QR로 들어가 보유 포인트를 사용해 병력과 힌트를 구매할 수 있어요.
       </p>
       <p className="preparation-hint">
         처음에는 ‘원정대 게시판 만들기’를 눌러 실제 링크와 QR을 만들어 주세요. 팀 구성을
@@ -146,7 +216,11 @@ export default function StudentSharing({
               )}
               {link && (
                 <>
-                  <TeamQr url={url} />
+                  <TeamQr
+                    url={url}
+                    expeditionName={plan.className}
+                    teamName={team.name}
+                  />
                   <label htmlFor={`team-link-${index}`}>학생용 읽기 전용 링크</label>
                   <input
                     id={`team-link-${index}`}

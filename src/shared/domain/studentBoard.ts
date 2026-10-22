@@ -1,4 +1,7 @@
 import type { Preparation } from '../../features/preparation/model';
+import type { MedalStore, MedalSymbol } from '../../features/medals/model';
+import type { PracticeStore } from '../../features/matches/practiceModel';
+import type { EconomyStore } from '../../features/economy/model';
 export interface StudentHeroSlot {
   slot: number;
   revealed: boolean;
@@ -23,6 +26,51 @@ export interface StudentHeroSource {
   }[];
 }
 
+export interface StudentBoardMedal {
+  name: string;
+  description: string;
+  symbol: MedalSymbol;
+  color: string;
+  awardedAt: string;
+}
+
+export interface StudentGrowthRecord {
+  seasonNumber: number;
+  recordedAt: string;
+  count: number;
+}
+
+export interface StudentBoardMember {
+  name: string;
+  number: number;
+  captain: boolean;
+  jumper: boolean;
+  medals: StudentBoardMedal[];
+  growth: StudentGrowthRecord[];
+}
+
+export interface StudentBoardTeam {
+  name: string;
+  teamIndex: number;
+  members: StudentBoardMember[];
+}
+
+export interface StudentBoardSources {
+  heroes?: StudentHeroSource;
+  medals?: MedalStore;
+  practice?: PracticeStore;
+  economy?: EconomyStore;
+}
+
+export interface StudentBoardEconomy {
+  earnedPoints: number;
+  teacherSpentPoints: number;
+  balance: number;
+  inventory: Record<'UNIT_01' | 'UNIT_02' | 'UNIT_03' | 'UNIT_04', number>;
+  hintPurchased: boolean;
+  hint?: string;
+}
+
 export interface StudentBoardData {
   version: 1;
   expeditionName: string;
@@ -30,8 +78,10 @@ export interface StudentBoardData {
   teamIndex: number;
   seasonNumber: number;
   publishedAt: string;
-  members: { name: string; number: number; captain: boolean; jumper: boolean }[];
+  members: StudentBoardMember[];
+  teams: StudentBoardTeam[];
   heroes: StudentHeroSlot[];
+  economy?: StudentBoardEconomy;
   heroReveal?: StudentHeroRevealEvent;
 }
 export const isUuid = (value: unknown): value is string =>
@@ -45,17 +95,214 @@ const name = (value: unknown, max = 60): value is string =>
   typeof value === 'string' && value.trim().length > 0 && value.length <= max;
 const integer = (value: unknown, min: number, max: number): value is number =>
   Number.isInteger(value) && Number(value) >= min && Number(value) <= max;
+const date = (value: unknown): value is string =>
+  typeof value === 'string' && Number.isFinite(Date.parse(value));
+
+export function parseStudentMedalSource(
+  value: unknown,
+  expeditionId: string,
+): MedalStore {
+  if (
+    !obj(value) ||
+    value.version !== 1 ||
+    value.expeditionId !== expeditionId ||
+    !Array.isArray(value.awards) ||
+    value.awards.length > 2_000 ||
+    !Array.isArray(value.entries) ||
+    value.entries.length > 2_000
+  )
+    throw new Error('훈장 게시 자료를 확인해 주세요.');
+  const awards = value.awards.map((award) => {
+    if (
+      !obj(award) ||
+      !name(award.studentId, 200) ||
+      !date(award.awardedAt) ||
+      !obj(award.medal) ||
+      !name(award.medal.name, 40) ||
+      typeof award.medal.description !== 'string' ||
+      award.medal.description.length > 300 ||
+      !['star', 'leaf', 'heart', 'flag'].includes(String(award.medal.symbol)) ||
+      (award.medal.color !== undefined &&
+        (typeof award.medal.color !== 'string' ||
+          !/^#[0-9a-f]{6}$/i.test(award.medal.color)))
+    )
+      throw new Error('훈장 게시 자료를 확인해 주세요.');
+    return {
+      id: name(award.id, 200) ? award.id : `${award.studentId}:${award.awardedAt}`,
+      medalId: name(award.medalId, 200) ? award.medalId : award.medal.name,
+      medal: {
+        id: name(award.medal.id, 200) ? award.medal.id : award.medal.name,
+        name: award.medal.name,
+        description: award.medal.description,
+        symbol: award.medal.symbol as MedalSymbol,
+        image: '',
+        ...(typeof award.medal.color === 'string' ? { color: award.medal.color } : {}),
+        active: true,
+      },
+      studentId: award.studentId,
+      studentName: typeof award.studentName === 'string' ? award.studentName : '',
+      teamKey: typeof award.teamKey === 'string' ? award.teamKey : '',
+      teamName: typeof award.teamName === 'string' ? award.teamName : '',
+      seasonIndex: integer(award.seasonIndex, 0, 4) ? award.seasonIndex : 0,
+      awardedAt: award.awardedAt,
+      actor: 'local-teacher' as const,
+    };
+  });
+  const entries = value.entries.map((entry) => {
+    if (
+      !obj(entry) ||
+      !name(entry.awardId, 200) ||
+      typeof entry.teamKey !== 'string' ||
+      !/^team-[0-3]$/.test(entry.teamKey) ||
+      !integer(entry.seasonIndex, 0, 4) ||
+      entry.delta !== 10
+    )
+      throw new Error('훈장 점수 자료를 확인해 주세요.');
+    return {
+      awardId: entry.awardId,
+      teamKey: entry.teamKey,
+      seasonIndex: entry.seasonIndex,
+      delta: 10 as const,
+    };
+  });
+  return { version: 1, expeditionId, definitions: [], awards, entries };
+}
+
+export function parseStudentPracticeSource(
+  value: unknown,
+  expeditionId: string,
+): PracticeStore {
+  if (
+    !obj(value) ||
+    value.version !== 1 ||
+    value.classId !== expeditionId ||
+    !Array.isArray(value.history) ||
+    value.history.length > 100
+  )
+    throw new Error('성장 기록 게시 자료를 확인해 주세요.');
+  const history = value.history.map((record, recordIndex) => {
+    if (
+      !obj(record) ||
+      !integer(record.seasonIndex, 0, 4) ||
+      !date(record.savedAt) ||
+      !Array.isArray(record.teams) ||
+      record.teams.length > 4
+    )
+      throw new Error('성장 기록 게시 자료를 확인해 주세요.');
+    const teams = record.teams.map((team, teamIndex) => {
+      if (!obj(team) || !Array.isArray(team.jumpers) || team.jumpers.length > 2)
+        throw new Error('성장 기록 게시 자료를 확인해 주세요.');
+      const jumpers = team.jumpers.map((jumper) => {
+        if (
+          !obj(jumper) ||
+          !name(jumper.studentId, 200) ||
+          typeof jumper.actual !== 'string' ||
+          !/^\d+$/.test(jumper.actual) ||
+          ![1, 2, 3].includes(Number(jumper.multiplier))
+        )
+          throw new Error('성장 기록 게시 자료를 확인해 주세요.');
+        return {
+          studentId: jumper.studentId,
+          multiplier: jumper.multiplier as 1 | 2 | 3,
+          actual: jumper.actual,
+        };
+      });
+      return {
+        key: `team-${teamIndex}`,
+        name: typeof team.name === 'string' ? team.name : '',
+        members: [],
+        raw: typeof team.raw === 'string' ? team.raw : '0',
+        jumpers,
+      };
+    });
+    let official;
+    if (record.official !== undefined) {
+      if (!obj(record.official) || !Array.isArray(record.official.awards))
+        throw new Error('공식 점수 게시 자료를 확인해 주세요.');
+      const awards = record.official.awards.map((award) => {
+        if (
+          !obj(award) ||
+          typeof award.teamKey !== 'string' ||
+          !/^team-[0-3]$/.test(award.teamKey) ||
+          !integer(award.points, 0, 10_000_000)
+        )
+          throw new Error('공식 점수 게시 자료를 확인해 주세요.');
+        return { teamKey: award.teamKey, points: award.points };
+      });
+      official = {
+        confirmedAt: date(record.official.confirmedAt)
+          ? record.official.confirmedAt
+          : record.savedAt,
+        awards,
+        ...(date(record.official.voidedAt) ? { voidedAt: record.official.voidedAt } : {}),
+      };
+    }
+    return {
+      id: typeof record.id === 'string' ? record.id : `published-${recordIndex}`,
+      classId: expeditionId,
+      seasonIndex: record.seasonIndex,
+      locked: true,
+      teams,
+      savedAt: record.savedAt,
+      ...(official ? { official } : {}),
+    };
+  });
+  return { version: 1, classId: expeditionId, draft: null, history };
+}
+
+export function parseStudentEconomySource(
+  value: unknown,
+  expeditionId: string,
+): EconomyStore {
+  if (
+    !obj(value) ||
+    value.version !== 1 ||
+    value.expeditionId !== expeditionId ||
+    !Array.isArray(value.purchases) ||
+    value.purchases.length > 5_000 ||
+    !Array.isArray(value.reversals) ||
+    value.reversals.length > 5_000
+  )
+    throw new Error('상점 게시 자료를 확인해 주세요.');
+  const itemIds = ['UNIT_01', 'UNIT_02', 'UNIT_03', 'UNIT_04', 'BOSS_HINT'];
+  const purchases = value.purchases.map((purchase) => {
+    if (
+      !obj(purchase) ||
+      !name(purchase.id, 200) ||
+      typeof purchase.teamKey !== 'string' ||
+      !/^team-[0-3]$/.test(purchase.teamKey) ||
+      !integer(purchase.seasonIndex, 0, 4) ||
+      !itemIds.includes(String(purchase.itemId)) ||
+      purchase.price !== (purchase.itemId === 'BOSS_HINT' ? 100 : 30) ||
+      !date(purchase.purchasedAt) ||
+      !['local-team', 'student-board'].includes(String(purchase.actor))
+    )
+      throw new Error('상점 게시 자료를 확인해 주세요.');
+    return purchase;
+  });
+  const reversals = value.reversals.map((reversal) => {
+    if (!obj(reversal) || !name(reversal.purchaseId, 200))
+      throw new Error('구매 복구 게시 자료를 확인해 주세요.');
+    return reversal;
+  });
+  return {
+    version: 1,
+    expeditionId,
+    purchases: purchases as unknown as EconomyStore['purchases'],
+    reversals: reversals as unknown as EconomyStore['reversals'],
+  };
+}
 /** Reconstruct from allowlisted fields. Never forward teacher config, IDs, boss or strategy. */
 export function studentBoardData(
   plan: Preparation,
   teamIndex: number,
   publishedAt = new Date().toISOString(),
-  heroes?: StudentHeroSource,
+  sources: StudentBoardSources = {},
 ): StudentBoardData {
   const team = plan.teams[teamIndex];
   if (!team) throw new Error('원정대를 찾을 수 없어요.');
   const teamRewards =
-    heroes?.rewards.filter(
+    sources.heroes?.rewards.filter(
       (reward) =>
         reward.teamIndex === teamIndex &&
         reward.seasonIndex === (plan.currentSeasonIndex ?? 0) &&
@@ -67,6 +314,111 @@ export function studentBoardData(
     .sort((left, right) =>
       String(right.reward.revealedAt).localeCompare(String(left.reward.revealedAt)),
     )[0];
+  const seasonIndex = plan.currentSeasonIndex ?? 0;
+  const teamKey = `team-${teamIndex}`;
+  const matchPoints =
+    sources.practice?.history
+      .filter(
+        (entry) =>
+          entry.seasonIndex === seasonIndex &&
+          Boolean(entry.official) &&
+          !entry.official?.voidedAt,
+      )
+      .flatMap((entry) => entry.official?.awards ?? [])
+      .filter((award) => award.teamKey === teamKey)
+      .reduce((sum, award) => sum + award.points, 0) ?? 0;
+  const medalPoints =
+    sources.medals?.entries
+      .filter((entry) => entry.teamKey === teamKey && entry.seasonIndex === seasonIndex)
+      .reduce((sum, entry) => sum + entry.delta, 0) ?? 0;
+  const reversed = new Set(
+    sources.economy?.reversals.map((entry) => entry.purchaseId) ?? [],
+  );
+  const purchases =
+    sources.economy?.purchases.filter(
+      (purchase) =>
+        purchase.teamKey === teamKey &&
+        purchase.seasonIndex === seasonIndex &&
+        purchase.actor !== 'student-board' &&
+        !reversed.has(purchase.id),
+    ) ?? [];
+  const unitIds = ['UNIT_01', 'UNIT_02', 'UNIT_03', 'UNIT_04'] as const;
+  const hintText: Record<string, string> = {
+    BOSS_01: '상대는 물리 공격을 주로 사용해요. 잎사귀 수호자가 방어에 유리해요.',
+    BOSS_02: '상대는 마법 공격을 주로 사용해요. 별빛 요정이 방어에 유리해요.',
+    BOSS_03: '상대는 마법 공격을 주로 사용해요. 별빛 요정이 방어에 유리해요.',
+    BOSS_04: '상대는 물리 공격을 주로 사용해요. 잎사귀 수호자가 방어에 유리해요.',
+    BOSS_05:
+      '상대는 물리와 마법 공격을 고르게 사용해요. 두 방어 병력을 균형 있게 준비해요.',
+  };
+  const earnedPoints = matchPoints + medalPoints;
+  const teacherSpentPoints = purchases.reduce((sum, purchase) => sum + purchase.price, 0);
+  const hintPurchased = purchases.some((purchase) => purchase.itemId === 'BOSS_HINT');
+  const economy = sources.economy
+    ? {
+        earnedPoints,
+        teacherSpentPoints,
+        balance: earnedPoints - teacherSpentPoints,
+        inventory: Object.fromEntries(
+          unitIds.map((unitId) => [
+            unitId,
+            purchases.filter((purchase) => purchase.itemId === unitId).length,
+          ]),
+        ) as StudentBoardEconomy['inventory'],
+        hintPurchased,
+        ...(hintPurchased
+          ? {
+              hint:
+                hintText[plan.seasons[seasonIndex]?.bossId] ?? '힌트를 확인할 수 없어요.',
+            }
+          : {}),
+      }
+    : undefined;
+  const boardTeams = plan.teams.map((boardTeam, boardTeamIndex) => ({
+    name: boardTeam.name,
+    teamIndex: boardTeamIndex,
+    members: plan.students.flatMap((student, at) => {
+      if (!boardTeam.studentIds.includes(student.id)) return [];
+      const medals =
+        sources.medals?.awards
+          .filter((award) => award.studentId === student.id)
+          .map((award) => ({
+            name: award.medal.name,
+            description: award.medal.description,
+            symbol: award.medal.symbol,
+            color: award.medal.color ?? '#2d6a4f',
+            awardedAt: award.awardedAt,
+          })) ?? [];
+      const growth =
+        sources.practice?.history
+          .filter((entry) => Boolean(entry.official) && !entry.official?.voidedAt)
+          .flatMap((entry) =>
+            entry.teams.flatMap((matchTeam) =>
+              matchTeam.jumpers
+                .filter((choice) => choice.studentId === student.id)
+                .map((choice) => ({
+                  seasonNumber: entry.seasonIndex + 1,
+                  recordedAt: entry.savedAt,
+                  count: Number(choice.actual),
+                })),
+            ),
+          ) ?? [];
+      return [
+        {
+          name: student.name,
+          number: at + 1,
+          captain: boardTeam.captainId === student.id,
+          jumper: Boolean(
+            plan.jumpers?.[boardTeamIndex]?.some(
+              (choice) => choice.studentId === student.id,
+            ),
+          ),
+          medals,
+          growth,
+        },
+      ];
+    }),
+  }));
   return {
     version: 1,
     expeditionName: plan.className,
@@ -74,27 +426,14 @@ export function studentBoardData(
     teamIndex,
     seasonNumber: (plan.currentSeasonIndex ?? 0) + 1,
     publishedAt,
-    members: plan.students.flatMap((student, at) =>
-      team.studentIds.includes(student.id)
-        ? [
-            {
-              name: student.name,
-              number: at + 1,
-              captain: team.captainId === student.id,
-              jumper: Boolean(
-                plan.jumpers?.[teamIndex]?.some(
-                  (choice) => choice.studentId === student.id,
-                ),
-              ),
-            },
-          ]
-        : [],
-    ),
+    members: boardTeams[teamIndex].members,
+    teams: boardTeams,
     heroes: teamRewards.map((reward, index) => ({
       slot: index + 1,
       revealed: Boolean(reward.revealedAt),
       ...(reward.revealedAt && reward.heroId ? { heroId: reward.heroId } : {}),
     })),
+    ...(economy ? { economy } : {}),
     ...(latestReveal?.reward.heroId && latestReveal.reward.revealedAt
       ? {
           heroReveal: {
@@ -165,24 +504,134 @@ export function parseStudentBoard(value: unknown): StudentBoardData {
       (!Array.isArray(value.heroes) || value.heroes.length > 15))
   )
     throw new Error('학생 화면 자료를 확인해 주세요.');
-  const members = value.members.map((member) => {
+  const parseMember = (member: unknown): StudentBoardMember => {
     if (
       !obj(member) ||
       !name(member.name) ||
       !integer(member.number, 1, 200) ||
       typeof member.captain !== 'boolean' ||
-      typeof member.jumper !== 'boolean'
+      typeof member.jumper !== 'boolean' ||
+      (member.medals !== undefined && !Array.isArray(member.medals)) ||
+      (member.growth !== undefined && !Array.isArray(member.growth))
     )
       throw new Error('대원 명단을 확인해 주세요.');
+    const medals = (member.medals ?? []).map((medal) => {
+      if (
+        !obj(medal) ||
+        !name(medal.name, 40) ||
+        typeof medal.description !== 'string' ||
+        medal.description.length > 300 ||
+        !['star', 'leaf', 'heart', 'flag'].includes(String(medal.symbol)) ||
+        typeof medal.color !== 'string' ||
+        !/^#[0-9a-f]{6}$/i.test(medal.color) ||
+        typeof medal.awardedAt !== 'string' ||
+        !Number.isFinite(Date.parse(medal.awardedAt))
+      )
+        throw new Error('훈장 기록을 확인해 주세요.');
+      return {
+        name: medal.name,
+        description: medal.description,
+        symbol: medal.symbol as MedalSymbol,
+        color: medal.color,
+        awardedAt: medal.awardedAt,
+      };
+    });
+    const growth = (member.growth ?? []).map((record) => {
+      if (
+        !obj(record) ||
+        !integer(record.seasonNumber, 1, 5) ||
+        typeof record.recordedAt !== 'string' ||
+        !Number.isFinite(Date.parse(record.recordedAt)) ||
+        !integer(record.count, 0, 10_000_000)
+      )
+        throw new Error('성장 기록을 확인해 주세요.');
+      return {
+        seasonNumber: record.seasonNumber,
+        recordedAt: record.recordedAt,
+        count: record.count,
+      };
+    });
     return {
       name: member.name,
       number: member.number,
       captain: member.captain,
       jumper: member.jumper,
+      medals,
+      growth,
     };
-  });
+  };
+  const members = value.members.map(parseMember);
   if (new Set(members.map((member) => member.number)).size !== members.length)
     throw new Error('대원 번호를 확인해 주세요.');
+  const teams =
+    value.teams === undefined
+      ? [
+          {
+            name: value.teamName,
+            teamIndex: value.teamIndex,
+            members,
+          },
+        ]
+      : (() => {
+          if (
+            !Array.isArray(value.teams) ||
+            value.teams.length < 2 ||
+            value.teams.length > 4
+          )
+            throw new Error('원정대 명단을 확인해 주세요.');
+          const parsed = value.teams.map((team) => {
+            if (
+              !obj(team) ||
+              !name(team.name, 40) ||
+              !integer(team.teamIndex, 0, 3) ||
+              !Array.isArray(team.members) ||
+              team.members.length > 200
+            )
+              throw new Error('원정대 명단을 확인해 주세요.');
+            const teamMembers = team.members.map(parseMember);
+            if (
+              new Set(teamMembers.map((member) => member.number)).size !==
+              teamMembers.length
+            )
+              throw new Error('원정대 대원 번호를 확인해 주세요.');
+            return { name: team.name, teamIndex: team.teamIndex, members: teamMembers };
+          });
+          if (new Set(parsed.map((team) => team.teamIndex)).size !== parsed.length)
+            throw new Error('원정대 순서를 확인해 주세요.');
+          return parsed;
+        })();
+  let economy: StudentBoardEconomy | undefined;
+  if (value.economy !== undefined) {
+    const source = value.economy;
+    const unitIds = ['UNIT_01', 'UNIT_02', 'UNIT_03', 'UNIT_04'] as const;
+    const inventory = obj(source) && obj(source.inventory) ? source.inventory : null;
+    if (
+      !obj(source) ||
+      !integer(source.earnedPoints, 0, 10_000_000) ||
+      !integer(source.teacherSpentPoints, 0, 10_000_000) ||
+      !integer(source.balance, 0, 10_000_000) ||
+      source.balance !== source.earnedPoints - source.teacherSpentPoints ||
+      !inventory ||
+      !unitIds.every((unitId) => integer(inventory[unitId], 0, 100_000)) ||
+      typeof source.hintPurchased !== 'boolean' ||
+      (source.hintPurchased
+        ? typeof source.hint !== 'string' ||
+          source.hint.length < 1 ||
+          source.hint.length > 500
+        : source.hint !== undefined)
+    )
+      throw new Error('원정대 포인트와 병력 기록을 확인해 주세요.');
+    economy = {
+      earnedPoints: source.earnedPoints,
+      teacherSpentPoints: source.teacherSpentPoints,
+      balance: source.balance,
+      inventory: Object.fromEntries(
+        unitIds.map((unitId) => [unitId, Number(inventory[unitId])]),
+      ) as StudentBoardEconomy['inventory'],
+      hintPurchased: source.hintPurchased,
+      ...(source.hintPurchased ? { hint: source.hint as string } : {}),
+    };
+  }
   const heroes = (value.heroes ?? []).map((hero) => {
     if (
       !obj(hero) ||
@@ -235,7 +684,9 @@ export function parseStudentBoard(value: unknown): StudentBoardData {
     seasonNumber: value.seasonNumber,
     publishedAt: value.publishedAt,
     members,
+    teams,
     heroes,
+    ...(economy ? { economy } : {}),
     ...(heroReveal ? { heroReveal } : {}),
   };
 }

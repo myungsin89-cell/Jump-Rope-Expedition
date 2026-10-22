@@ -35,6 +35,38 @@ test('uses a compact expedition list with one clear create action and correct ca
   await page.screenshot({ path: 'artifacts/ready-library-mobile.png', fullPage: true });
 });
 
+test('creates downloadable team-labeled QR images for published boards', async ({ page }) => {
+  const id = await seedOperation(page);
+  await page.evaluate((expeditionId) => {
+    localStorage.setItem(
+      `jre.student-links.v1.${expeditionId}`,
+      JSON.stringify([
+        {
+          teamIndex: 0,
+          teamName: '초록 원정대',
+          token: '11111111-1111-4111-8111-111111111111',
+        },
+        {
+          teamIndex: 1,
+          teamName: '햇살 원정대',
+          token: '22222222-2222-4222-8222-222222222222',
+        },
+        {
+          teamIndex: 2,
+          teamName: '바람 원정대',
+          token: '33333333-3333-4333-8333-333333333333',
+        },
+      ]),
+    );
+  }, id);
+  await page.reload();
+  await page.getByRole('button', { name: '학생 화면 공유', exact: true }).click();
+  const downloads = page.locator('.student-qr-download a[download]');
+  await expect(downloads).toHaveCount(3);
+  await expect(downloads.first()).toHaveAttribute('download', /초록 원정대.*QR\.png/);
+  await expect(downloads.first()).toHaveAttribute('href', /^data:image\/png;base64,/);
+});
+
 test('previews a read-only student team and browses real unit and hero cards without exposing the boss', async ({
   page,
 }) => {
@@ -77,7 +109,7 @@ test('previews a read-only student team and browses real unit and hero cards wit
   }, id);
   const original = await page.evaluate(() => localStorage.getItem('jre.preparations.v2'));
   await page.getByRole('button', { name: '학생 화면 공유', exact: true }).click();
-  await expect(page.getByRole('dialog')).toContainText('읽기');
+  await expect(page.getByRole('dialog')).toContainText('원정대 게시판');
   await expect(
     page.getByRole('button', { name: '원정대 게시판 만들기', exact: true }),
   ).toBeVisible();
@@ -88,25 +120,26 @@ test('previews a read-only student team and browses real unit and hero cards wit
     .first()
     .click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('초록 원정대');
-  await expect(page.locator('.student-roster li')).toHaveCount(10);
+  await expect(page.locator('.student-team-card')).toHaveCount(3);
+  await expect(page.locator('.student-team-card li')).toHaveCount(30);
   await expect(page.getByText('도전점퍼', { exact: true })).toHaveCount(0);
   expect(
     await page
-      .locator('.student-roster li.is-jumper .student-member-name')
+      .locator('.student-team-card li.is-jumper .student-member-name')
       .first()
       .evaluate((element) => getComputedStyle(element).textDecorationLine),
   ).toContain('underline');
   await expect(page.getByRole('textbox')).toHaveCount(0);
-  await expect(
-    page.getByRole('button', { name: /구매|기록하기|학생 추가|편성/ }),
-  ).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /기록하기|학생 추가|편성/ })).toHaveCount(
+    0,
+  );
   await expect(page.getByText('바위 골렘', { exact: true })).toHaveCount(0);
   await expect(page.getByText('2배', { exact: true })).toHaveCount(0);
   await page.screenshot({
     path: 'artifacts/ready-student-team-desktop.png',
     fullPage: true,
   });
-  await page.getByRole('button', { name: '병력 카드', exact: true }).click();
+  await page.getByRole('button', { name: '상점', exact: true }).click();
   await expect(page.locator('.jre-card-unit')).toHaveCount(4);
   for (const img of await page.locator('.jre-card-image').all()) {
     await img.scrollIntoViewIfNeeded();
@@ -119,24 +152,22 @@ test('previews a read-only student team and browses real unit and hero cards wit
     path: 'artifacts/ready-student-cards-desktop.png',
     fullPage: true,
   });
-  await page.getByRole('button', { name: '영웅 카드', exact: true }).click();
+  await page.getByRole('button', { name: /^원정대 병력/ }).click();
   await expect(page.locator('.student-owned-heroes .jre-card-hero')).toHaveCount(1);
   await expect(page.locator('.student-sealed-hero')).toHaveCount(1);
-  await expect(page.locator('.student-card-grid .jre-card-hero')).toHaveCount(16);
-  await expect(
-    page.getByText('아직 만나지 못한 영웅까지', { exact: false }),
-  ).toBeVisible();
+  await expect(page.locator('.student-card-grid .jre-card-hero')).toHaveCount(1);
+  await expect(page.getByText('영웅 도감', { exact: true })).toHaveCount(0);
   await page.setViewportSize({ width: 375, height: 812 });
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
   ).toBe(true);
-  await page.getByRole('button', { name: '우리 원정대', exact: true }).click();
+  await page.getByRole('button', { name: '원정대 현황', exact: true }).click();
   await page.screenshot({
     path: 'artifacts/ready-student-team-mobile.png',
     fullPage: true,
   });
-  await page.getByRole('button', { name: '명단 새로고침', exact: true }).click();
-  await expect(page.locator('.student-roster li')).toHaveCount(10);
+  await page.getByRole('button', { name: '현황 새로고침', exact: true }).click();
+  await expect(page.locator('.student-team-card li')).toHaveCount(30);
   expect(await page.evaluate(() => localStorage.getItem('jre.preparations.v2'))).toBe(
     original,
   );
@@ -145,7 +176,7 @@ test('previews a read-only student team and browses real unit and hero cards wit
 
 test('plays one scheduled hero reveal across a live team board', async ({ page }) => {
   const token = '33333333-3333-4333-8333-333333333333';
-  const startedAt = new Date(Date.now() + 1_800).toISOString();
+  const startedAt = new Date(Date.now() + 4_000).toISOString();
   const payload = {
     version: 1,
     expeditionName: '별빛 원정',
@@ -173,14 +204,66 @@ test('plays one scheduled hero reveal across a live team board', async ({ page }
   await expect(
     page.getByRole('heading', { level: 1, name: '초록 원정대' }),
   ).toBeVisible();
-  await page.getByRole('button', { name: '영웅 카드', exact: true }).click();
-  await expect(page.locator('.student-sealed-hero')).toHaveCount(1);
+  await page.getByRole('button', { name: /^원정대 병력/ }).click();
   const reveal = page.locator('.student-live-reveal');
-  await expect(reveal).toBeVisible({ timeout: 5_000 });
+  await expect(reveal).toBeVisible({ timeout: 8_000 });
   await expect(reveal).toContainText('새로운 영웅이 합류했습니다');
   await expect(reveal.getByText('아르코', { exact: true })).toBeVisible();
   await page.screenshot({
     path: 'artifacts/student-live-hero-reveal.png',
     fullPage: true,
   });
+});
+
+test('buys a unit on the live board and shows it in expedition forces', async ({
+  page,
+}) => {
+  const token = '44444444-4444-4444-8444-444444444444';
+  let purchased = false;
+  const payload = () => ({
+    version: 1,
+    expeditionName: '별빛 원정',
+    teamName: '초록 원정대',
+    teamIndex: 0,
+    seasonNumber: 1,
+    publishedAt: new Date().toISOString(),
+    members: [{ name: '가람', number: 1, captain: true, jumper: false }],
+    heroes: [],
+    economy: {
+      earnedPoints: 100,
+      teacherSpentPoints: purchased ? 30 : 0,
+      balance: purchased ? 70 : 100,
+      inventory: { UNIT_01: purchased ? 1 : 0, UNIT_02: 0, UNIT_03: 0, UNIT_04: 0 },
+      hintPurchased: false,
+    },
+  });
+  await page.route('**/functions/v1/student-board*', async (route) => {
+    if (route.request().method() === 'POST') {
+      const body = route.request().postDataJSON();
+      expect(body.action).toBe('purchase');
+      expect(body.itemId).toBe('UNIT_01');
+      purchased = true;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ purchase: { itemId: 'UNIT_01', balance: 70 } }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(payload()),
+    });
+  });
+  page.on('dialog', (dialog) => void dialog.accept());
+  await page.goto(`/#/team/${token}`);
+  await page.getByRole('button', { name: '상점', exact: true }).click();
+  await expect(page.getByText('보유 포인트')).toContainText('100P');
+  await page.locator('.student-shop-item').first().getByRole('button').click();
+  await expect(page.getByRole('status')).toContainText('구매 완료');
+  await expect(page.getByText('보유 포인트')).toContainText('70P');
+  await page.getByRole('button', { name: /^원정대 병력/ }).click();
+  await expect(page.locator('.student-owned-units .jre-card-unit')).toHaveCount(1);
+  await expect(page.getByLabel('도토리 탐험가 1장')).toBeVisible();
 });

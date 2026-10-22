@@ -314,8 +314,11 @@ export default function TeamEconomyModal({
                       {purchase.purchasedAt.slice(0, 10)} · -{purchase.price}P
                     </span>
                     {reversal && <small>복구됨 · {reversal.reason}</small>}
+                    {purchase.actor === 'student-board' && (
+                      <small>원정대 게시판에서 구매</small>
+                    )}
                   </div>
-                  {!reversed && (
+                  {!reversed && purchase.actor === 'local-team' && (
                     <button
                       type="button"
                       className="operation-text-link"
@@ -343,8 +346,7 @@ export default function TeamEconomyModal({
       </details>
 
       <p className="operation-save-note">
-        학생 공개 화면은 아직 읽기 전용이에요. 구매 기록은 교사 계정 서버 자료에 함께
-        동기화됩니다.
+        원정대 게시판에서 구매한 기록도 자동으로 이 장부와 최종 대전에 반영됩니다.
       </p>
     </OperationModal>
   );

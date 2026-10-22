@@ -26,7 +26,7 @@ import type { MedalStore } from '../medals/model';
 import MedalManager from '../medals/MedalManager';
 import '../medals/medals.css';
 import StudentSharing from '../student/StudentSharing';
-import { readEconomy } from '../economy/model';
+import { mergeStudentBoardPurchases, readEconomy } from '../economy/model';
 import type { EconomyStore } from '../economy/model';
 import TeamEconomyModal from '../economy/TeamEconomyModal';
 import TeacherServerModal from '../backup/TeacherServerModal';
@@ -42,7 +42,11 @@ import {
 } from '../battle/model';
 import type { BattleStore } from '../battle/model';
 import FinalBattleModal from '../battle/FinalBattleModal';
-import { syncPublishedStudentBoards } from '../student/studentBoardClient';
+import {
+  fetchStudentBoardPurchases,
+  readStudentLinks,
+  syncPublishedStudentBoards,
+} from '../student/studentBoardClient';
 import {
   revealHeroWithAuthority,
   syncHeroRewardsWithAuthority,
@@ -140,7 +144,14 @@ export default function ExpeditionBoard({
   const updateHeroes = useCallback(
     (store: HeroStore) => {
       setHeroes({ store, error: '' });
-      void syncPublishedStudentBoards(plan, store)
+      if (!loaded.store || !medals.store || !economy.store) return;
+      void syncPublishedStudentBoards(
+        plan,
+        store,
+        loaded.store,
+        medals.store,
+        economy.store,
+      )
         .then((synced) => {
           if (synced) setServerStatus('학생 영웅 화면까지 갱신 완료');
         })
@@ -150,7 +161,7 @@ export default function ExpeditionBoard({
           ),
         );
     },
-    [plan],
+    [economy.store, loaded.store, medals.store, plan],
   );
   useEffect(() => {
     if (!heroes.store || !usesGameAuthority()) return;
@@ -203,6 +214,51 @@ export default function ExpeditionBoard({
     setEconomy({ store, error: '' });
     if (medals.store) reconcileHeroes(medals.store, store);
   };
+  const purchaseFingerprint =
+    economy.store?.purchases.map((item) => item.id).join('|') ?? '';
+  useEffect(() => {
+    if (
+      !loaded.store ||
+      !medals.store ||
+      !economy.store ||
+      readStudentLinks(plan.id).length !== plan.teams.length
+    )
+      return;
+    let active = true;
+    let controller = new AbortController();
+    const sync = async () => {
+      try {
+        const rows = await fetchStudentBoardPurchases(plan.id, controller.signal);
+        if (!active) return;
+        const next = mergeStudentBoardPurchases(plan, rows);
+        const fingerprint = next.purchases.map((item) => item.id).join('|');
+        if (fingerprint === purchaseFingerprint) return;
+        setEconomy({ store: next, error: '' });
+        setHeroes({
+          store: reconcileHeroRewards(plan, {
+            practice: loaded.store!,
+            medals: medals.store!,
+            economy: next,
+          }),
+          error: '',
+        });
+        setServerStatus('학생 상점 구매 기록까지 동기화 완료');
+      } catch {
+        if (active) setServerStatus('학생 구매 기록 동기화를 기다리고 있어요.');
+      }
+    };
+    void sync();
+    const interval = window.setInterval(() => {
+      controller.abort();
+      controller = new AbortController();
+      void sync();
+    }, 8_000);
+    return () => {
+      active = false;
+      controller.abort();
+      window.clearInterval(interval);
+    };
+  }, [economy.store, loaded.store, medals.store, plan, purchaseFingerprint]);
   const revealTeamHero = async (rewardId: string) => {
     if (!heroes.store) throw new Error('영웅 기록을 먼저 확인해 주세요.');
     const next = await revealHeroWithAuthority(plan.id, heroes.store, rewardId);
@@ -497,10 +553,13 @@ export default function ExpeditionBoard({
           onClose={() => setManagingMedals(false)}
         />
       )}
-      {sharing && heroes.store && (
+      {sharing && heroes.store && loaded.store && medals.store && economy.store && (
         <StudentSharing
           plan={plan}
           heroes={heroes.store}
+          practice={loaded.store}
+          medals={medals.store}
+          economy={economy.store}
           onClose={() => setSharing(false)}
         />
       )}

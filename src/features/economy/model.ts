@@ -29,7 +29,7 @@ export interface EconomyPurchase {
   itemName: string;
   price: 30 | 100;
   purchasedAt: string;
-  actor: 'local-team';
+  actor: 'local-team' | 'student-board';
 }
 
 export interface EconomyReversal {
@@ -96,7 +96,7 @@ function isPurchase(value: unknown): value is EconomyPurchase {
     value.itemName === itemNames[value.itemId] &&
     value.price === priceFor(value.itemId) &&
     isDate(value.purchasedAt) &&
-    value.actor === 'local-team'
+    (value.actor === 'local-team' || value.actor === 'student-board')
   );
 }
 
@@ -168,6 +168,52 @@ function commit(store: EconomyStore): EconomyStore {
 export function activePurchases(store: EconomyStore): EconomyPurchase[] {
   const reversed = new Set(store.reversals.map((entry) => entry.purchaseId));
   return store.purchases.filter((purchase) => !reversed.has(purchase.id));
+}
+
+export interface StudentBoardPurchase {
+  requestId: string;
+  teamIndex: number;
+  seasonIndex: number;
+  itemId: EconomyItemId;
+  price: 30 | 100;
+  purchasedAt: string;
+}
+
+export function mergeStudentBoardPurchases(
+  plan: Preparation,
+  rows: StudentBoardPurchase[],
+): EconomyStore {
+  const store = readEconomy(plan.id);
+  const known = new Set(store.purchases.map((purchase) => purchase.id));
+  const additions = rows.flatMap((row): EconomyPurchase[] => {
+    if (
+      known.has(row.requestId) ||
+      !/^team-[0-3]$/.test(`team-${row.teamIndex}`) ||
+      !isSeason(row.seasonIndex) ||
+      !isItemId(row.itemId) ||
+      row.price !== priceFor(row.itemId) ||
+      !isDate(row.purchasedAt) ||
+      !plan.teams[row.teamIndex]
+    )
+      return [];
+    known.add(row.requestId);
+    return [
+      {
+        id: row.requestId,
+        teamKey: `team-${row.teamIndex}` as TeamKey,
+        teamName: plan.teams[row.teamIndex].name,
+        seasonIndex: row.seasonIndex,
+        itemId: row.itemId,
+        itemName: itemNames[row.itemId],
+        price: row.price,
+        purchasedAt: row.purchasedAt,
+        actor: 'student-board',
+      },
+    ];
+  });
+  return additions.length
+    ? commit({ ...store, purchases: [...store.purchases, ...additions] })
+    : store;
 }
 
 export function teamEconomySummary(
