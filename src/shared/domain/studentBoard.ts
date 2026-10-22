@@ -106,12 +106,38 @@ export function parseStudentMedalSource(
     !obj(value) ||
     value.version !== 1 ||
     value.expeditionId !== expeditionId ||
+    !Array.isArray(value.definitions) ||
+    value.definitions.length > 200 ||
     !Array.isArray(value.awards) ||
     value.awards.length > 2_000 ||
     !Array.isArray(value.entries) ||
     value.entries.length > 2_000
   )
     throw new Error('훈장 게시 자료를 확인해 주세요.');
+  const definitions = value.definitions.map((definition) => {
+    if (
+      !obj(definition) ||
+      !name(definition.id, 200) ||
+      !name(definition.name, 40) ||
+      typeof definition.description !== 'string' ||
+      definition.description.length > 300 ||
+      !['star', 'leaf', 'heart', 'flag'].includes(String(definition.symbol)) ||
+      (definition.color !== undefined &&
+        (typeof definition.color !== 'string' ||
+          !/^#[0-9a-f]{6}$/i.test(definition.color))) ||
+      typeof definition.active !== 'boolean'
+    )
+      throw new Error('훈장 게시 자료를 확인해 주세요.');
+    return {
+      id: definition.id,
+      name: definition.name,
+      description: definition.description,
+      symbol: definition.symbol as MedalSymbol,
+      image: '',
+      ...(typeof definition.color === 'string' ? { color: definition.color } : {}),
+      active: definition.active,
+    };
+  });
   const awards = value.awards.map((award) => {
     if (
       !obj(award) ||
@@ -165,7 +191,7 @@ export function parseStudentMedalSource(
       delta: 10 as const,
     };
   });
-  return { version: 1, expeditionId, definitions: [], awards, entries };
+  return { version: 1, expeditionId, definitions, awards, entries };
 }
 
 export function parseStudentPracticeSource(
@@ -382,13 +408,18 @@ export function studentBoardData(
       const medals =
         sources.medals?.awards
           .filter((award) => award.studentId === student.id)
-          .map((award) => ({
-            name: award.medal.name,
-            description: award.medal.description,
-            symbol: award.medal.symbol,
-            color: award.medal.color ?? '#2d6a4f',
-            awardedAt: award.awardedAt,
-          })) ?? [];
+          .map((award) => {
+            const current = sources.medals?.definitions.find(
+              (definition) => definition.id === award.medalId,
+            );
+            return {
+              name: award.medal.name,
+              description: award.medal.description,
+              symbol: award.medal.symbol,
+              color: current?.color ?? award.medal.color ?? '#2d6a4f',
+              awardedAt: award.awardedAt,
+            };
+          }) ?? [];
       const growth =
         sources.practice?.history
           .filter((entry) => Boolean(entry.official) && !entry.official?.voidedAt)

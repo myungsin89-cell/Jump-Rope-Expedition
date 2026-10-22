@@ -55,13 +55,19 @@ export default function TeamMembers({
               <span className="medal-name-icons">
                 {received.map(({ medal }) => (
                   <span key={medal.id} title={medal.name}>
-                    <MedalIcon medal={medal} decorative />
+                    <MedalIcon
+                      medal={
+                        medals?.definitions.find((item) => item.id === medal.id) ?? medal
+                      }
+                      decorative
+                    />
                   </span>
                 ))}
               </span>
             )}
           </span>
         </span>
+        <span className="operation-student-action">훈장 주기</span>
         {isCaptain && !featured && (
           <span className="operation-captain-tag">원정대장</span>
         )}
@@ -97,7 +103,7 @@ export function RosterLegend() {
   return (
     <p className="operation-roster-legend">
       <span aria-hidden="true" />
-      이름 아래 금색 선: 도전점퍼 · 이름을 누르면 상세와 배수를 확인해요.
+      이름 아래 금색 선: 도전점퍼 · 이름을 누르면 훈장 수여와 상세 기록을 확인해요.
     </p>
   );
 }

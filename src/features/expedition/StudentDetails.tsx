@@ -66,6 +66,13 @@ export default function StudentDetails({
         {team?.captainId === student.id ? ' · 원정대장' : ''}
         {jumper ? ` · 도전점퍼 ${jumper.multiplier}배` : ''}
       </p>
+      <StudentMedals
+        plan={plan}
+        student={student}
+        store={medals}
+        error={medalError}
+        onChange={onMedalsChange}
+      />
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -155,13 +162,6 @@ export default function StudentDetails({
             {error}
           </p>
         )}
-        <StudentMedals
-          plan={plan}
-          student={student}
-          store={medals}
-          error={medalError}
-          onChange={onMedalsChange}
-        />
         <details className="operation-detail-section" open={records.length > 0}>
           <summary>
             <h3>

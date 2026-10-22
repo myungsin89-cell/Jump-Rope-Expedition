@@ -3,6 +3,7 @@ import { createPreparation } from '../../features/preparation/model';
 import {
   isUuid,
   parseStudentBoard,
+  parseStudentMedalSource,
   parseTeacherPreparation,
   studentBoardData,
 } from './studentBoard';
@@ -60,6 +61,51 @@ describe('student-only preparation snapshot', () => {
         members: board.members.map((member) => ({ ...member, multiplier: 3 })),
       }),
     ).toEqual(board);
+  });
+  it('uses the current medal definition color for the published status icon', () => {
+    const value = plan();
+    const medals = parseStudentMedalSource(
+      {
+        version: 1,
+        expeditionId: value.id,
+        definitions: [
+          {
+            id: 'kindness',
+            name: '따뜻한 도움',
+            description: '친구를 도왔어요.',
+            symbol: 'heart',
+            color: '#c96f3d',
+            active: true,
+          },
+        ],
+        awards: [
+          {
+            id: 'award-1',
+            medalId: 'kindness',
+            medal: {
+              id: 'kindness',
+              name: '도움의 손길',
+              description: '친구를 도왔어요.',
+              symbol: 'heart',
+              active: true,
+            },
+            studentId: 'a',
+            studentName: '동명이인',
+            teamKey: 'team-0',
+            teamName: value.teams[0].name,
+            seasonIndex: 0,
+            awardedAt: '2026-10-22T00:00:00.000Z',
+          },
+        ],
+        entries: [{ awardId: 'award-1', teamKey: 'team-0', seasonIndex: 0, delta: 10 }],
+      },
+      value.id,
+    );
+    const board = studentBoardData(value, 0, undefined, { medals });
+    expect(board.members[0].medals[0]).toMatchObject({
+      name: '도움의 손길',
+      color: '#c96f3d',
+    });
   });
   it('publishes only this team sealed count and revealed hero identities', () => {
     const value = plan();

@@ -43,13 +43,12 @@ export default function StudentMedals({
     }
   };
   return (
-    <details className="operation-detail-section" aria-label="학생 훈장">
+    <details className="operation-detail-section" aria-label="학생 훈장" open>
       <summary>
         <h3>
-          받은 훈장{' '}
+          훈장 바로 수여{' '}
           <small>
-            {medals.reduce((sum, item) => sum + item.awards.length, 0)}개 · 연습 · 누르면
-            바로 수여·이력
+            받은 훈장 {medals.reduce((sum, item) => sum + item.awards.length, 0)}개 · 연습
           </small>
         </h3>
       </summary>
