@@ -35,7 +35,9 @@ test('uses a compact expedition list with one clear create action and correct ca
   await page.screenshot({ path: 'artifacts/ready-library-mobile.png', fullPage: true });
 });
 
-test('creates downloadable team-labeled QR images for published boards', async ({ page }) => {
+test('creates downloadable team-labeled QR images for published boards', async ({
+  page,
+}) => {
   const id = await seedOperation(page);
   await page.evaluate((expeditionId) => {
     localStorage.setItem(
@@ -65,6 +67,13 @@ test('creates downloadable team-labeled QR images for published boards', async (
   await expect(downloads).toHaveCount(3);
   await expect(downloads.first()).toHaveAttribute('download', /초록 원정대.*QR\.png/);
   await expect(downloads.first()).toHaveAttribute('href', /^data:image\/png;base64,/);
+  const openLinks = page.locator('.student-share-open');
+  await expect(openLinks).toHaveCount(3);
+  await expect(openLinks.first()).toHaveAttribute('target', '_blank');
+  await expect(openLinks.first()).toHaveAttribute(
+    'href',
+    /#\/team\/11111111-1111-4111-8111-111111111111$/,
+  );
 });
 
 test('previews a read-only student team and browses real unit and hero cards without exposing the boss', async ({

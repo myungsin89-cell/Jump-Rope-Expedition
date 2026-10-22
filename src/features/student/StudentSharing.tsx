@@ -221,14 +221,17 @@ export default function StudentSharing({
                     expeditionName={plan.className}
                     teamName={team.name}
                   />
-                  <label htmlFor={`team-link-${index}`}>학생용 읽기 전용 링크</label>
-                  <input
-                    id={`team-link-${index}`}
-                    readOnly
-                    value={url}
-                    onFocus={(event) => event.target.select()}
-                  />
-                  <a href={`#/team/${link.token}`}>실제 원정대 게시판 열기</a>
+                  <span className="student-share-link-label">학생용 원정대 링크</span>
+                  <a
+                    className="student-share-open"
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`${team.name} 게시판 새 탭에서 열기`}
+                  >
+                    <strong>{team.name} 게시판 바로 열기</strong>
+                    <small>{url}</small>
+                  </a>
                 </>
               )}
             </li>
