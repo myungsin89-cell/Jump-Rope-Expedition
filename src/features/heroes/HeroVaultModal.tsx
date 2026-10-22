@@ -19,12 +19,14 @@ export default function HeroVaultModal({
   store,
   teamIndex,
   onReveal,
+  onRevoke,
   onClose,
 }: {
   plan: Preparation;
   store: HeroStore;
   teamIndex: number;
   onReveal: (rewardId: string) => Promise<HeroStore>;
+  onRevoke?: (rewardId: string, reason: string) => Promise<HeroStore>;
   onClose: () => void;
 }) {
   const seasonIndex = currentSeasonIndex(plan);
@@ -40,6 +42,37 @@ export default function HeroVaultModal({
   const [revealedReward, setRevealedReward] = useState<HeroReward | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [revoking, setRevoking] = useState<HeroReward | null>(null);
+  const [revokeReason, setRevokeReason] = useState('');
+
+  const teamCorrections = (store.corrections ?? []).filter((entry) => {
+    const orig = store.rewards.find((r) => r.id === entry.rewardId);
+    return orig?.teamIndex === teamIndex;
+  });
+
+  const confirmRevoke = async () => {
+    if (!revoking || !onRevoke || busy) return;
+    const cleanReason = revokeReason.trim();
+    if (cleanReason.length < 3 || cleanReason.length > 200) {
+      setError('회수 사유를 3자 이상 200자 이내로 입력해 주세요.');
+      return;
+    }
+    setBusy(true);
+    try {
+      await onRevoke(revoking.id, cleanReason);
+      setNotice('영웅 카드를 회수하고 장부에 기록했어요.');
+      setRevoking(null);
+      setRevokeReason('');
+      setError('');
+    } catch (reason) {
+      setError(
+        reason instanceof Error ? reason.message : '영웅 카드를 회수하지 못했어요.',
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
   const achievementCounts = useMemo(
     () =>
       Object.fromEntries(
@@ -119,10 +152,59 @@ export default function HeroVaultModal({
             <p>획득한 영웅은 선택하지 않아도 이번 시즌 최종 대전에 모두 참여해요.</p>
           </section>
 
+          {notice && (
+            <p className="economy-notice" role="status">
+              {notice}
+            </p>
+          )}
           {error && (
             <p className="preparation-field-error" role="alert">
               {error}
             </p>
+          )}
+
+          {revoking && (
+            <section className="hero-reveal-confirm" aria-labelledby="hero-revoke-title">
+              <div>
+                <h3 id="hero-revoke-title">영웅 카드 회수·정정</h3>
+                <p>
+                  오지급되거나 취소된 임무의 영웅 카드를 감사 사유와 함께 회수합니다.
+                  회수된 카드는 이번 시즌 최종 대전에서 제외됩니다.
+                </p>
+                <label htmlFor="hero-revoke-reason" style={{ display: 'block', margin: '8px 0 4px', fontWeight: 'bold' }}>
+                  회수 사유
+                </label>
+                <textarea
+                  id="hero-revoke-reason"
+                  maxLength={200}
+                  value={revokeReason}
+                  onChange={(e) => setRevokeReason(e.target.value)}
+                  placeholder="예: 경기 기록 오입력 취소에 따른 영웅 회수"
+                  style={{ width: '100%', minHeight: '70px', padding: '8px' }}
+                />
+                <div className="preparation-actions" style={{ marginTop: '12px' }}>
+                  <button
+                    type="button"
+                    className="preparation-secondary"
+                    disabled={busy}
+                    onClick={() => {
+                      setRevoking(null);
+                      setRevokeReason('');
+                    }}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className="preparation-primary"
+                    disabled={busy}
+                    onClick={() => void confirmRevoke()}
+                  >
+                    {busy ? '회수 처리 중…' : '회수 확정'}
+                  </button>
+                </div>
+              </div>
+            </section>
           )}
 
           {pending && (
@@ -170,17 +252,33 @@ export default function HeroVaultModal({
                       <span>시즌 {reward.seasonIndex + 1} 임무 달성</span>
                       <small>{contributorLabel(reward)}</small>
                     </div>
-                    <button
-                      type="button"
-                      className="preparation-primary"
-                      disabled={Boolean(pending)}
-                      onClick={() => {
-                        setPending(reward.id);
-                        setError('');
-                      }}
-                    >
-                      팀원과 공개하기
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        className="preparation-primary"
+                        disabled={Boolean(pending) || Boolean(revoking)}
+                        onClick={() => {
+                          setPending(reward.id);
+                          setError('');
+                        }}
+                      >
+                        팀원과 공개하기
+                      </button>
+                      {onRevoke && (
+                        <button
+                          type="button"
+                          className="operation-text-link"
+                          disabled={Boolean(pending) || Boolean(revoking)}
+                          onClick={() => {
+                            setRevoking(reward);
+                            setPending(null);
+                            setError('');
+                          }}
+                        >
+                          교사 회수
+                        </button>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -199,9 +297,24 @@ export default function HeroVaultModal({
                 {revealed.map((reward) => {
                   const hero = HEROES_CATALOG.find((item) => item.id === reward.heroId);
                   return hero ? (
-                    <div key={reward.id}>
+                    <div key={reward.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                       <HeroCard hero={hero} state="revealed" />
                       <small>{HERO_MISSIONS[reward.missionId].name}</small>
+                      {onRevoke && (
+                        <button
+                          type="button"
+                          className="operation-text-link"
+                          style={{ marginTop: '4px' }}
+                          disabled={Boolean(pending) || Boolean(revoking)}
+                          onClick={() => {
+                            setRevoking(reward);
+                            setPending(null);
+                            setError('');
+                          }}
+                        >
+                          교사 회수
+                        </button>
+                      )}
                     </div>
                   ) : null;
                 })}
@@ -216,6 +329,25 @@ export default function HeroVaultModal({
               </p>
             )}
           </section>
+
+          {teamCorrections.length > 0 && (
+            <details className="hero-mission-details">
+              <summary>영웅 회수·정정 장부 {teamCorrections.length}건</summary>
+              <ul className="hero-archive-list">
+                {teamCorrections.map((entry) => {
+                  const orig = store.rewards.find((r) => r.id === entry.rewardId);
+                  const hero = orig?.heroId ? HEROES_CATALOG.find((h) => h.id === orig.heroId) : null;
+                  return (
+                    <li key={entry.id}>
+                      <strong>{hero ? hero.name : '미공개 카드'} ({orig ? HERO_MISSIONS[orig.missionId].name : ''})</strong>
+                      <span>회수됨 · {entry.reason}</span>
+                      <small>{entry.correctedAt.slice(0, 10)}</small>
+                    </li>
+                  );
+                })}
+              </ul>
+            </details>
+          )}
 
           <details className="hero-mission-details">
             <summary>영웅 임무 6개와 달성 기록</summary>

@@ -6,6 +6,7 @@ import type { MedalDefinition, MedalStore } from '../medals/model';
 import { createPreparation } from '../preparation/model';
 import type { Preparation } from '../preparation/model';
 import {
+  activeHeroRewards,
   deriveHeroAchievements,
   drawHeroId,
   heroKey,
@@ -13,6 +14,7 @@ import {
   reconcileHeroRewards,
   revealHero,
   revealSeasonHeroes,
+  revokeHeroReward,
 } from './model';
 
 function plan(teamCount = 3): Preparation {
@@ -239,6 +241,60 @@ describe('영웅 임무 판정', () => {
     );
     expect(missionIds).not.toContain('STEADY_STEPS');
     expect(missionIds).not.toContain('COMEBACK');
+  });
+
+  it('allows teacher to revoke a hero reward with an audit reason and filters it from active heroes', () => {
+    const value = plan();
+    const sources = stores(value);
+    const medalDef: MedalDefinition = {
+      id: 'kindness',
+      name: '친절',
+      description: '서로 도와요',
+      symbol: 'star',
+      image: '',
+      color: '#2d6a4f',
+      active: true,
+    };
+    sources.medals.definitions = [medalDef];
+    sources.medals.awards = Array.from({ length: 4 }, (_, index) => ({
+      id: `award-${index}`,
+      medalId: medalDef.id,
+      medal: medalDef,
+      studentId: `friend-${index}`,
+      studentName: `친구 ${index + 1}`,
+      teamKey: 'team-0',
+      teamName: value.teams[0].name,
+      seasonIndex: 0,
+      awardedAt: `2026-09-0${index + 1}T00:00:00.000Z`,
+      actor: 'local-teacher' as const,
+    }));
+    sources.medals.entries = sources.medals.awards.map((entry) => ({
+      awardId: entry.id,
+      teamKey: entry.teamKey,
+      seasonIndex: entry.seasonIndex,
+      delta: 10 as const,
+    }));
+    const store = reconcileHeroRewards(value, sources, () => 0.05);
+    const rewardId = store.rewards[0].id;
+    expect(activeHeroRewards(store, 0)).toHaveLength(1);
+
+    expect(() => revokeHeroReward(value.id, rewardId, 'req-rev-1', '취')).toThrow('3자 이상');
+
+    const revoked = revokeHeroReward(value.id, rewardId, 'req-rev-1', '훈장 오입력 취소에 따른 회수');
+    expect(revoked.corrections).toHaveLength(1);
+    expect(revoked.corrections?.[0]).toMatchObject({
+      id: 'req-rev-1',
+      rewardId,
+      reason: '훈장 오입력 취소에 따른 회수',
+      actor: 'local-teacher',
+    });
+    expect(activeHeroRewards(revoked, 0)).toHaveLength(0);
+
+    // Replaying identical request is idempotent
+    expect(revokeHeroReward(value.id, rewardId, 'req-rev-1', '훈장 오입력 취소에 따른 회수')).toEqual(revoked);
+
+    // Re-revoking with a different id throws
+    expect(() => revokeHeroReward(value.id, rewardId, 'req-rev-2', '다른 사유')).toThrow('이미 회수');
   });
 
   it('preserves malformed local hero data instead of overwriting it', () => {

@@ -71,10 +71,19 @@ export interface HeroReward {
   contributorNames: string[];
 }
 
+export interface HeroCorrection {
+  id: string;
+  rewardId: string;
+  reason: string;
+  correctedAt: string;
+  actor: 'local-teacher';
+}
+
 export interface HeroStore {
   version: 1;
   expeditionId: string;
   rewards: HeroReward[];
+  corrections?: HeroCorrection[];
 }
 
 export interface HeroSources {
@@ -89,6 +98,7 @@ const emptyStore = (id: string): HeroStore => ({
   version: 1,
   expeditionId: id,
   rewards: [],
+  corrections: [],
 });
 
 const object = (value: unknown): value is Record<string, unknown> =>
@@ -104,6 +114,21 @@ const heroId = (value: unknown): value is string =>
   text(value) && /^H(0[1-9]|1[0-5])$/.test(value);
 const stringList = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((item) => text(item));
+
+function isCorrection(value: unknown, rewards: HeroReward[]): value is HeroCorrection {
+  return (
+    object(value) &&
+    text(value.id) &&
+    value.id.length > 0 &&
+    text(value.rewardId) &&
+    rewards.some((reward) => reward.id === value.rewardId) &&
+    text(value.reason) &&
+    value.reason.trim().length >= 3 &&
+    value.reason.length <= 200 &&
+    date(value.correctedAt) &&
+    value.actor === 'local-teacher'
+  );
+}
 
 function isReward(value: unknown): value is HeroReward {
   return (
@@ -146,7 +171,20 @@ export function parseHeroStore(value: unknown, expeditionId: string): HeroStore 
       ).size !== value.rewards.filter((reward) => reward.heroId).length
     )
       throw new Error();
-    return value as unknown as HeroStore;
+    const rewards = value.rewards as HeroReward[];
+    const corrections = Array.isArray(value.corrections) ? value.corrections : [];
+    if (
+      !corrections.every((item) => isCorrection(item, rewards)) ||
+      new Set(corrections.map((item) => item.id)).size !== corrections.length ||
+      new Set(corrections.map((item) => item.rewardId)).size !== corrections.length
+    )
+      throw new Error();
+    return {
+      version: 1,
+      expeditionId,
+      rewards,
+      corrections: corrections as HeroCorrection[],
+    };
   } catch {
     throw new Error(
       '영웅 기록을 읽을 수 없어요. 원본은 보존했으며 새 영웅 지급을 막았어요.',
@@ -485,13 +523,65 @@ export function revealSeasonHeroes(
   });
 }
 
+export function activeHeroRewards(
+  store: HeroStore,
+  teamIndexValue?: number,
+  seasonIndex?: number,
+): HeroReward[] {
+  const correctedIds = new Set((store.corrections ?? []).map((entry) => entry.rewardId));
+  return store.rewards.filter(
+    (reward) =>
+      !correctedIds.has(reward.id) &&
+      (teamIndexValue === undefined || reward.teamIndex === teamIndexValue) &&
+      (seasonIndex === undefined || reward.seasonIndex === seasonIndex),
+  );
+}
+
+export function revokeHeroReward(
+  expeditionId: string,
+  rewardId: string,
+  requestId: string,
+  reason: string,
+): HeroStore {
+  const store = readHeroes(expeditionId);
+  const cleanReason = reason.trim();
+  const corrections = store.corrections ?? [];
+  const existing = corrections.find((entry) => entry.id === requestId);
+  if (existing) {
+    if (existing.rewardId !== rewardId || existing.reason !== cleanReason)
+      throw new Error('이미 사용한 회수 요청이에요. 상세창을 다시 열어 주세요.');
+    return store;
+  }
+  if (!store.rewards.some((reward) => reward.id === rewardId))
+    throw new Error('회수할 영웅 카드를 찾지 못했어요.');
+  if (corrections.some((entry) => entry.rewardId === rewardId))
+    throw new Error('이미 회수한 영웅이에요.');
+  if (!requestId.trim()) throw new Error('회수 요청을 확인해 주세요.');
+  if (cleanReason.length < 3 || cleanReason.length > 200)
+    throw new Error('회수 사유를 3자 이상 200자 이내로 입력해 주세요.');
+
+  const correction: HeroCorrection = {
+    id: requestId,
+    rewardId,
+    reason: cleanReason,
+    correctedAt: new Date().toISOString(),
+    actor: 'local-teacher',
+  };
+  return commit({
+    ...store,
+    corrections: [...corrections, correction],
+  });
+}
+
 export function teamHeroRewards(
   store: HeroStore,
   teamIndexValue: number,
   seasonIndex?: number,
 ): HeroReward[] {
+  const correctedIds = new Set((store.corrections ?? []).map((entry) => entry.rewardId));
   return store.rewards.filter(
     (reward) =>
+      !correctedIds.has(reward.id) &&
       reward.teamIndex === teamIndexValue &&
       (seasonIndex === undefined || reward.seasonIndex === seasonIndex),
   );

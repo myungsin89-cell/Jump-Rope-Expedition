@@ -30,7 +30,8 @@ import { mergeStudentBoardPurchases, readEconomy } from '../economy/model';
 import type { EconomyStore } from '../economy/model';
 import TeamEconomyModal from '../economy/TeamEconomyModal';
 import { saveTeacherBackup } from '../backup/teacherBackup';
-import { readHeroes, reconcileHeroRewards } from '../heroes/model';
+import { readHeroes, reconcileHeroRewards, revokeHeroReward } from '../heroes/model';
+import { recordOfficialHeroCorrection } from '../heroes/officialHeroes';
 import type { HeroStore } from '../heroes/model';
 import HeroVaultModal from '../heroes/HeroVaultModal';
 import {
@@ -260,6 +261,16 @@ export default function ExpeditionBoard({
   const revealTeamHero = async (rewardId: string) => {
     if (!heroes.store) throw new Error('영웅 기록을 먼저 확인해 주세요.');
     const next = await revealHeroWithAuthority(plan.id, heroes.store, rewardId);
+    updateHeroes(next);
+    return next;
+  };
+  const revokeTeamHero = async (rewardId: string, reason: string) => {
+    if (!heroes.store) throw new Error('영웅 기록을 먼저 확인해 주세요.');
+    const requestId = crypto.randomUUID();
+    const next = revokeHeroReward(plan.id, rewardId, requestId, reason);
+    void recordOfficialHeroCorrection(plan, rewardId, requestId, reason).catch(() => {
+      /* Server recording is best-effort alongside local authoritative store */
+    });
     updateHeroes(next);
     return next;
   };
@@ -572,6 +583,7 @@ export default function ExpeditionBoard({
           store={heroes.store}
           teamIndex={heroTeam}
           onReveal={revealTeamHero}
+          onRevoke={revokeTeamHero}
           onClose={() => setHeroTeam(null)}
         />
       )}
