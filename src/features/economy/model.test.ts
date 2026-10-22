@@ -9,6 +9,7 @@ import { createPreparation } from '../preparation/model';
 import type { Preparation } from '../preparation/model';
 import {
   economyKey,
+  mergeStudentBoardPurchases,
   purchaseItem,
   readEconomy,
   reversePurchase,
@@ -125,6 +126,64 @@ describe('로컬 포인트·구매 장부', () => {
       balance: 0,
       spent: 30,
       inventory: { UNIT_01: 1, UNIT_02: 0, UNIT_03: 0, UNIT_04: 0 },
+    });
+  });
+
+  it('allows teacher to reverse purchases made from student board and restores points and inventory', () => {
+    const value = plan();
+    addMatch(value, [100, 90, 80]);
+    const practice = readPracticeStore(value.id);
+    const sources = { practice, medals: readMedals(value.id) };
+
+    const merged = mergeStudentBoardPurchases(value, [
+      {
+        requestId: 'student-buy-1',
+        teamIndex: 0,
+        seasonIndex: 0,
+        itemId: 'UNIT_01',
+        price: 30,
+        purchasedAt: '2026-10-22T00:00:00.000Z',
+      },
+      {
+        requestId: 'student-buy-2',
+        teamIndex: 0,
+        seasonIndex: 0,
+        itemId: 'BOSS_HINT',
+        price: 100,
+        purchasedAt: '2026-10-22T00:00:01.000Z',
+      },
+    ]);
+    expect(merged.purchases).toHaveLength(2);
+    expect(merged.purchases[0].actor).toBe('student-board');
+    expect(teamEconomySummary(value, sources, merged, 0, 0)).toMatchObject({
+      spent: 130,
+      balance: -70,
+      inventory: { UNIT_01: 1, UNIT_02: 0, UNIT_03: 0, UNIT_04: 0 },
+      hintPurchased: true,
+    });
+
+    const reversed = reversePurchase(value.id, 'student-buy-2', 'rev-1', '학생 힌트 오구매 취소');
+    expect(reversed.reversals).toHaveLength(1);
+    expect(teamEconomySummary(value, sources, reversed, 0, 0)).toMatchObject({
+      spent: 30,
+      balance: 30,
+      hintPurchased: false,
+      inventory: { UNIT_01: 1, UNIT_02: 0, UNIT_03: 0, UNIT_04: 0 },
+    });
+
+    const reMerged = mergeStudentBoardPurchases(value, [
+      {
+        requestId: 'student-buy-2',
+        teamIndex: 0,
+        seasonIndex: 0,
+        itemId: 'BOSS_HINT',
+        price: 100,
+        purchasedAt: '2026-10-22T00:00:01.000Z',
+      },
+    ]);
+    expect(reMerged.purchases).toHaveLength(2);
+    expect(teamEconomySummary(value, sources, reMerged, 0, 0)).toMatchObject({
+      hintPurchased: false,
     });
   });
 

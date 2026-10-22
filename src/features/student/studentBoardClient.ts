@@ -122,6 +122,35 @@ export async function fetchStudentBoardPurchases(
     : [];
 }
 
+export async function reverseStudentBoardPurchase(
+  expeditionId: string,
+  requestId: string,
+  reason: string,
+  signal?: AbortSignal,
+): Promise<boolean> {
+  const apiUrl = import.meta.env.VITE_BOARD_API_URL?.trim();
+  if (!apiUrl || !supabase) return false;
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session) return false;
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    credentials: 'omit',
+    signal,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${data.session.access_token}`,
+    },
+    body: JSON.stringify({
+      action: 'reverse-purchase',
+      expeditionId,
+      requestId,
+      reason,
+    }),
+  });
+  if (!response.ok) throw new Error('학생 구매 서버 복구에 실패했어요.');
+  return true;
+}
+
 export async function publishStudentBoards(
   plan: Preparation,
   heroes: HeroStore,

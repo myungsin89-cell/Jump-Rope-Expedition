@@ -244,6 +244,45 @@ describe('student sharing API boundary', () => {
     expect(response.status).toBe(200);
   });
 
+  it('allows teacher to reverse a student purchase with a valid reason', async () => {
+    const expeditionId = '11111111-2222-4333-8444-555555555555';
+    const requestId = '66666666-7777-4888-8999-000000000000';
+    let deleted = false;
+    const fetcher = authenticatedFetcher(async (url, init) => {
+      if (url.includes(`request_id=eq.${requestId}`) && init?.method === 'DELETE') {
+        deleted = true;
+        return json({});
+      }
+      return json([]);
+    });
+    const handler = createBoardHandler(env, fetcher);
+    const response = await handler(
+      request({
+        action: 'reverse-purchase',
+        expeditionId,
+        requestId,
+        reason: '학생 오구매 취소',
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(deleted).toBe(true);
+    expect(await response.json()).toEqual({ success: true, requestId });
+  });
+
+  it('rejects reversal with invalid reason', async () => {
+    const fetcher = authenticatedFetcher(() => json({}));
+    const handler = createBoardHandler(env, fetcher);
+    const responseShort = await handler(
+      request({
+        action: 'reverse-purchase',
+        expeditionId: '11111111-2222-4333-8444-555555555555',
+        requestId: '66666666-7777-4888-8999-000000000000',
+        reason: '취',
+      }),
+    );
+    expect(responseShort.status).toBe(400);
+  });
+
   it('rejects forbidden origins, unsupported methods and malformed data', async () => {
     const fetcher = authenticatedFetcher(() => json([]));
     const handler = createBoardHandler(env, fetcher);

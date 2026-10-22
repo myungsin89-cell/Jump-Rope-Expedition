@@ -13,6 +13,7 @@ import {
   teamEconomySummary,
 } from './model';
 import type { EconomyItemId, EconomyPurchase, EconomyStore } from './model';
+import { reverseStudentBoardPurchase } from '../student/studentBoardClient';
 import './economy.css';
 
 interface PendingPurchase {
@@ -101,6 +102,15 @@ export default function TeamEconomyModal({
         reversing.requestId,
         reason,
       );
+      if (reversing.purchase.actor === 'student-board') {
+        void reverseStudentBoardPurchase(
+          plan.id,
+          reversing.purchase.id,
+          reason,
+        ).catch(() => {
+          /* Local reversal succeeded; server sync is best-effort or syncs on next publish */
+        });
+      }
       onChange(next);
       setNotice(`${reversing.purchase.itemName} 구매를 복구하고 포인트를 돌려줬어요.`);
       setError('');
@@ -202,6 +212,11 @@ export default function TeamEconomyModal({
             교사만 오입력·오구매를 반대 거래로 복구할 수 있어요. 기존 구매 기록은 삭제하지
             않습니다.
           </p>
+          {reversing.purchase.actor === 'student-board' && (
+            <p className="economy-reversal-student-note">
+              원정대 게시판에서 학생이 구매한 내역이에요. 복구 시 {reversing.purchase.price}P가 팀 잔액으로 환불됩니다.
+            </p>
+          )}
           <label htmlFor="economy-reversal-reason">복구 사유</label>
           <textarea
             id="economy-reversal-reason"
@@ -318,7 +333,7 @@ export default function TeamEconomyModal({
                       <small>원정대 게시판에서 구매</small>
                     )}
                   </div>
-                  {!reversed && purchase.actor === 'local-team' && (
+                  {!reversed && (
                     <button
                       type="button"
                       className="operation-text-link"

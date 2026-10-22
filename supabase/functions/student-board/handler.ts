@@ -303,6 +303,26 @@ export function createBoardHandler(env: Environment, fetcher: typeof fetch = fet
           ),
         });
       }
+      if (
+        object(value) &&
+        value.action === 'reverse-purchase' &&
+        isUuid(value.expeditionId) &&
+        isUuid(value.requestId)
+      ) {
+        if (
+          typeof value.reason !== 'string' ||
+          value.reason.trim().length < 3 ||
+          value.reason.length > 200
+        )
+          return respond({ error: 'Invalid reversal reason' }, 400);
+        const deleteResponse = await rest(
+          `student_team_purchases?owner_id=eq.${authUser.id}&expedition_id=eq.${value.expeditionId}&request_id=eq.${value.requestId}`,
+          { method: 'DELETE' },
+        );
+        if (!deleteResponse.ok)
+          return respond({ error: 'Purchase reversal unavailable' }, 503);
+        return respond({ success: true, requestId: value.requestId });
+      }
       if (!object(value) || !('plan' in value))
         return respond({ error: 'Invalid request' }, 400);
       let plan;

@@ -66,6 +66,13 @@
   color: var(--forest-primary) !important;
   font-weight: 700;
 }
+.economy-reversal-student-note {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #f0f7f2;
+  color: var(--forest-primary) !important;
+  font-size: 12px !important;
+}
 .economy-confirm label {
   display: block;
   margin: 12px 0 6px;
