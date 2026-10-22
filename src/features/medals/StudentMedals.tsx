@@ -21,18 +21,19 @@ export default function StudentMedals({
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [workingMedalId, setWorkingMedalId] = useState<string | null>(null);
   const blocked = awardBlockReason(plan, student.id);
   const medals = store ? studentMedals(store, student.id) : [];
   const active = store?.definitions.filter((item) => item.active) ?? [];
   const team = plan.teams.find((item) => item.studentIds.includes(student.id));
-  const give = (medalId: string) => {
+  const give = async (medalId: string) => {
+    if (workingMedalId) return;
+    setWorkingMedalId(medalId);
     try {
       const result = awardMedal(plan, student.id, medalId, requestId);
       const latestAward = result.awards.find((item) => item.id === requestId);
       if (latestAward) {
-        void recordOfficialMedalAward(plan, latestAward).catch(() => {
-          /* Server recording is best-effort alongside local authoritative store */
-        });
+        await recordOfficialMedalAward(plan, latestAward);
       }
       const medal = active.find((item) => item.id === medalId);
       onChange(result);
@@ -47,6 +48,8 @@ export default function StudentMedals({
           ? `수여하지 못했어요. ${reason.message}`
           : '수여하지 못했어요. 다시 시도해 주세요.',
       );
+    } finally {
+      setWorkingMedalId(null);
     }
   };
   return (
@@ -76,14 +79,18 @@ export default function StudentMedals({
                   <button
                     key={medal.id}
                     type="button"
-                    disabled={Boolean(blocked)}
+                    disabled={Boolean(blocked) || Boolean(workingMedalId)}
                     aria-label={`${medal.name} 훈장 수여`}
-                    onClick={() => give(medal.id)}
+                    onClick={() => void give(medal.id)}
                   >
                     <MedalIcon medal={medal} decorative />
                     <span>
                       <strong>{medal.name}</strong>
-                      <small>수여하기 · +10P</small>
+                      <small>
+                        {workingMedalId === medal.id
+                          ? '서버 장부 기록 중…'
+                          : '수여하기 · +10P'}
+                      </small>
                     </span>
                   </button>
                 ))}

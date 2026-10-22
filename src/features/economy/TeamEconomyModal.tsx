@@ -52,6 +52,7 @@ export default function TeamEconomyModal({
   const [pending, setPending] = useState<PendingPurchase | null>(null);
   const [reversing, setReversing] = useState<PendingReversal | null>(null);
   const [reason, setReason] = useState('');
+  const [working, setWorking] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const reversedIds = new Set(store.reversals.map((entry) => entry.purchaseId));
@@ -93,26 +94,31 @@ export default function TeamEconomyModal({
     }
   };
 
-  const confirmReversal = () => {
-    if (!reversing) return;
+  const confirmReversal = async () => {
+    if (!reversing || working) return;
+    setWorking(true);
     try {
+      let serverRecorded = true;
+      if (reversing.purchase.actor === 'student-board') {
+        serverRecorded = await reverseStudentBoardPurchase(
+          plan.id,
+          reversing.purchase.id,
+          reversing.requestId,
+          reason,
+        );
+      }
       const next = reversePurchase(
         plan.id,
         reversing.purchase.id,
         reversing.requestId,
         reason,
       );
-      if (reversing.purchase.actor === 'student-board') {
-        void reverseStudentBoardPurchase(
-          plan.id,
-          reversing.purchase.id,
-          reason,
-        ).catch(() => {
-          /* Local reversal succeeded; server sync is best-effort or syncs on next publish */
-        });
-      }
       onChange(next);
-      setNotice(`${reversing.purchase.itemName} 구매를 복구하고 포인트를 돌려줬어요.`);
+      setNotice(
+        serverRecorded
+          ? `${reversing.purchase.itemName} 구매를 복구하고 포인트를 돌려줬어요.`
+          : `${reversing.purchase.itemName} 구매를 복구하고 포인트를 돌려줬어요. 교사 계정에 연결되면 서버 장부도 자동으로 맞춰요.`,
+      );
       setError('');
       setReason('');
       setReversing(null);
@@ -120,6 +126,8 @@ export default function TeamEconomyModal({
       setError(
         reasonValue instanceof Error ? reasonValue.message : '복구 내용을 확인해 주세요.',
       );
+    } finally {
+      setWorking(false);
     }
   };
 
@@ -190,6 +198,7 @@ export default function TeamEconomyModal({
             <button
               type="button"
               className="preparation-secondary"
+              disabled={working}
               onClick={() => setPending(null)}
             >
               아니요, 더 상의하기
@@ -214,7 +223,8 @@ export default function TeamEconomyModal({
           </p>
           {reversing.purchase.actor === 'student-board' && (
             <p className="economy-reversal-student-note">
-              원정대 게시판에서 학생이 구매한 내역이에요. 복구 시 {reversing.purchase.price}P가 팀 잔액으로 환불됩니다.
+              원정대 게시판에서 학생이 구매한 내역이에요. 복구 시{' '}
+              {reversing.purchase.price}P가 팀 잔액으로 환불됩니다.
             </p>
           )}
           <label htmlFor="economy-reversal-reason">복구 사유</label>
@@ -239,9 +249,10 @@ export default function TeamEconomyModal({
             <button
               type="button"
               className="preparation-primary"
-              onClick={confirmReversal}
+              disabled={working}
+              onClick={() => void confirmReversal()}
             >
-              복구 확정
+              {working ? '서버 장부 기록 중…' : '복구 확정'}
             </button>
           </div>
         </section>

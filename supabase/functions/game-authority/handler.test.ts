@@ -62,7 +62,8 @@ describe('game authority edge boundary', () => {
     const input = battleInput();
     const fetcher = authenticatedFetcher(async (url, init) => {
       if (url.includes('/hero_reward_tokens?'))
-        return json([{ team_index: 0, hero_id: 'H12' }]);
+        return json([{ reward_id: 'reward-1', team_index: 0, hero_id: 'H12' }]);
+      if (url.includes('/hero_correction_ledger?')) return json([]);
       expect(url).toContain('/rpc/store_final_battle_authority');
       const body = JSON.parse(String(init?.body));
       expect(body.p_owner_id).toBe(userId);
@@ -94,8 +95,10 @@ describe('game authority edge boundary', () => {
 
   it('rejects a browser battle input that changes authoritative hero ownership', async () => {
     const fetcher = authenticatedFetcher(async (url) => {
-      expect(url).toContain('/hero_reward_tokens?');
-      return json([{ team_index: 0, hero_id: 'H14' }]);
+      if (url.includes('/hero_reward_tokens?'))
+        return json([{ reward_id: 'reward-1', team_index: 0, hero_id: 'H14' }]);
+      expect(url).toContain('/hero_correction_ledger?');
+      return json([]);
     });
     const response = await createGameAuthorityHandler(
       env,
@@ -112,6 +115,32 @@ describe('game authority edge boundary', () => {
     await expect(response.json()).resolves.toEqual({
       error: 'Hero snapshot does not match',
     });
+  });
+
+  it('excludes corrected heroes from the authoritative battle snapshot', async () => {
+    const input = battleInput();
+    input.teams[0].heroIds = [];
+    const fetcher = authenticatedFetcher(async (url, init) => {
+      if (url.includes('/hero_reward_tokens?'))
+        return json([{ reward_id: 'reward-1', team_index: 0, hero_id: 'H12' }]);
+      if (url.includes('/hero_correction_ledger?'))
+        return json([{ reward_id: 'reward-1' }]);
+      expect(url).toContain('/rpc/store_final_battle_authority');
+      const body = JSON.parse(String(init?.body));
+      return json(body.p_result);
+    });
+    const response = await createGameAuthorityHandler(
+      env,
+      fetcher,
+    )(
+      request({
+        action: 'calculate-battle',
+        expeditionId,
+        requestKey: `battle:${expeditionId}:0`,
+        input,
+      }),
+    );
+    expect(response.status).toBe(200);
   });
 
   it('claims hidden hero identities idempotently through the database function', async () => {

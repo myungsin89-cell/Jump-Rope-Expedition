@@ -22,10 +22,8 @@ function serverMessage(raw: string): string {
     return '교사 로그인이 만료됐어요. 다시 로그인해 주세요.';
   if (raw.includes('Expedition not found'))
     return '원정 정보를 찾을 수 없어요. 원정 목록을 다시 열어 주세요.';
-  if (raw.includes('Invalid season'))
-    return '기록할 시즌을 먼저 준비해 주세요.';
-  if (raw.includes('Invalid team key'))
-    return '원정대 편성을 확인해 주세요.';
+  if (raw.includes('Invalid season')) return '기록할 시즌을 먼저 준비해 주세요.';
+  if (raw.includes('Invalid team key')) return '원정대 편성을 확인해 주세요.';
   if (raw.includes('Award payload does not match'))
     return '이미 다른 내용으로 처리된 훈장 수여 요청이에요.';
   return '훈장 서버 기록에 실패했어요. 네트워크 상태를 확인해 주세요.';

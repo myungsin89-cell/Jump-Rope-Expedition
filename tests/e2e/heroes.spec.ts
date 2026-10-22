@@ -144,5 +144,7 @@ test('allows teacher to revoke a hero card with audit reason in hero vault modal
   await expect(dialog.locator('.hero-owned-grid .jre-card-hero')).toHaveCount(0);
 
   await dialog.getByText('영웅 회수·정정 장부 1건').click();
-  await expect(dialog.getByText('회수됨 · 경기 오입력 취소에 따른 영웅 회수')).toBeVisible();
+  await expect(
+    dialog.getByText('회수됨 · 경기 오입력 취소에 따른 영웅 회수'),
+  ).toBeVisible();
 });

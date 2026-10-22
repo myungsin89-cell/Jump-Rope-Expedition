@@ -146,6 +146,7 @@ describe('student sharing API boundary', () => {
           },
         ]);
       if (url.includes('hero_reward_tokens?')) return json([]);
+      if (url.includes('hero_correction_ledger?')) return json([]);
       if (url.includes('student_team_accounts?'))
         return json([
           {
@@ -157,7 +158,14 @@ describe('student sharing API boundary', () => {
           },
         ]);
       if (url.includes('student_team_purchases?'))
-        return json([{ item_id: 'UNIT_03', price: 30 }]);
+        return json([
+          {
+            request_id: '22222222-2222-4222-8222-222222222222',
+            item_id: 'UNIT_03',
+            price: 30,
+          },
+        ]);
+      if (url.includes('student_team_purchase_reversals?')) return json([]);
       return json({}, { status: 404 });
     });
     const response = await createBoardHandler(
@@ -247,11 +255,19 @@ describe('student sharing API boundary', () => {
   it('allows teacher to reverse a student purchase with a valid reason', async () => {
     const expeditionId = '11111111-2222-4333-8444-555555555555';
     const requestId = '66666666-7777-4888-8999-000000000000';
-    let deleted = false;
+    const reversalId = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
+    let recorded = false;
     const fetcher = authenticatedFetcher(async (url, init) => {
-      if (url.includes(`request_id=eq.${requestId}`) && init?.method === 'DELETE') {
-        deleted = true;
-        return json({});
+      if (url.includes('rpc/reverse_student_team_purchase')) {
+        recorded = true;
+        expect(JSON.parse(String(init?.body))).toEqual({
+          p_owner_id: userId,
+          p_expedition_id: expeditionId,
+          p_request_id: requestId,
+          p_reversal_id: reversalId,
+          p_reason: '학생 오구매 취소',
+        });
+        return json({ reversalId, requestId, refundedPoints: 30 });
       }
       return json([]);
     });
@@ -261,12 +277,15 @@ describe('student sharing API boundary', () => {
         action: 'reverse-purchase',
         expeditionId,
         requestId,
+        reversalId,
         reason: '학생 오구매 취소',
       }),
     );
     expect(response.status).toBe(200);
-    expect(deleted).toBe(true);
-    expect(await response.json()).toEqual({ success: true, requestId });
+    expect(recorded).toBe(true);
+    expect(await response.json()).toEqual({
+      reversal: { reversalId, requestId, refundedPoints: 30 },
+    });
   });
 
   it('rejects reversal with invalid reason', async () => {
@@ -277,6 +296,7 @@ describe('student sharing API boundary', () => {
         action: 'reverse-purchase',
         expeditionId: '11111111-2222-4333-8444-555555555555',
         requestId: '66666666-7777-4888-8999-000000000000',
+        reversalId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
         reason: '취',
       }),
     );

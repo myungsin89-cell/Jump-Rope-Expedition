@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  recordOfficialHeroCorrection,
-  setHeroTestBypass,
-} from './officialHeroes';
+import { recordOfficialHeroCorrection, setHeroTestBypass } from './officialHeroes';
 import { createPreparation } from '../preparation/model';
 
 function testPlan() {

@@ -26,6 +26,10 @@ function serverMessage(raw: string): string {
     return '회수 사유를 3자 이상 200자 이내로 입력해 주세요.';
   if (raw.includes('Correction reason does not match'))
     return '이미 다른 사유로 회수 처리된 요청이에요.';
+  if (raw.includes('Hero reward not found'))
+    return '서버 영웅 기록을 찾지 못했어요. 먼저 서버 동기화를 확인해 주세요.';
+  if (raw.includes('Season already closed'))
+    return '최종 대전이 확정된 시즌의 영웅은 회수할 수 없어요.';
   return '영웅 회수 서버 기록에 실패했어요. 네트워크 상태를 확인해 주세요.';
 }
 
@@ -64,6 +68,7 @@ export async function recordOfficialHeroCorrection(
   return {
     correctionId: (data as { correctionId?: string })?.correctionId ?? correctionId,
     rewardId: (data as { rewardId?: string })?.rewardId ?? rewardId,
-    correctedAt: (data as { correctedAt?: string })?.correctedAt ?? new Date().toISOString(),
+    correctedAt:
+      (data as { correctedAt?: string })?.correctedAt ?? new Date().toISOString(),
   };
 }

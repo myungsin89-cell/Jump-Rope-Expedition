@@ -45,6 +45,7 @@ import FinalBattleModal from '../battle/FinalBattleModal';
 import {
   fetchStudentBoardPurchases,
   readStudentLinks,
+  reverseStudentBoardPurchase,
   syncPublishedStudentBoards,
 } from '../student/studentBoardClient';
 import {
@@ -213,8 +214,9 @@ export default function ExpeditionBoard({
     setEconomy({ store, error: '' });
     if (medals.store) reconcileHeroes(medals.store, store);
   };
-  const purchaseFingerprint =
-    economy.store?.purchases.map((item) => item.id).join('|') ?? '';
+  const purchaseFingerprint = economy.store
+    ? `${economy.store.purchases.map((item) => item.id).join('|')}::${economy.store.reversals.map((item) => item.id).join('|')}`
+    : '';
   useEffect(() => {
     if (
       !loaded.store ||
@@ -227,10 +229,33 @@ export default function ExpeditionBoard({
     let controller = new AbortController();
     const sync = async () => {
       try {
-        const rows = await fetchStudentBoardPurchases(plan.id, controller.signal);
+        let rows = await fetchStudentBoardPurchases(plan.id, controller.signal);
         if (!active) return;
-        const next = mergeStudentBoardPurchases(plan, rows);
-        const fingerprint = next.purchases.map((item) => item.id).join('|');
+        const serverReversalIds = new Set(
+          rows.reversals.map((entry) => entry.reversalId),
+        );
+        let pushedReversal = false;
+        for (const reversal of economy.store!.reversals) {
+          if (serverReversalIds.has(reversal.id)) continue;
+          const purchase = economy.store!.purchases.find(
+            (entry) => entry.id === reversal.purchaseId,
+          );
+          if (purchase?.actor !== 'student-board') continue;
+          pushedReversal =
+            (await reverseStudentBoardPurchase(
+              plan.id,
+              purchase.id,
+              reversal.id,
+              reversal.reason,
+              controller.signal,
+            )) || pushedReversal;
+        }
+        if (pushedReversal) {
+          rows = await fetchStudentBoardPurchases(plan.id, controller.signal);
+          if (!active) return;
+        }
+        const next = mergeStudentBoardPurchases(plan, rows.purchases, rows.reversals);
+        const fingerprint = `${next.purchases.map((item) => item.id).join('|')}::${next.reversals.map((item) => item.id).join('|')}`;
         if (fingerprint === purchaseFingerprint) return;
         setEconomy({ store: next, error: '' });
         setHeroes({
@@ -267,10 +292,8 @@ export default function ExpeditionBoard({
   const revokeTeamHero = async (rewardId: string, reason: string) => {
     if (!heroes.store) throw new Error('영웅 기록을 먼저 확인해 주세요.');
     const requestId = crypto.randomUUID();
+    await recordOfficialHeroCorrection(plan, rewardId, requestId, reason);
     const next = revokeHeroReward(plan.id, rewardId, requestId, reason);
-    void recordOfficialHeroCorrection(plan, rewardId, requestId, reason).catch(() => {
-      /* Server recording is best-effort alongside local authoritative store */
-    });
     updateHeroes(next);
     return next;
   };

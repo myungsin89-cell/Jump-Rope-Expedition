@@ -164,7 +164,9 @@ test('allows teacher to reverse student board purchases in team preparation moda
   await reverseButton.click();
 
   await expect(
-    dialog.getByText('원정대 게시판에서 학생이 구매한 내역이에요. 복구 시 30P가 팀 잔액으로 환불됩니다.'),
+    dialog.getByText(
+      '원정대 게시판에서 학생이 구매한 내역이에요. 복구 시 30P가 팀 잔액으로 환불됩니다.',
+    ),
   ).toBeVisible();
   await dialog.getByLabel('복구 사유').fill('학생 실수 구매 취소');
   await dialog.getByRole('button', { name: '복구 확정' }).click();

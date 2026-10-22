@@ -74,7 +74,7 @@ test('shows 30 students compactly, uses add/edit modals and preserves team ident
   await page.getByRole('button', { name: '경기 기록하기' }).click();
   await page.locator('#raw-0').fill('77');
   await page.locator('#actual-0-0').fill('11');
-  await page.getByRole('link', { name: '현황으로', exact: true }).click();
+  await page.locator('.match-return-link').click();
   await page.getByRole('link', { name: '명단', exact: true }).click();
   await firstMember.click();
   await page.getByRole('combobox', { name: '기록 배수', exact: true }).selectOption('3');
@@ -158,7 +158,7 @@ test('keeps future seasons optional and the three operating menus responsive', a
   await page.getByRole('link', { name: '현황', exact: true }).click();
   await page.getByRole('button', { name: '경기 기록하기' }).click();
   await expect(page.locator('#practice-season option')).toHaveCount(1);
-  await page.getByRole('link', { name: '현황으로', exact: true }).click();
+  await page.locator('.match-return-link').click();
   await page.setViewportSize({ width: 375, height: 812 });
   await page.getByRole('link', { name: '명단', exact: true }).click();
   await page.getByRole('button', { name: '학생 추가', exact: true }).click();

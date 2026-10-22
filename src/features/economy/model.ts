@@ -179,9 +179,17 @@ export interface StudentBoardPurchase {
   purchasedAt: string;
 }
 
+export interface StudentBoardPurchaseReversal {
+  reversalId: string;
+  requestId: string;
+  reason: string;
+  reversedAt: string;
+}
+
 export function mergeStudentBoardPurchases(
   plan: Preparation,
   rows: StudentBoardPurchase[],
+  reversalRows: StudentBoardPurchaseReversal[] = [],
 ): EconomyStore {
   const store = readEconomy(plan.id);
   const known = new Set(store.purchases.map((purchase) => purchase.id));
@@ -211,8 +219,38 @@ export function mergeStudentBoardPurchases(
       },
     ];
   });
-  return additions.length
-    ? commit({ ...store, purchases: [...store.purchases, ...additions] })
+  const purchases = [...store.purchases, ...additions];
+  const knownReversals = new Set(store.reversals.map((entry) => entry.id));
+  const reversedPurchases = new Set(store.reversals.map((entry) => entry.purchaseId));
+  const reversalAdditions = reversalRows.flatMap((row): EconomyReversal[] => {
+    if (
+      knownReversals.has(row.reversalId) ||
+      reversedPurchases.has(row.requestId) ||
+      !purchases.some((purchase) => purchase.id === row.requestId) ||
+      !row.reason ||
+      row.reason.trim().length < 3 ||
+      row.reason.length > 200 ||
+      !isDate(row.reversedAt)
+    )
+      return [];
+    knownReversals.add(row.reversalId);
+    reversedPurchases.add(row.requestId);
+    return [
+      {
+        id: row.reversalId,
+        purchaseId: row.requestId,
+        reason: row.reason.trim(),
+        reversedAt: row.reversedAt,
+        actor: 'local-teacher',
+      },
+    ];
+  });
+  return additions.length || reversalAdditions.length
+    ? commit({
+        ...store,
+        purchases,
+        reversals: [...store.reversals, ...reversalAdditions],
+      })
     : store;
 }
 

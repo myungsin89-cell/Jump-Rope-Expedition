@@ -111,7 +111,26 @@ export function createBoardHandler(env: Environment, fetcher: typeof fetch = fet
         const rewardRows: unknown = await rewards.json();
         if (!Array.isArray(rewardRows))
           return respond({ error: 'Hero read unavailable' }, 503);
-        const heroes = rewardRows.flatMap((reward, index) =>
+        const correctionResponse = await rest(
+          `hero_correction_ledger?owner_id=eq.${boardOwner}&expedition_id=eq.${publicationId}&select=reward_id`,
+        );
+        if (!correctionResponse.ok)
+          return respond({ error: 'Hero read unavailable' }, 503);
+        const correctionRows: unknown = await correctionResponse.json();
+        if (!Array.isArray(correctionRows))
+          return respond({ error: 'Hero read unavailable' }, 503);
+        const correctedRewardIds = new Set(
+          correctionRows.flatMap((entry) =>
+            object(entry) && typeof entry.reward_id === 'string' ? [entry.reward_id] : [],
+          ),
+        );
+        const activeRewardRows = rewardRows.filter(
+          (reward) =>
+            !object(reward) ||
+            typeof reward.reward_id !== 'string' ||
+            !correctedRewardIds.has(reward.reward_id),
+        );
+        const heroes = activeRewardRows.flatMap((reward, index) =>
           object(reward) &&
           typeof reward.hero_id === 'string' &&
           /^H(0[1-9]|1[0-5])$/.test(reward.hero_id)
@@ -144,18 +163,39 @@ export function createBoardHandler(env: Environment, fetcher: typeof fetch = fet
         let dynamicEconomy = board.economy;
         if (account) {
           const purchasesResponse = await rest(
-            `student_team_purchases?owner_id=eq.${boardOwner}&expedition_id=eq.${publicationId}&team_index=eq.${boardTeam}&season_index=eq.${seasonIndex}&select=item_id,price`,
+            `student_team_purchases?owner_id=eq.${boardOwner}&expedition_id=eq.${publicationId}&team_index=eq.${boardTeam}&season_index=eq.${seasonIndex}&select=request_id,item_id,price`,
           );
           if (!purchasesResponse.ok)
             return respond({ error: 'Shop read unavailable' }, 503);
           const purchaseRows: unknown = await purchasesResponse.json();
           if (!Array.isArray(purchaseRows))
             return respond({ error: 'Shop read unavailable' }, 503);
+          const reversalResponse = await rest(
+            `student_team_purchase_reversals?owner_id=eq.${boardOwner}&expedition_id=eq.${publicationId}&select=request_id`,
+          );
+          if (!reversalResponse.ok)
+            return respond({ error: 'Shop read unavailable' }, 503);
+          const reversalRows: unknown = await reversalResponse.json();
+          if (!Array.isArray(reversalRows))
+            return respond({ error: 'Shop read unavailable' }, 503);
+          const reversedRequestIds = new Set(
+            reversalRows.flatMap((entry) =>
+              object(entry) && typeof entry.request_id === 'string'
+                ? [entry.request_id]
+                : [],
+            ),
+          );
+          const activePurchaseRows = purchaseRows.filter(
+            (purchase) =>
+              !object(purchase) ||
+              typeof purchase.request_id !== 'string' ||
+              !reversedRequestIds.has(purchase.request_id),
+          );
           const baseInventory = object(account.base_inventory)
             ? account.base_inventory
             : {};
           const unitIds = ['UNIT_01', 'UNIT_02', 'UNIT_03', 'UNIT_04'] as const;
-          const studentSpent = purchaseRows.reduce(
+          const studentSpent = activePurchaseRows.reduce(
             (sum, purchase) =>
               sum +
               (object(purchase) && Number.isInteger(purchase.price)
@@ -165,7 +205,7 @@ export function createBoardHandler(env: Environment, fetcher: typeof fetch = fet
           );
           const hintPurchased =
             account.base_hint_purchased === true ||
-            purchaseRows.some(
+            activePurchaseRows.some(
               (purchase) => object(purchase) && purchase.item_id === 'BOSS_HINT',
             );
           dynamicEconomy = {
@@ -179,7 +219,7 @@ export function createBoardHandler(env: Environment, fetcher: typeof fetch = fet
               unitIds.map((itemId) => [
                 itemId,
                 Number(baseInventory[itemId] ?? 0) +
-                  purchaseRows.filter(
+                  activePurchaseRows.filter(
                     (purchase) => object(purchase) && purchase.item_id === itemId,
                   ).length,
               ]),
@@ -286,6 +326,14 @@ export function createBoardHandler(env: Environment, fetcher: typeof fetch = fet
         const purchases: unknown = await purchaseResponse.json();
         if (!Array.isArray(purchases))
           return respond({ error: 'Purchase read unavailable' }, 503);
+        const reversalResponse = await rest(
+          `student_team_purchase_reversals?owner_id=eq.${authUser.id}&expedition_id=eq.${value.expeditionId}&select=reversal_id,request_id,reason,reversed_at&order=reversed_at.asc,reversal_id.asc`,
+        );
+        if (!reversalResponse.ok)
+          return respond({ error: 'Purchase read unavailable' }, 503);
+        const reversals: unknown = await reversalResponse.json();
+        if (!Array.isArray(reversals))
+          return respond({ error: 'Purchase read unavailable' }, 503);
         return respond({
           purchases: purchases.flatMap((purchase) =>
             object(purchase)
@@ -301,13 +349,26 @@ export function createBoardHandler(env: Environment, fetcher: typeof fetch = fet
                 ]
               : [],
           ),
+          reversals: reversals.flatMap((reversal) =>
+            object(reversal)
+              ? [
+                  {
+                    reversalId: reversal.reversal_id,
+                    requestId: reversal.request_id,
+                    reason: reversal.reason,
+                    reversedAt: reversal.reversed_at,
+                  },
+                ]
+              : [],
+          ),
         });
       }
       if (
         object(value) &&
         value.action === 'reverse-purchase' &&
         isUuid(value.expeditionId) &&
-        isUuid(value.requestId)
+        isUuid(value.requestId) &&
+        isUuid(value.reversalId)
       ) {
         if (
           typeof value.reason !== 'string' ||
@@ -315,13 +376,19 @@ export function createBoardHandler(env: Environment, fetcher: typeof fetch = fet
           value.reason.length > 200
         )
           return respond({ error: 'Invalid reversal reason' }, 400);
-        const deleteResponse = await rest(
-          `student_team_purchases?owner_id=eq.${authUser.id}&expedition_id=eq.${value.expeditionId}&request_id=eq.${value.requestId}`,
-          { method: 'DELETE' },
-        );
-        if (!deleteResponse.ok)
+        const reversalResponse = await rest('rpc/reverse_student_team_purchase', {
+          method: 'POST',
+          body: JSON.stringify({
+            p_owner_id: authUser.id,
+            p_expedition_id: value.expeditionId,
+            p_request_id: value.requestId,
+            p_reversal_id: value.reversalId,
+            p_reason: value.reason.trim(),
+          }),
+        });
+        if (!reversalResponse.ok)
           return respond({ error: 'Purchase reversal unavailable' }, 503);
-        return respond({ success: true, requestId: value.requestId });
+        return respond({ reversal: await reversalResponse.json() });
       }
       if (!object(value) || !('plan' in value))
         return respond({ error: 'Invalid request' }, 400);

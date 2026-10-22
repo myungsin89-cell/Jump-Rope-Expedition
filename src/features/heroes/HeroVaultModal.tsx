@@ -171,7 +171,10 @@ export default function HeroVaultModal({
                   오지급되거나 취소된 임무의 영웅 카드를 감사 사유와 함께 회수합니다.
                   회수된 카드는 이번 시즌 최종 대전에서 제외됩니다.
                 </p>
-                <label htmlFor="hero-revoke-reason" style={{ display: 'block', margin: '8px 0 4px', fontWeight: 'bold' }}>
+                <label
+                  htmlFor="hero-revoke-reason"
+                  style={{ display: 'block', margin: '8px 0 4px', fontWeight: 'bold' }}
+                >
                   회수 사유
                 </label>
                 <textarea
@@ -297,7 +300,14 @@ export default function HeroVaultModal({
                 {revealed.map((reward) => {
                   const hero = HEROES_CATALOG.find((item) => item.id === reward.heroId);
                   return hero ? (
-                    <div key={reward.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div
+                      key={reward.id}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                      }}
+                    >
                       <HeroCard hero={hero} state="revealed" />
                       <small>{HERO_MISSIONS[reward.missionId].name}</small>
                       {onRevoke && (
@@ -336,10 +346,15 @@ export default function HeroVaultModal({
               <ul className="hero-archive-list">
                 {teamCorrections.map((entry) => {
                   const orig = store.rewards.find((r) => r.id === entry.rewardId);
-                  const hero = orig?.heroId ? HEROES_CATALOG.find((h) => h.id === orig.heroId) : null;
+                  const hero = orig?.heroId
+                    ? HEROES_CATALOG.find((h) => h.id === orig.heroId)
+                    : null;
                   return (
                     <li key={entry.id}>
-                      <strong>{hero ? hero.name : '미공개 카드'} ({orig ? HERO_MISSIONS[orig.missionId].name : ''})</strong>
+                      <strong>
+                        {hero ? hero.name : '미공개 카드'} (
+                        {orig ? HERO_MISSIONS[orig.missionId].name : ''})
+                      </strong>
                       <span>회수됨 · {entry.reason}</span>
                       <small>{entry.correctedAt.slice(0, 10)}</small>
                     </li>

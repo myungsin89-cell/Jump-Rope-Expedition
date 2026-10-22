@@ -2,7 +2,11 @@ import type { HeroStore } from '../heroes/model';
 import type { MedalStore } from '../medals/model';
 import type { PracticeStore } from '../matches/practiceModel';
 import type { EconomyStore } from '../economy/model';
-import type { EconomyItemId, StudentBoardPurchase } from '../economy/model';
+import type {
+  EconomyItemId,
+  StudentBoardPurchase,
+  StudentBoardPurchaseReversal,
+} from '../economy/model';
 import type { Preparation } from '../preparation/model';
 import { isUuid } from '../../shared/domain/studentBoard';
 import { supabase } from '../../shared/lib/supabase';
@@ -99,11 +103,14 @@ export async function purchaseStudentItem(
 export async function fetchStudentBoardPurchases(
   expeditionId: string,
   signal?: AbortSignal,
-): Promise<StudentBoardPurchase[]> {
+): Promise<{
+  purchases: StudentBoardPurchase[];
+  reversals: StudentBoardPurchaseReversal[];
+}> {
   const apiUrl = import.meta.env.VITE_BOARD_API_URL?.trim();
-  if (!apiUrl || !supabase) return [];
+  if (!apiUrl || !supabase) return { purchases: [], reversals: [] };
   const { data, error } = await supabase.auth.getSession();
-  if (error || !data.session) return [];
+  if (error || !data.session) return { purchases: [], reversals: [] };
   const response = await fetch(apiUrl, {
     method: 'POST',
     credentials: 'omit',
@@ -116,15 +123,23 @@ export async function fetchStudentBoardPurchases(
   });
   if (!response.ok) throw new Error('학생 구매 기록을 불러오지 못했어요.');
   const value: unknown = await response.json();
-  if (!value || typeof value !== 'object' || !('purchases' in value)) return [];
-  return Array.isArray(value.purchases)
-    ? (value.purchases as StudentBoardPurchase[])
-    : [];
+  if (!value || typeof value !== 'object' || !('purchases' in value))
+    return { purchases: [], reversals: [] };
+  return {
+    purchases: Array.isArray(value.purchases)
+      ? (value.purchases as StudentBoardPurchase[])
+      : [],
+    reversals:
+      'reversals' in value && Array.isArray(value.reversals)
+        ? (value.reversals as StudentBoardPurchaseReversal[])
+        : [],
+  };
 }
 
 export async function reverseStudentBoardPurchase(
   expeditionId: string,
   requestId: string,
+  reversalId: string,
   reason: string,
   signal?: AbortSignal,
 ): Promise<boolean> {
@@ -144,6 +159,7 @@ export async function reverseStudentBoardPurchase(
       action: 'reverse-purchase',
       expeditionId,
       requestId,
+      reversalId,
       reason,
     }),
   });

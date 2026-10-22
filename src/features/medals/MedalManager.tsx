@@ -42,6 +42,7 @@ export default function MedalManager({
   );
   const [studentId, setStudentId] = useState('');
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
+  const [working, setWorking] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const dirty = JSON.stringify(editing) !== JSON.stringify(baseline);
@@ -94,16 +95,15 @@ export default function MedalManager({
       );
     }
   };
-  const award = (event: FormEvent) => {
+  const award = async (event: FormEvent) => {
     event.preventDefault();
-    if (!selected || !student) return;
+    if (!selected || !student || working) return;
+    setWorking(true);
     try {
       const next = awardMedal(plan, student.id, selected.id, requestId);
       const latestAward = next.awards.find((item) => item.id === requestId);
       if (latestAward) {
-        void recordOfficialMedalAward(plan, latestAward).catch(() => {
-          /* Server recording is best-effort alongside local authoritative store */
-        });
+        await recordOfficialMedalAward(plan, latestAward);
       }
       onChange(next);
       setRequestId(crypto.randomUUID());
@@ -118,6 +118,8 @@ export default function MedalManager({
           ? `수여하지 못했어요. ${reason.message}`
           : '수여하지 못했어요. 다시 시도해 주세요.',
       );
+    } finally {
+      setWorking(false);
     }
   };
 
@@ -291,7 +293,7 @@ export default function MedalManager({
           </section>
         </>
       ) : (
-        <form className="medal-quick-award" onSubmit={award}>
+        <form className="medal-quick-award" onSubmit={(event) => void award(event)}>
           <p className="preparation-hint">
             만들어 둔 훈장과 학생을 고른 뒤 한 번만 누르면 바로 수여돼요.
           </p>
@@ -371,9 +373,13 @@ export default function MedalManager({
               <button
                 type="submit"
                 className="preparation-primary medal-award-submit"
-                disabled={!student || Boolean(blocked)}
+                disabled={!student || Boolean(blocked) || working}
               >
-                {student ? `${student.name}에게 훈장 수여 (+10P)` : '학생에게 훈장 수여'}
+                {working
+                  ? '서버 장부 기록 중…'
+                  : student
+                    ? `${student.name}에게 훈장 수여 (+10P)`
+                    : '학생에게 훈장 수여'}
               </button>
             </>
           )}

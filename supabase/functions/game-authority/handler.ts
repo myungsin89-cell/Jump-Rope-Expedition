@@ -202,17 +202,39 @@ export function createGameAuthorityHandler(
         rewardsUrl.searchParams.set('owner_id', `eq.${authUser.id}`);
         rewardsUrl.searchParams.set('expedition_id', `eq.${value.expeditionId}`);
         rewardsUrl.searchParams.set('season_index', `eq.${input.seasonIndex}`);
-        rewardsUrl.searchParams.set('select', 'team_index,hero_id');
+        rewardsUrl.searchParams.set('select', 'reward_id,team_index,hero_id');
         const rewardsResponse = await fetcher(rewardsUrl, { headers: serviceHeaders });
         if (!rewardsResponse.ok)
           return respond({ error: 'Hero authority unavailable' }, 503);
         const rewardRows: unknown = await rewardsResponse.json();
         if (!Array.isArray(rewardRows))
           return respond({ error: 'Hero authority unavailable' }, 503);
+        const correctionsUrl = new URL(
+          '/rest/v1/hero_correction_ledger',
+          env.SUPABASE_URL,
+        );
+        correctionsUrl.searchParams.set('owner_id', `eq.${authUser.id}`);
+        correctionsUrl.searchParams.set('expedition_id', `eq.${value.expeditionId}`);
+        correctionsUrl.searchParams.set('select', 'reward_id');
+        const correctionsResponse = await fetcher(correctionsUrl, {
+          headers: serviceHeaders,
+        });
+        if (!correctionsResponse.ok)
+          return respond({ error: 'Hero authority unavailable' }, 503);
+        const correctionRows: unknown = await correctionsResponse.json();
+        if (!Array.isArray(correctionRows))
+          return respond({ error: 'Hero authority unavailable' }, 503);
+        const correctedRewardIds = new Set(
+          correctionRows.flatMap((row) =>
+            object(row) && typeof row.reward_id === 'string' ? [row.reward_id] : [],
+          ),
+        );
         for (const team of input.teams) {
           const authoritative = rewardRows
             .flatMap((row) =>
               object(row) &&
+              typeof row.reward_id === 'string' &&
+              !correctedRewardIds.has(row.reward_id) &&
               row.team_index === team.teamIndex &&
               typeof row.hero_id === 'string' &&
               /^H(0[1-9]|1[0-5])$/.test(row.hero_id)

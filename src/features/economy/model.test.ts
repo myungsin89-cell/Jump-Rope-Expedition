@@ -162,7 +162,12 @@ describe('로컬 포인트·구매 장부', () => {
       hintPurchased: true,
     });
 
-    const reversed = reversePurchase(value.id, 'student-buy-2', 'rev-1', '학생 힌트 오구매 취소');
+    const reversed = reversePurchase(
+      value.id,
+      'student-buy-2',
+      'rev-1',
+      '학생 힌트 오구매 취소',
+    );
     expect(reversed.reversals).toHaveLength(1);
     expect(teamEconomySummary(value, sources, reversed, 0, 0)).toMatchObject({
       spent: 30,
@@ -184,6 +189,25 @@ describe('로컬 포인트·구매 장부', () => {
     expect(reMerged.purchases).toHaveLength(2);
     expect(teamEconomySummary(value, sources, reMerged, 0, 0)).toMatchObject({
       hintPurchased: false,
+    });
+
+    const serverReversed = mergeStudentBoardPurchases(
+      value,
+      [],
+      [
+        {
+          reversalId: 'server-rev-1',
+          requestId: 'student-buy-1',
+          reason: '서버에서 확인한 오구매 취소',
+          reversedAt: '2026-10-22T00:00:02.000Z',
+        },
+      ],
+    );
+    expect(serverReversed.reversals).toHaveLength(2);
+    expect(teamEconomySummary(value, sources, serverReversed, 0, 0)).toMatchObject({
+      spent: 0,
+      balance: 60,
+      inventory: { UNIT_01: 0, UNIT_02: 0, UNIT_03: 0, UNIT_04: 0 },
     });
   });
 

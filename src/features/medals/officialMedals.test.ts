@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  recordOfficialMedalAward,
-  setMedalTestBypass,
-} from './officialMedals';
+import { recordOfficialMedalAward, setMedalTestBypass } from './officialMedals';
 import { createPreparation } from '../preparation/model';
 import type { MedalAward } from './model';
 

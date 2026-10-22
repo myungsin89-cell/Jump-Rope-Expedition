@@ -278,9 +278,16 @@ describe('영웅 임무 판정', () => {
     const rewardId = store.rewards[0].id;
     expect(activeHeroRewards(store, 0)).toHaveLength(1);
 
-    expect(() => revokeHeroReward(value.id, rewardId, 'req-rev-1', '취')).toThrow('3자 이상');
+    expect(() => revokeHeroReward(value.id, rewardId, 'req-rev-1', '취')).toThrow(
+      '3자 이상',
+    );
 
-    const revoked = revokeHeroReward(value.id, rewardId, 'req-rev-1', '훈장 오입력 취소에 따른 회수');
+    const revoked = revokeHeroReward(
+      value.id,
+      rewardId,
+      'req-rev-1',
+      '훈장 오입력 취소에 따른 회수',
+    );
     expect(revoked.corrections).toHaveLength(1);
     expect(revoked.corrections?.[0]).toMatchObject({
       id: 'req-rev-1',
@@ -291,10 +298,14 @@ describe('영웅 임무 판정', () => {
     expect(activeHeroRewards(revoked, 0)).toHaveLength(0);
 
     // Replaying identical request is idempotent
-    expect(revokeHeroReward(value.id, rewardId, 'req-rev-1', '훈장 오입력 취소에 따른 회수')).toEqual(revoked);
+    expect(
+      revokeHeroReward(value.id, rewardId, 'req-rev-1', '훈장 오입력 취소에 따른 회수'),
+    ).toEqual(revoked);
 
     // Re-revoking with a different id throws
-    expect(() => revokeHeroReward(value.id, rewardId, 'req-rev-2', '다른 사유')).toThrow('이미 회수');
+    expect(() => revokeHeroReward(value.id, rewardId, 'req-rev-2', '다른 사유')).toThrow(
+      '이미 회수',
+    );
   });
 
   it('preserves malformed local hero data instead of overwriting it', () => {
