@@ -22,6 +22,13 @@ test('confirms official results, posts points once, and preserves a cancellation
   await page.locator('#multiplier-0-1').selectOption('2');
   await page.getByRole('button', { name: '도전점퍼 정하고 기록 입력' }).click();
   await expect(page.locator('#jumper-0-0')).toHaveCount(0);
+  await page.getByRole('link', { name: '원정대 현황판으로 돌아가기' }).click();
+  await expect(page).toHaveURL(new RegExp(`/#/preparations/${id}$`));
+  await expect(page.getByRole('button', { name: '서버 저장', exact: true })).toHaveCount(
+    0,
+  );
+  await page.goto(`/#/game/${id}`);
+  await expect(page.locator('#raw-0')).toBeVisible();
   await page.getByRole('button', { name: '순위·포인트 미리보기' }).click();
   await expect(page.getByRole('alert')).toContainText('0 이상의 정수');
   for (let index = 0; index < 3; index++) {

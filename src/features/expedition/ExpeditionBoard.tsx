@@ -29,7 +29,6 @@ import StudentSharing from '../student/StudentSharing';
 import { mergeStudentBoardPurchases, readEconomy } from '../economy/model';
 import type { EconomyStore } from '../economy/model';
 import TeamEconomyModal from '../economy/TeamEconomyModal';
-import TeacherServerModal from '../backup/TeacherServerModal';
 import { saveTeacherBackup } from '../backup/teacherBackup';
 import { readHeroes, reconcileHeroRewards } from '../heroes/model';
 import type { HeroStore } from '../heroes/model';
@@ -88,8 +87,7 @@ export default function ExpeditionBoard({
   });
   const [managingMedals, setManagingMedals] = useState(false);
   const [sharing, setSharing] = useState(false);
-  const [backingUp, setBackingUp] = useState(false);
-  const [serverStatus, setServerStatus] = useState('서버 동기화 준비 중…');
+  const [serverStatus, setServerStatus] = useState('교사 계정 동기화 준비 중…');
   const [economyTeam, setEconomyTeam] = useState<number | null>(null);
   const [heroTeam, setHeroTeam] = useState<number | null>(null);
   const [battleSeason, setBattleSeason] = useState<number | null>(null);
@@ -277,11 +275,10 @@ export default function ExpeditionBoard({
       if (active) setServerStatus('변경 내용을 서버에 저장하는 중…');
       void saveTeacherBackup(plan)
         .then(() => {
-          if (active) setServerStatus('서버 저장 완료');
+          if (active) setServerStatus('교사 계정 자동 저장 완료');
         })
         .catch(() => {
-          if (active)
-            setServerStatus('서버 저장을 기다리고 있어요. 로컬 자료는 보관됐어요.');
+          if (active) setServerStatus('교사 계정 자동 저장을 재시도하고 있어요.');
         });
     }, 900);
     return () => {
@@ -393,13 +390,6 @@ export default function ExpeditionBoard({
       brandSubtitle="선생님 원정실"
       headingAside={
         <div className="teacher-server-heading-actions">
-          <button
-            type="button"
-            className="preparation-secondary"
-            onClick={() => setBackingUp(true)}
-          >
-            서버 저장
-          </button>
           <button
             type="button"
             className="preparation-secondary"
@@ -562,9 +552,6 @@ export default function ExpeditionBoard({
           economy={economy.store}
           onClose={() => setSharing(false)}
         />
-      )}
-      {backingUp && (
-        <TeacherServerModal mode="save" plan={plan} onClose={() => setBackingUp(false)} />
       )}
       {economyTeam !== null && loaded.store && medals.store && economy.store && (
         <TeamEconomyModal

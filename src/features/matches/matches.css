@@ -2,6 +2,24 @@
   width: min(1280px, calc(100% - 64px));
   margin: 40px auto 0;
 }
+.match-return-link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  margin-bottom: 18px;
+  padding: 8px 13px;
+  border: 1px solid var(--prep-line);
+  border-radius: 9px;
+  background: var(--prep-paper);
+  color: var(--forest-primary);
+  font-size: 14px;
+  font-weight: 750;
+  text-decoration: none;
+}
+.match-return-link:hover {
+  border-color: var(--forest-primary);
+  background: var(--mint-tint);
+}
 .match-header {
   width: min(1280px, calc(100% - 64px));
 }

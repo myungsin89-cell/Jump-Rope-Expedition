@@ -19,6 +19,7 @@ async function openStudent(page: Page, number: number) {
   await page
     .getByRole('button', { name: new RegExp(`^${number}번 가상학생 ${number} .*상세$`) })
     .click();
+  await page.getByRole('heading', { name: /^훈장 수여/ }).click();
 }
 async function giveMedal(page: Page) {
   await page.getByRole('button', { name: '도움의 손길 훈장 수여', exact: true }).click();
@@ -217,6 +218,7 @@ test('keeps medal flows usable on mobile and does not guess points for unassigne
   await page.getByLabel('추가할 학생 이름', { exact: true }).fill('미배정 친구');
   await page.getByRole('button', { name: '1명 추가하기', exact: true }).click();
   await page.getByRole('button', { name: '31번 미배정 친구 상세', exact: true }).click();
+  await page.getByRole('heading', { name: /^훈장 수여/ }).click();
   await expect(
     page.getByRole('button', { name: '도움의 손길 훈장 수여', exact: true }),
   ).toBeDisabled();

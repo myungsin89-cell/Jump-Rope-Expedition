@@ -68,7 +68,7 @@ function MatchFrame({ plan, children }: { plan?: Preparation; children: ReactNod
             className="preparation-home"
             href={plan ? `#/preparations/${plan.id}` : '#/preparations'}
           >
-            현황으로
+            현황판으로 돌아가기
           </a>
           <TeacherSessionButton />
         </div>
@@ -264,7 +264,7 @@ function MatchBoard({ plan }: { plan: Preparation }) {
             await saveTeacherBackup(plan);
           } catch {
             setStorageError(
-              '공식 결과와 포인트는 서버에 확정했지만 원정 백업 동기화를 기다리고 있어요. 현황의 서버 저장으로 다시 시도할 수 있어요.',
+              '공식 결과와 포인트는 확정했지만 교사 계정 동기화를 기다리고 있어요. 현황판을 다시 열면 자동으로 재시도해요.',
             );
           }
         }
@@ -359,6 +359,9 @@ function MatchBoard({ plan }: { plan: Preparation }) {
 
   return (
     <MatchFrame plan={plan}>
+      <a className="match-return-link" href={`#/preparations/${plan.id}`}>
+        ← 원정대 현황판으로 돌아가기
+      </a>
       <div className="match-heading">
         <div>
           <p className="match-class-name">{plan.className} · 선생님 직접 입력</p>
@@ -373,13 +376,13 @@ function MatchBoard({ plan }: { plan: Preparation }) {
           {currentSaved?.official?.voidedAt
             ? '경기 취소와 포인트 회수를 완료했어요.'
             : phase === 'saved'
-              ? '공식 결과와 팀 포인트를 서버에 기록했어요.'
+              ? '공식 결과와 팀 포인트를 저장했어요.'
               : '확정 전까지 입력 내용을 다시 확인할 수 있어요.'}
         </strong>
         <span>
           {phase === 'saved'
             ? '원본 기록은 장부에 보존돼요. 다음 경기를 입력하거나 현황으로 돌아갈 수 있어요.'
-            : '결과를 확정하면 팀 포인트가 서버 원장에 지급돼요. 잘못 확정한 기록은 사유를 남기고 취소할 수 있어요.'}
+            : '결과를 확정하면 팀 포인트가 지급돼요. 잘못 확정한 기록은 사유를 남기고 취소할 수 있어요.'}
         </span>
       </div>
       {loaded.error ? (
@@ -713,7 +716,7 @@ function MatchBoard({ plan }: { plan: Preparation }) {
                     type="submit"
                   >
                     {working
-                      ? '서버에 확정 중…'
+                      ? '경기 결과 저장 중…'
                       : phase === 'jumpers'
                         ? '도전점퍼 정하고 기록 입력'
                         : phase === 'records'
@@ -821,7 +824,7 @@ function MatchBoard({ plan }: { plan: Preparation }) {
             )}
             <p className="match-save-hint">
               입력 중인 내용은 이 브라우저에 자동 보관돼요. 결과 확정과 취소는 교사 계정의
-              서버 경기·포인트 장부에 기록됩니다.
+              경기·포인트 기록에 자동 저장됩니다.
             </p>
           </>
         )
