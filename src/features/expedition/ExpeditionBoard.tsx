@@ -29,7 +29,11 @@ import StudentSharing from '../student/StudentSharing';
 import { mergeStudentBoardPurchases, readEconomy } from '../economy/model';
 import type { EconomyStore } from '../economy/model';
 import TeamEconomyModal from '../economy/TeamEconomyModal';
-import { saveTeacherBackup } from '../backup/teacherBackup';
+import {
+  isTeacherBackupConfigured,
+  saveTeacherBackup,
+} from '../backup/teacherBackup';
+import TeacherServerModal from '../backup/TeacherServerModal';
 import { readHeroes, reconcileHeroRewards, revokeHeroReward } from '../heroes/model';
 import { recordOfficialHeroCorrection } from '../heroes/officialHeroes';
 import type { HeroStore } from '../heroes/model';
@@ -53,6 +57,23 @@ import {
   syncHeroRewardsWithAuthority,
   usesGameAuthority,
 } from '../../shared/lib/gameAuthorityClient';
+
+type SyncTone = 'attention' | 'local' | 'saved' | 'saving';
+
+interface SyncStatus {
+  tone: SyncTone;
+  message: string;
+}
+
+function savedTime(value: string): string {
+  const date = new Date(value);
+  return Number.isFinite(date.getTime())
+    ? new Intl.DateTimeFormat('ko-KR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(date)
+    : '';
+}
 
 export default function ExpeditionBoard({
   initial,
@@ -89,7 +110,13 @@ export default function ExpeditionBoard({
   });
   const [managingMedals, setManagingMedals] = useState(false);
   const [sharing, setSharing] = useState(false);
-  const [serverStatus, setServerStatus] = useState('교사 계정 동기화 준비 중…');
+  const [managingBackup, setManagingBackup] = useState(false);
+  const serverConfigured = isTeacherBackupConfigured();
+  const [serverStatus, setServerStatus] = useState<SyncStatus>(() =>
+    serverConfigured
+      ? { tone: 'saving', message: '교사 계정 동기화를 준비하고 있어요.' }
+      : { tone: 'local', message: '이 브라우저에 저장됨 · 서버 연결 전' },
+  );
   const [economyTeam, setEconomyTeam] = useState<number | null>(null);
   const [heroTeam, setHeroTeam] = useState<number | null>(null);
   const [battleSeason, setBattleSeason] = useState<number | null>(null);
@@ -153,12 +180,14 @@ export default function ExpeditionBoard({
         economy.store,
       )
         .then((synced) => {
-          if (synced) setServerStatus('학생 영웅 화면까지 갱신 완료');
+          if (synced)
+            setServerStatus({ tone: 'saved', message: '학생 영웅 화면까지 갱신 완료' });
         })
         .catch(() =>
-          setServerStatus(
-            '학생 영웅 화면 갱신을 기다리고 있어요. QR 게시에서 다시 시도하세요.',
-          ),
+          setServerStatus({
+            tone: 'attention',
+            message: '학생 영웅 화면 갱신 대기 · QR 게시에서 다시 시도해 주세요.',
+          }),
         );
     },
     [economy.store, loaded.store, medals.store, plan],
@@ -172,17 +201,20 @@ export default function ExpeditionBoard({
     if (!fingerprint || authorityFingerprint.current === fingerprint) return;
     authorityFingerprint.current = fingerprint;
     let active = true;
-    setServerStatus('새 영웅을 서버에서 확정하는 중…');
+    setServerStatus({ tone: 'saving', message: '새 영웅을 서버에서 확정하는 중…' });
     void syncHeroRewardsWithAuthority(plan.id, heroes.store)
       .then((store) => {
         if (!active) return;
         updateHeroes(store);
-        setServerStatus('영웅 추첨 서버 확정 완료');
+        setServerStatus({ tone: 'saved', message: '영웅 추첨 서버 확정 완료' });
       })
       .catch(() => {
         if (!active) return;
         authorityFingerprint.current = '';
-        setServerStatus('영웅 서버 확정을 기다리고 있어요. 잠시 후 다시 시도하세요.');
+        setServerStatus({
+          tone: 'attention',
+          message: '영웅 서버 확정 대기 · 잠시 후 다시 시도해 주세요.',
+        });
       });
     return () => {
       active = false;
@@ -266,9 +298,16 @@ export default function ExpeditionBoard({
           }),
           error: '',
         });
-        setServerStatus('학생 상점 구매 기록까지 동기화 완료');
+        setServerStatus({
+          tone: 'saved',
+          message: '학생 상점 구매 기록까지 동기화 완료',
+        });
       } catch {
-        if (active) setServerStatus('학생 구매 기록 동기화를 기다리고 있어요.');
+        if (active)
+          setServerStatus({
+            tone: 'attention',
+            message: '학생 구매 기록 동기화를 기다리고 있어요.',
+          });
       }
     };
     void sync();
@@ -304,15 +343,25 @@ export default function ExpeditionBoard({
   useEffect(() => {
     if (loaded.error || medals.error || economy.error || heroes.error || battles.error)
       return;
+    if (!serverConfigured) return;
     let active = true;
     const timeout = window.setTimeout(() => {
-      if (active) setServerStatus('변경 내용을 서버에 저장하는 중…');
+      if (active)
+        setServerStatus({ tone: 'saving', message: '변경 내용을 서버에 저장하는 중…' });
       void saveTeacherBackup(plan)
-        .then(() => {
-          if (active) setServerStatus('교사 계정 자동 저장 완료');
+        .then((backup) => {
+          if (active)
+            setServerStatus({
+              tone: 'saved',
+              message: `교사 계정 저장 완료 · ${savedTime(backup.updatedAt)}`,
+            });
         })
         .catch(() => {
-          if (active) setServerStatus('교사 계정 자동 저장을 재시도하고 있어요.');
+          if (active)
+            setServerStatus({
+              tone: 'attention',
+              message: '서버 자동 저장 실패 · 저장·백업에서 다시 시도해 주세요.',
+            });
         });
     }, 900);
     return () => {
@@ -330,6 +379,7 @@ export default function ExpeditionBoard({
     heroes.store,
     battles.error,
     battles.store,
+    serverConfigured,
   ]);
   const save = (next: Preparation) => {
     try {
@@ -337,6 +387,8 @@ export default function ExpeditionBoard({
       setPlan(next);
       setStorageError('');
       setErrors({});
+      if (!serverConfigured)
+        setServerStatus({ tone: 'local', message: '이 브라우저에 저장됨 · 서버 연결 전' });
       return true;
     } catch {
       setStorageError(
@@ -450,6 +502,21 @@ export default function ExpeditionBoard({
           </a>
         ))}
       </nav>
+      <div className="operation-storage-status" data-tone={serverStatus.tone}>
+        <div>
+          <strong>저장 상태</strong>
+          <span role="status" aria-live="polite">
+            {serverStatus.message}
+          </span>
+        </div>
+        <button
+          type="button"
+          className="preparation-secondary"
+          onClick={() => setManagingBackup(true)}
+        >
+          저장·백업 관리
+        </button>
+      </div>
       {(storageError || loaded.error) && (
         <p className="preparation-storage-error" role="alert">
           {storageError || loaded.error}
@@ -587,6 +654,19 @@ export default function ExpeditionBoard({
           onClose={() => setSharing(false)}
         />
       )}
+      {managingBackup && (
+        <TeacherServerModal
+          mode="save"
+          plan={plan}
+          onClose={() => setManagingBackup(false)}
+          onServerSaved={(updatedAt) =>
+            setServerStatus({
+              tone: 'saved',
+              message: `직접 서버 저장 완료 · ${savedTime(updatedAt)}`,
+            })
+          }
+        />
+      )}
       {economyTeam !== null && loaded.store && medals.store && economy.store && (
         <TeamEconomyModal
           key={`${economyTeam}-${currentSeasonIndex(plan)}`}
@@ -630,9 +710,7 @@ export default function ExpeditionBoard({
             onClose={() => setBattleSeason(null)}
           />
         )}
-      <p className="operation-save-note">
-        변경 내용은 이 브라우저와 교사 계정에 자동 저장돼요. {serverStatus}
-      </p>
+      <p className="operation-save-note">변경 사항은 먼저 이 브라우저에 저장돼요.</p>
     </PageFrame>
   );
 }

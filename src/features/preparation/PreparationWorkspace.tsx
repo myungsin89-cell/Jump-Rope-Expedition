@@ -155,7 +155,7 @@ function ClassRegistration() {
             </button>
           </div>
           <p className="preparation-save-hint">
-            입력 내용은 이 브라우저와 로그인한 교사 계정에 함께 저장돼요.
+            입력 내용은 먼저 이 브라우저에 저장되고, 서버 연결 시 교사 계정에도 저장돼요.
           </p>
         </form>
       )}
@@ -186,7 +186,7 @@ function PreparationLibrary({
   const [serverNotice, setServerNotice] = useState(() =>
     isTeacherBackupConfigured()
       ? '서버 자료를 확인하고 있어요…'
-      : 'Supabase 서버 연결을 확인해 주세요.',
+      : '이 브라우저에 저장한 원정을 보여주고 있어요.',
   );
   useEffect(() => {
     let active = true;
@@ -234,7 +234,7 @@ function PreparationLibrary({
             className="preparation-secondary"
             onClick={() => setRestoring(true)}
           >
-            서버 명단 불러오기
+            백업 불러오기
           </button>
           <a className="preparation-primary" href="#/prepare">
             {loaded.draft ? '명단 이어하기' : '원정 만들기'}
@@ -325,7 +325,9 @@ function PreparationLibrary({
         <TeacherServerModal
           mode="restore"
           onClose={() => setRestoring(false)}
-          onRestored={(all) => setLoaded((current) => ({ ...current, all }))}
+          onRestored={(all) =>
+            setLoaded((current) => ({ ...current, all, error: '' }))
+          }
         />
       )}
     </PageFrame>

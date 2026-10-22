@@ -146,8 +146,8 @@ export function PageFrame({
           <ForestMap />
           {aside}
           <p className="preparation-local-note">
-            지금은 이 브라우저에 저장하는 준비 화면이에요. 다른 기기 연결과 팀 QR은 아직
-            제공하지 않아요.
+            원정 자료는 이 브라우저에 먼저 저장돼요. 백업 파일로 보관하고, 서버가 연결되면
+            교사 계정에도 동기화할 수 있어요.
           </p>
         </aside>
         <section
