@@ -32,6 +32,7 @@ test('creates a custom medal and gives repeated awards with icons, history and e
 }) => {
   await seedOperation(page);
   await createMedal(page);
+  await expect(page.getByText('훈장 주기', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: '훈장 만들기·수여', exact: true }).click();
   await page.getByRole('tab', { name: '2. 학생에게 수여', exact: true }).click();
   await page.screenshot({ path: 'artifacts/medal-quick-award-desktop.png' });

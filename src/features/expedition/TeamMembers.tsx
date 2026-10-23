@@ -67,7 +67,6 @@ export default function TeamMembers({
             )}
           </span>
         </span>
-        <span className="operation-student-action">훈장 주기</span>
         {isCaptain && !featured && (
           <span className="operation-captain-tag">원정대장</span>
         )}
