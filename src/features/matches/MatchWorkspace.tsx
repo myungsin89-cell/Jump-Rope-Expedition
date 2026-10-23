@@ -17,6 +17,7 @@ import {
   practiceInputs,
   readPracticeStore,
   saveOfficialPractice,
+  seasonBestInputs,
   validatePractice,
   voidOfficialPractice,
   writePracticeDraft,
@@ -43,6 +44,18 @@ const PHASE_TITLES: Record<Phase, string> = {
   saved: '공식 경기 결과를 확정했어요',
 };
 const formatCount = (value: number) => value.toLocaleString('ko-KR');
+const growthMessage = (result: MatchPreview) => {
+  if (result.growthKind === 'baseline')
+    return `이번 시즌 기준 기록 ${formatCount(result.rawCount)}개 · 기준 보너스`;
+  const best = formatCount(result.seasonBestRawCount ?? 0);
+  if (result.growthKind === 'breakthrough')
+    return `시즌 최고 ${best}개 → ${formatCount(result.rawCount)}개 · 5% 이상 크게 성장`;
+  if (result.growthKind === 'improved')
+    return `시즌 최고 ${best}개 → ${formatCount(result.rawCount)}개 · 최고 기록 경신`;
+  if (result.growthKind === 'maintained')
+    return `시즌 최고 ${best}개의 95% 이상 유지 · 꾸준함 보너스`;
+  return `시즌 최고 ${best}개 → ${formatCount(result.rawCount)}개 · 다음 성장에 도전`;
+};
 const testBypass =
   import.meta.env.DEV && import.meta.env.VITE_AUTH_TEST_BYPASS === 'true';
 
@@ -124,11 +137,7 @@ function Results({
               <dd>{formatCount(result.rankingCount)}개</dd>
             </div>
           </dl>
-          <p className="match-growth">
-            {result.previousRawCount === null
-              ? '첫 경기 기록 · 성장 보너스 없음'
-              : `직전 경기 원기록 ${formatCount(result.previousRawCount)}개 → ${formatCount(result.rawCount)}개`}
-          </p>
+          <p className="match-growth">{growthMessage(result)}</p>
           <div className="match-point-preview">
             <span>
               {voided
@@ -250,7 +259,7 @@ function MatchBoard({ plan }: { plan: Preparation }) {
     else if (phase === 'review') {
       const preview = calculateMatchPreview(
         practiceInputs(draft),
-        previous ? practiceInputs(previous) : [],
+        seasonBests,
       );
       setWorking(true);
       try {
@@ -279,18 +288,15 @@ function MatchBoard({ plan }: { plan: Preparation }) {
       }
     }
   };
-  const previous = store?.history
-    .filter(
-      (entry) =>
-        entry.id !== draft?.id && Boolean(entry.official) && !entry.official?.voidedAt,
-    )
-    .at(-1);
+  const seasonBests = draft
+    ? seasonBestInputs(store?.history ?? [], draft.seasonIndex, draft.id)
+    : [];
   const currentSaved = store?.history.find((entry) => entry.id === draft?.id);
   const results =
     draft && (phase === 'review' || phase === 'saved')
       ? calculateMatchPreview(
           practiceInputs(draft),
-          previous ? practiceInputs(previous) : [],
+          seasonBests,
         )
       : null;
   const newPractice = () => {

@@ -68,16 +68,15 @@ describe('로컬 포인트·구매 장부', () => {
     const first = purchaseItem(value, sources, 0, 0, 'UNIT_01', 'buy-1');
     expect(first.purchases).toHaveLength(1);
     expect(purchaseItem(value, sources, 0, 0, 'UNIT_01', 'buy-1')).toEqual(first);
-    const second = purchaseItem(value, sources, 0, 0, 'UNIT_02', 'buy-2');
-    expect(teamEconomySummary(value, sources, second, 0, 0)).toMatchObject({
-      matchEarned: 60,
+    expect(teamEconomySummary(value, sources, first, 0, 0)).toMatchObject({
+      matchEarned: 45,
       medalEarned: 10,
-      spent: 60,
-      balance: 10,
-      inventory: { UNIT_01: 1, UNIT_02: 1, UNIT_03: 0, UNIT_04: 0 },
+      spent: 30,
+      balance: 25,
+      inventory: { UNIT_01: 1, UNIT_02: 0, UNIT_03: 0, UNIT_04: 0 },
     });
-    expect(() => purchaseItem(value, sources, 0, 0, 'UNIT_03', 'buy-3')).toThrow(
-      '20P 부족',
+    expect(() => purchaseItem(value, sources, 0, 0, 'UNIT_02', 'buy-2')).toThrow(
+      '5P 부족',
     );
   });
 
@@ -88,7 +87,7 @@ describe('로컬 포인트·구매 장부', () => {
     const sources = { practice, medals: readMedals(value.id) };
     const bought = purchaseItem(value, sources, 0, 0, 'BOSS_HINT', 'hint-1');
     expect(teamEconomySummary(value, sources, bought, 0, 0)).toMatchObject({
-      balance: 40,
+      balance: 10,
       hintPurchased: true,
     });
     expect(() => purchaseItem(value, sources, 0, 0, 'BOSS_HINT', 'hint-2')).toThrow(
@@ -101,7 +100,7 @@ describe('로컬 포인트·구매 장부', () => {
     expect(restored.purchases).toHaveLength(1);
     expect(restored.reversals).toHaveLength(1);
     expect(teamEconomySummary(value, sources, restored, 0, 0)).toMatchObject({
-      balance: 140,
+      balance: 110,
       hintPurchased: false,
     });
     expect(reversePurchase(value.id, 'hint-1', 'undo-1', '학생 오입력')).toEqual(
@@ -109,7 +108,7 @@ describe('로컬 포인트·구매 장부', () => {
     );
   });
 
-  it('lets fourth place spend its 30 participation points after confirmation', () => {
+  it('lets fourth place spend its 20P participation and 10P baseline reward', () => {
     const value = plan(4);
     const draft = createPractice(value, 0);
     draft.teams.forEach((team, index) => {
@@ -157,7 +156,7 @@ describe('로컬 포인트·구매 장부', () => {
     expect(merged.purchases[0].actor).toBe('student-board');
     expect(teamEconomySummary(value, sources, merged, 0, 0)).toMatchObject({
       spent: 130,
-      balance: -70,
+      balance: -85,
       inventory: { UNIT_01: 1, UNIT_02: 0, UNIT_03: 0, UNIT_04: 0 },
       hintPurchased: true,
     });
@@ -171,7 +170,7 @@ describe('로컬 포인트·구매 장부', () => {
     expect(reversed.reversals).toHaveLength(1);
     expect(teamEconomySummary(value, sources, reversed, 0, 0)).toMatchObject({
       spent: 30,
-      balance: 30,
+      balance: 15,
       hintPurchased: false,
       inventory: { UNIT_01: 1, UNIT_02: 0, UNIT_03: 0, UNIT_04: 0 },
     });
@@ -206,7 +205,7 @@ describe('로컬 포인트·구매 장부', () => {
     expect(serverReversed.reversals).toHaveLength(2);
     expect(teamEconomySummary(value, sources, serverReversed, 0, 0)).toMatchObject({
       spent: 0,
-      balance: 60,
+      balance: 45,
       inventory: { UNIT_01: 0, UNIT_02: 0, UNIT_03: 0, UNIT_04: 0 },
     });
   });

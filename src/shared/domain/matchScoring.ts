@@ -16,17 +16,22 @@ export interface MatchPreview {
   rankingPoints: number;
   growthPoints: number;
   estimatedPoints: number;
-  previousRawCount: number | null;
+  seasonBestRawCount: number | null;
+  growthKind: 'baseline' | 'maintained' | 'improved' | 'breakthrough' | 'none';
 }
 
 function isCount(value: number): boolean {
   return Number.isSafeInteger(value) && value >= 0;
 }
 
+function reachesPercent(value: number, baseline: number, percent: number): boolean {
+  return BigInt(value) * 100n >= BigInt(baseline) * BigInt(percent);
+}
+
 /** Pure rule calculation. This preview does not authorize or post rewards. */
 export function calculateMatchPreview(
   inputs: TeamMatchInput[],
-  previous: Pick<TeamMatchInput, 'teamKey' | 'rawCount'>[] = [],
+  seasonBests: Pick<TeamMatchInput, 'teamKey' | 'rawCount'>[] = [],
 ): MatchPreview[] {
   if (
     inputs.length < 2 ||
@@ -68,23 +73,39 @@ export function calculateMatchPreview(
     const rank =
       1 +
       counts.filter((count) => count.rankingCount > counts[index].rankingCount).length;
-    const previousRawCount =
-      previous.find((entry) => entry.teamKey === team.teamKey)?.rawCount ?? null;
-    if (previousRawCount !== null && !isCount(previousRawCount))
-      throw new Error('직전 기록을 확인해 주세요.');
-    const rankingPoints = ({ 1: 30, 2: 20, 3: 10, 4: 0 } as Record<number, number>)[rank];
-    const growthPoints =
-      previousRawCount !== null && team.rawCount > previousRawCount ? 20 : 0;
+    const seasonBestRawCount =
+      seasonBests.find((entry) => entry.teamKey === team.teamKey)?.rawCount ?? null;
+    if (seasonBestRawCount !== null && !isCount(seasonBestRawCount))
+      throw new Error('시즌 최고 기록을 확인해 주세요.');
+    const rankingPoints = ({ 1: 15, 2: 10, 3: 5, 4: 0 } as Record<number, number>)[rank];
+    let growthPoints: number;
+    let growthKind: MatchPreview['growthKind'];
+    if (seasonBestRawCount === null) {
+      growthPoints = 10;
+      growthKind = 'baseline';
+    } else if (team.rawCount > seasonBestRawCount) {
+      const breakthrough =
+        seasonBestRawCount === 0 || reachesPercent(team.rawCount, seasonBestRawCount, 105);
+      growthPoints = breakthrough ? 30 : 20;
+      growthKind = breakthrough ? 'breakthrough' : 'improved';
+    } else if (reachesPercent(team.rawCount, seasonBestRawCount, 95)) {
+      growthPoints = 10;
+      growthKind = 'maintained';
+    } else {
+      growthPoints = 0;
+      growthKind = 'none';
+    }
     return {
       teamKey: team.teamKey,
       rawCount: team.rawCount,
       ...counts[index],
       rank,
-      participationPoints: 30,
+      participationPoints: 20,
       rankingPoints,
       growthPoints,
-      estimatedPoints: 30 + rankingPoints + growthPoints,
-      previousRawCount,
+      estimatedPoints: 20 + rankingPoints + growthPoints,
+      seasonBestRawCount,
+      growthKind,
     };
   });
 }

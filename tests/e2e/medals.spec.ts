@@ -100,11 +100,11 @@ test('creates a custom medal and gives repeated awards with icons, history and e
   await page.getByRole('link', { name: '현황으로 돌아가기', exact: true }).click();
   await expect(
     page.locator('.operation-team').first().locator('.operation-team-stats'),
-  ).toContainText('80P');
+  ).toContainText('65P');
   await page.reload();
   await expect(
     page.locator('.operation-team').first().locator('.operation-team-stats'),
-  ).toContainText('80P');
+  ).toContainText('65P');
   expect(
     await page.evaluate(
       () =>

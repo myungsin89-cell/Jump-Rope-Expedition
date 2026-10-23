@@ -32,6 +32,7 @@ export interface SavedPractice extends PracticeDraft {
   official?: {
     confirmedAt: string;
     awards: { teamKey: string; points: number }[];
+    scoringVersion?: 'growth-v2';
     voidedAt?: string;
     voidReason?: string;
   };
@@ -131,6 +132,28 @@ export function practiceInputs(draft: PracticeDraft): TeamMatchInput[] {
   }));
 }
 
+export function seasonBestInputs(
+  history: SavedPractice[],
+  seasonIndex: number,
+  excludeMatchId?: string,
+): Pick<TeamMatchInput, 'teamKey' | 'rawCount'>[] {
+  const bests = new Map<string, number>();
+  history
+    .filter(
+      (entry) =>
+        entry.id !== excludeMatchId &&
+        entry.seasonIndex === seasonIndex &&
+        Boolean(entry.official) &&
+        !entry.official?.voidedAt,
+    )
+    .forEach((entry) =>
+      practiceInputs(entry).forEach((team) => {
+        bests.set(team.teamKey, Math.max(bests.get(team.teamKey) ?? 0, team.rawCount));
+      }),
+    );
+  return [...bests].map(([teamKey, rawCount]) => ({ teamKey, rawCount }));
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -203,6 +226,8 @@ function isSavedPractice(value: unknown, classId: string): value is SavedPractic
         !isRecord(value.official) ||
         typeof value.official.confirmedAt !== 'string' ||
         !Number.isFinite(Date.parse(value.official.confirmedAt)) ||
+        (value.official.scoringVersion !== undefined &&
+          value.official.scoringVersion !== 'growth-v2') ||
         !Array.isArray(value.official.awards) ||
         value.official.awards.length !== results.length ||
         !value.official.awards.every(
@@ -287,18 +312,13 @@ export function saveOfficialPractice(
   if (!draft.locked || Object.keys(validatePractice(draft, true)).length)
     throw new Error('도전점퍼와 기록을 먼저 확인해 주세요.');
   const store = readPracticeStore(draft.classId);
-  const previous = store.history
-    .filter(
-      (entry) =>
-        entry.id !== draft.id && Boolean(entry.official) && !entry.official?.voidedAt,
-    )
-    .at(-1);
   const results = calculateMatchPreview(
     practiceInputs(draft),
-    previous ? practiceInputs(previous) : [],
+    seasonBestInputs(store.history, draft.seasonIndex, draft.id),
   );
   const official = {
     confirmedAt,
+    scoringVersion: 'growth-v2' as const,
     awards: results.map((result) => ({
       teamKey: result.teamKey,
       points: result.estimatedPoints,

@@ -1,7 +1,7 @@
 import { assignStudents, readySeasonIndices } from '../preparation/model';
 import type { JumperSetting, Preparation } from '../preparation/model';
 import type { PracticeStore, SavedPractice } from '../matches/practiceModel';
-import { practiceInputs } from '../matches/practiceModel';
+import { practiceInputs, seasonBestInputs } from '../matches/practiceModel';
 import { calculateMatchPreview } from '../../shared/domain/matchScoring';
 
 export type OperationPanel = 'overview' | 'roster' | 'seasons';
@@ -106,18 +106,13 @@ export function previewHistory(history: SavedPractice[], seasonIndex: number) {
   activeHistory.forEach((entry, index) => {
     const results = calculateMatchPreview(
       practiceInputs(entry),
-      index ? practiceInputs(activeHistory[index - 1]) : [],
+      seasonBestInputs(activeHistory.slice(0, index), entry.seasonIndex, entry.id),
     );
     if (entry.seasonIndex !== seasonIndex) return;
     latest = results;
-    results.forEach((result) => {
-      const sum = points.get(result.teamKey);
-      points.set(
-        result.teamKey,
-        sum === null || result.estimatedPoints === null
-          ? null
-          : (sum ?? 0) + result.estimatedPoints,
-      );
+    entry.official!.awards.forEach((award) => {
+      const sum = points.get(award.teamKey);
+      points.set(award.teamKey, sum === null ? null : (sum ?? 0) + award.points);
     });
   });
   return { entries, latest, points };

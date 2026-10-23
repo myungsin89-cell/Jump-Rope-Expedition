@@ -38,8 +38,10 @@ function serverMessage(message: string) {
     return '같은 경기 번호로 다른 결과가 이미 저장되어 있어요.';
   if (value.includes('fourth-place'))
     return '서버에 최신 4위 포인트 규칙을 적용한 뒤 다시 시도해 주세요.';
+  if (value.includes('growth scoring v2'))
+    return '서버에 성장 중심 포인트 규칙을 적용한 뒤 다시 시도해 주세요.';
   if (value.includes('award calculation does not match'))
-    return '서버의 직전 공식 경기와 포인트 계산이 달라요. 현황에서 서버 자료를 다시 불러온 뒤 시도해 주세요.';
+    return '서버의 시즌 최고 기록과 포인트 계산이 달라요. 현황에서 서버 자료를 다시 불러온 뒤 시도해 주세요.';
   if (value.includes('invalid match') || value.includes('invalid awards'))
     return '경기 입력값을 서버에서 확인하지 못했어요. 기록을 다시 확인해 주세요.';
   if (value.includes('expedition not found'))
@@ -72,7 +74,7 @@ export async function confirmOfficialMatch(
     p_expedition_id: plan.id,
     p_match_id: draft.id,
     p_season_index: draft.seasonIndex,
-    p_payload: { version: 1, draft, results },
+    p_payload: { version: 1, scoringVersion: 'growth-v2', draft, results },
     p_awards: awards,
   });
   if (error) throw new Error(serverMessage(error.message));

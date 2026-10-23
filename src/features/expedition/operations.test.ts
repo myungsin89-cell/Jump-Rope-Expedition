@@ -127,7 +127,7 @@ describe('현황 중심 원정 운영', () => {
     expect(configured.jumpers![0]).toEqual([{ studentId: 's-0', multiplier: 3 }]);
     expect(setJumper(configured, 's-3', true).jumpers![0]).toHaveLength(2);
   });
-  it('keeps season totals separate without changing the existing raw-record growth rule', () => {
+  it('keeps season totals separate and preserves the points stored at confirmation', () => {
     const value = plan();
     value.seasonCount = 2;
     value.currentSeasonIndex = 1;
@@ -148,7 +148,8 @@ describe('현황 중심 원정 운영', () => {
       },
     }));
     expect(previewHistory(entries, 0).points.get('team-0')).toBe(60);
-    expect(previewHistory(entries, 1).points.get('team-0')).toBe(80);
+    expect(previewHistory(entries, 1).points.get('team-0')).toBe(60);
+    expect(previewHistory(entries, 1).latest[0].growthKind).toBe('baseline');
   });
   it('removes a voided official match from rankings and point totals without deleting it', () => {
     const value = plan();

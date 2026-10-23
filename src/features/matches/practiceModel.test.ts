@@ -109,10 +109,11 @@ describe('연습 기록판 입력과 저장', () => {
     const confirmed = saveOfficialPractice(value, '2026-10-21T01:00:00.000Z');
     expect(confirmed.draft).toBeNull();
     expect(confirmed.history[0].official?.awards).toEqual([
-      { teamKey: 'team-0', points: 60 },
-      { teamKey: 'team-1', points: 60 },
-      { teamKey: 'team-2', points: 60 },
+      { teamKey: 'team-0', points: 45 },
+      { teamKey: 'team-1', points: 45 },
+      { teamKey: 'team-2', points: 45 },
     ]);
+    expect(confirmed.history[0].official?.scoringVersion).toBe('growth-v2');
     const voided = voidOfficialPractice(
       value.classId,
       value.id,
@@ -124,6 +125,21 @@ describe('연습 기록판 입력과 저장', () => {
       voidReason: '기록 입력 오류',
       voidedAt: '2026-10-21T02:00:00.000Z',
     });
+  });
+  it('uses the same-season best record for growth-v2 awards', () => {
+    const first = completeDraft();
+    saveOfficialPractice(first, '2026-10-21T01:00:00.000Z');
+    const second = structuredClone(first);
+    second.id = 'second-match';
+    ['105', '104', '95'].forEach((raw, index) => {
+      second.teams[index].raw = raw;
+    });
+    const confirmed = saveOfficialPractice(second, '2026-10-21T02:00:00.000Z');
+    expect(confirmed.history[1].official?.awards).toEqual([
+      { teamKey: 'team-0', points: 65 },
+      { teamKey: 'team-1', points: 50 },
+      { teamKey: 'team-2', points: 35 },
+    ]);
   });
   it('preserves stored data on corruption and keeps the draft when saving fails', () => {
     const value = completeDraft();

@@ -32,7 +32,7 @@ describe('경기 예상 계산', () => {
   it('uses competition ranks for ties without awarding victory points', () => {
     const result = calculateMatchPreview(records([500, 500, 300]));
     expect(result.map((team) => team.rank)).toEqual([1, 1, 3]);
-    expect(result.map((team) => team.estimatedPoints)).toEqual([60, 60, 40]);
+    expect(result.map((team) => team.estimatedPoints)).toEqual([45, 45, 35]);
     expect(result[0]).not.toHaveProperty('victoryPoints');
   });
   it('gives every team first place when all records are zero', () => {
@@ -46,10 +46,24 @@ describe('경기 예상 계산', () => {
     const teams = records([510, 490, 500]);
     teams[1].jumpers[0].multiplier = 3;
     const result = calculateMatchPreview(teams, records([500, 500, 500]));
-    expect(result.map((team) => team.growthPoints)).toEqual([20, 0, 0]);
+    expect(result.map((team) => team.growthPoints)).toEqual([20, 10, 10]);
     expect(calculateMatchPreview(teams).map((team) => team.growthPoints)).toEqual([
-      0, 0, 0,
+      10, 10, 10,
     ]);
+  });
+  it('rewards season-best growth more than rank and recognizes steady performance', () => {
+    const result = calculateMatchPreview(
+      records([105, 104, 95, 94]),
+      records([100, 100, 100, 100]),
+    );
+    expect(result.map((team) => team.growthPoints)).toEqual([30, 20, 10, 0]);
+    expect(result.map((team) => team.growthKind)).toEqual([
+      'breakthrough',
+      'improved',
+      'maintained',
+      'none',
+    ]);
+    expect(result[3].estimatedPoints).toBe(20);
   });
   it('rejects duplicate students, missing teams, and unsafe counts', () => {
     const duplicate = records();
@@ -64,13 +78,14 @@ describe('경기 예상 계산', () => {
   it('supports two teams using the existing first and second place rules', () => {
     const result = calculateMatchPreview(records([500, 400]));
     expect(result.map((team) => team.rank)).toEqual([1, 2]);
-    expect(result.map((team) => team.estimatedPoints)).toEqual([60, 50]);
+    expect(result.map((team) => team.estimatedPoints)).toEqual([45, 40]);
   });
-  it('gives fourth place no ranking bonus while keeping participation points', () => {
+  it('gives every team a baseline bonus and fourth place no ranking bonus', () => {
     const result = calculateMatchPreview(records([500, 400, 300, 200]));
     expect(result.map((team) => team.rank)).toEqual([1, 2, 3, 4]);
-    expect(result.map((team) => team.estimatedPoints)).toEqual([60, 50, 40, 30]);
+    expect(result.map((team) => team.estimatedPoints)).toEqual([45, 40, 35, 30]);
     expect(result[3].rankingPoints).toBe(0);
-    expect(result[3].participationPoints).toBe(30);
+    expect(result[3].participationPoints).toBe(20);
+    expect(result[3].growthKind).toBe('baseline');
   });
 });

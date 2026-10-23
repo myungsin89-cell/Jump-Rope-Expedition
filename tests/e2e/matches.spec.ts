@@ -51,7 +51,10 @@ test('confirms official results, posts points once, and preserves a cancellation
   await expect(cards.nth(0).locator('.match-result-rank')).toContainText('공동 1위');
   await expect(cards.nth(1).locator('.match-result-rank')).toContainText('공동 1위');
   await expect(cards.nth(2).locator('.match-result-rank')).toContainText('3위');
-  await expect(cards.nth(0).locator('.match-point-preview strong')).toHaveText('60P');
+  await expect(cards.nth(0).locator('.match-point-preview strong')).toHaveText('45P');
+  await expect(cards.nth(0).locator('.match-growth')).toContainText(
+    '이번 시즌 기준 기록',
+  );
   await page.getByRole('button', { name: '경기 결과 확정하기', exact: true }).click();
   await expect(page.getByText('경기 기록 장부 1개')).toBeVisible();
   await expect(page.getByText('공식 확정', { exact: true })).toBeVisible();
@@ -88,10 +91,10 @@ test('confirms official results, posts points once, and preserves a cancellation
     await page.locator(`#actual-${index}-0`).fill('0');
   }
   await page.getByRole('button', { name: '순위·포인트 미리보기' }).click();
-  await expect(cards.nth(0).locator('.match-point-preview strong')).toHaveText('50P');
-  await expect(cards.nth(0).locator('.match-point-breakdown')).toContainText('성장 0');
-  await expect(cards.nth(1).locator('.match-point-breakdown')).toContainText('성장 0');
-  await expect(cards.nth(2).locator('.match-point-breakdown')).toContainText('성장 0');
+  await expect(cards.nth(0).locator('.match-point-preview strong')).toHaveText('40P');
+  await expect(cards.nth(0).locator('.match-point-breakdown')).toContainText('성장 10');
+  await expect(cards.nth(1).locator('.match-point-breakdown')).toContainText('성장 10');
+  await expect(cards.nth(2).locator('.match-point-breakdown')).toContainText('성장 10');
 });
 
 test('requires prepared teams and seasons and stays usable at mobile width', async ({

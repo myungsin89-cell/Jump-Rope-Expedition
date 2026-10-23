@@ -228,7 +228,7 @@ for (const count of [2, 4])
     await page.getByRole('link', { name: '현황으로 돌아가기', exact: true }).click();
     await expect(
       page.locator('.operation-team').last().locator('.operation-team-stats'),
-    ).toContainText(count === 4 ? '30P' : '50P');
+    ).toContainText(count === 4 ? '30P' : '40P');
     await page.reload();
     await expect(page.locator('.operation-team')).toHaveCount(count);
     expect(
