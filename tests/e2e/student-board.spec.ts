@@ -287,6 +287,46 @@ test('plays one scheduled hero reveal across a live team board', async ({ page }
   });
 });
 
+test('keeps a slow student board request alive and resumes after going offline', async ({
+  page,
+  context,
+}) => {
+  const token = '36666666-3666-4666-8666-366666666666';
+  let requests = 0;
+  await page.route('**/functions/v1/student-board?token=*', async (route) => {
+    requests += 1;
+    await new Promise((resolve) => setTimeout(resolve, 1_600));
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        version: 1,
+        expeditionName: '느린 숲 원정',
+        teamName: '초록 원정대',
+        teamIndex: 0,
+        seasonNumber: 1,
+        publishedAt: new Date().toISOString(),
+        members: [{ name: '가람', number: 1, captain: true, jumper: false }],
+        heroes: [],
+      }),
+    });
+  });
+  await page.goto(`/#/team/${token}`);
+  await expect(page.getByRole('heading', { level: 1, name: '초록 원정대' })).toBeVisible({
+    timeout: 6_000,
+  });
+  await expect(page.locator('.student-sync-status')).toContainText('자동 동기화 작동 중');
+  expect(requests).toBeGreaterThanOrEqual(1);
+
+  await context.setOffline(true);
+  await expect(page.locator('.student-sync-status')).toContainText('오프라인 상태');
+  await context.setOffline(false);
+  await expect(page.locator('.student-sync-status')).toContainText(
+    '자동 동기화 작동 중',
+    { timeout: 6_000 },
+  );
+});
+
 test('buys a unit on the live board and shows it in expedition forces', async ({
   page,
 }) => {

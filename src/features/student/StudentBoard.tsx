@@ -54,6 +54,8 @@ export default function StudentBoard({ route }: { route: string }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [refresh, setRefresh] = useState(0);
+  const [syncIssue, setSyncIssue] = useState('');
+  const [online, setOnline] = useState(() => navigator.onLine);
   const [activeReveal, setActiveReveal] = useState<StudentHeroRevealEvent | null>(null);
   const [unlockedRevealId, setUnlockedRevealId] = useState<string | null>(null);
   const [selectedMember, setSelectedMember] = useState<{
@@ -65,26 +67,55 @@ export default function StudentBoard({ route }: { route: string }) {
   const [actionError, setActionError] = useState('');
   const [actionNotice, setActionNotice] = useState('');
   const title = useRef<HTMLHeadingElement>(null);
+  const focusedTitle = useRef(false);
+  const dataRef = useRef<StudentBoardData | null>(null);
+  const dataSignature = useRef('');
   const preview = route.startsWith('/student-preview/');
   const previewParts = route.split('/');
   const teamToken = preview ? '' : route.slice('/team/'.length);
   useEffect(() => {
-    const controller = new AbortController();
+    let active = true;
+    let controller: AbortController | null = null;
+    let requestTimeout = 0;
+    let pollTimer = 0;
+    let running = false;
+
+    const schedule = (delay: number) => {
+      if (preview || !active) return;
+      window.clearTimeout(pollTimer);
+      pollTimer = window.setTimeout(() => void load(), delay);
+    };
+
     async function load() {
+      if (!active || running) return;
+      if (!preview && !navigator.onLine) {
+        setOnline(false);
+        setSyncIssue('인터넷 연결이 끊겼어요. 연결되면 자동으로 다시 확인할게요.');
+        setLoading(false);
+        return;
+      }
+      if (!preview && document.visibilityState === 'hidden') return;
+      running = true;
+      controller = new AbortController();
+      let timedOut = false;
+      let retryDelay = 2_500;
+      requestTimeout = window.setTimeout(() => {
+        timedOut = true;
+        controller?.abort();
+      }, 15_000);
       try {
+        let next: StudentBoardData;
         if (preview) {
           const [, , id, index] = route.split('/');
           const plan = readPreparations().find((item) => item.id === id);
           if (!plan || !/^[0-3]$/.test(index ?? ''))
             throw new Error('이 브라우저에서 미리 볼 원정대를 찾을 수 없어요.');
-          setData(
-            studentBoardData(plan, Number(index), new Date().toISOString(), {
-              heroes: readHeroes(plan.id),
-              medals: readMedals(plan.id),
-              practice: readPracticeStore(plan.id),
-              economy: readEconomy(plan.id),
-            }),
-          );
+          next = studentBoardData(plan, Number(index), new Date().toISOString(), {
+            heroes: readHeroes(plan.id),
+            medals: readMedals(plan.id),
+            practice: readPracticeStore(plan.id),
+            economy: readEconomy(plan.id),
+          });
         } else {
           const endpoint = import.meta.env.VITE_BOARD_API_URL?.trim();
           if (!endpoint)
@@ -105,28 +136,70 @@ export default function StudentBoard({ route }: { route: string }) {
                 : '학생 화면을 열지 못했어요. 잠시 후 새로고침해 주세요.',
             );
           const value: unknown = await response.json();
-          if (!controller.signal.aborted) setData(parseStudentBoard(value));
+          next = parseStudentBoard(value);
         }
-        if (!controller.signal.aborted) setError('');
+        if (!active || controller.signal.aborted) return;
+        dataRef.current = next;
+        const signature = JSON.stringify(next);
+        if (signature !== dataSignature.current) {
+          dataSignature.current = signature;
+          setData(next);
+        }
+        setOnline(true);
+        setSyncIssue('');
+        setError('');
       } catch (reason) {
-        if (!controller.signal.aborted)
-          setError(
-            reason instanceof Error ? reason.message : '학생 화면을 열지 못했어요.',
-          );
+        if (!active || (controller.signal.aborted && !timedOut)) return;
+        retryDelay = 5_000;
+        const message = timedOut
+          ? '연결이 느려 최신 정보를 받지 못했어요. 자동으로 다시 시도할게요.'
+          : reason instanceof Error
+            ? reason.message
+            : '학생 화면을 열지 못했어요.';
+        if (dataRef.current) setSyncIssue(message);
+        else setError(message);
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        window.clearTimeout(requestTimeout);
+        running = false;
+        if (active) {
+          setLoading(false);
+          schedule(retryDelay);
+        }
       }
     }
+
+    const checkVisibleBoard = () => {
+      if (document.visibilityState !== 'visible') return;
+      window.clearTimeout(pollTimer);
+      void load();
+    };
+    const resumeOnline = () => {
+      setOnline(true);
+      setSyncIssue('');
+      window.clearTimeout(pollTimer);
+      void load();
+    };
+    const pauseOffline = () => {
+      setOnline(false);
+      setSyncIssue('인터넷 연결이 끊겼어요. 연결되면 자동으로 다시 확인할게요.');
+    };
+
     void load();
-    return () => controller.abort();
+    if (!preview) {
+      document.addEventListener('visibilitychange', checkVisibleBoard);
+      window.addEventListener('online', resumeOnline);
+      window.addEventListener('offline', pauseOffline);
+    }
+    return () => {
+      active = false;
+      controller?.abort();
+      window.clearTimeout(requestTimeout);
+      window.clearTimeout(pollTimer);
+      document.removeEventListener('visibilitychange', checkVisibleBoard);
+      window.removeEventListener('online', resumeOnline);
+      window.removeEventListener('offline', pauseOffline);
+    };
   }, [route, preview, refresh]);
-  useEffect(() => {
-    if (preview) return;
-    const interval = window.setInterval(() => {
-      if (document.visibilityState === 'visible') setRefresh((value) => value + 1);
-    }, 1_000);
-    return () => window.clearInterval(interval);
-  }, [preview]);
   const revealEventId = data?.heroReveal?.eventId;
   const revealSlot = data?.heroReveal?.slot;
   const revealHeroId = data?.heroReveal?.heroId;
@@ -173,6 +246,8 @@ export default function StudentBoard({ route }: { route: string }) {
     };
   }, [preview, revealEventId, revealHeroId, revealSlot, revealStartedAt, route]);
   useEffect(() => {
+    if (!data || focusedTitle.current) return;
+    focusedTitle.current = true;
     title.current?.focus({ preventScroll: true });
   }, [data]);
   const openSealedHero = async (slot: number) => {
@@ -253,6 +328,37 @@ export default function StudentBoard({ route }: { route: string }) {
           주세요.
         </p>
       )}
+      {!preview && data && (
+        <div
+          className="student-sync-status"
+          data-state={syncIssue ? 'attention' : 'active'}
+          aria-live="polite"
+        >
+          <div>
+            <strong>
+              {syncIssue
+                ? online
+                  ? '최신 정보 확인 필요'
+                  : '오프라인 상태'
+                : '자동 동기화 작동 중'}
+            </strong>
+            <span>
+              {syncIssue || '새 영웅과 구매 결과를 이 화면에서 자동으로 확인해요.'}
+            </span>
+          </div>
+          {syncIssue && online && (
+            <button
+              type="button"
+              onClick={() => {
+                setSyncIssue('');
+                setRefresh((value) => value + 1);
+              }}
+            >
+              다시 확인
+            </button>
+          )}
+        </div>
+      )}
       {loading ? (
         <p role="status" className="student-message">
           원정대를 불러오는 중이에요…
@@ -316,7 +422,7 @@ export default function StudentBoard({ route }: { route: string }) {
                   </h2>
                   <button
                     onClick={() => {
-                      setLoading(true);
+                      setSyncIssue('');
                       setRefresh((value) => value + 1);
                     }}
                   >

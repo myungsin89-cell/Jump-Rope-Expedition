@@ -128,7 +128,7 @@ export default function StudentSharing({
       );
       setLinks(next);
       setNotice(
-        '학생 화면에 현재 명단을 게시했어요. 학생은 새로고침하면 확인할 수 있어요.',
+        '학생 화면에 현재 자료를 게시했어요. 열어 둔 학생 화면도 자동으로 새 내용을 확인해요.',
       );
     } catch (reason) {
       setError(
@@ -154,7 +154,8 @@ export default function StudentSharing({
       </p>
       <p className="preparation-hint">
         처음에는 ‘원정대 게시판 만들기’를 눌러 실제 링크와 QR을 만들어 주세요. 팀 구성을
-        바꾼 뒤에는 같은 버튼으로 학생 화면을 갱신할 수 있어요.
+        바꾼 뒤에는 같은 버튼으로 학생 화면을 갱신할 수 있어요. 학생 화면은 연결이
+        유지되는 동안 새 내용을 자동으로 확인합니다.
       </p>
       {!apiUrl ? (
         <p className="preparation-hint">
