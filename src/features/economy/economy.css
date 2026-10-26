@@ -73,6 +73,22 @@
   color: var(--forest-primary) !important;
   font-size: 12px !important;
 }
+.economy-reversal-help {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.economy-danger-action {
+  border-color: #8f342b !important;
+  background: #8f342b !important;
+  color: #fff !important;
+}
+.economy-danger-action:hover:not(:disabled) {
+  border-color: #72271f !important;
+  background: #72271f !important;
+}
 .economy-confirm label {
   display: block;
   margin: 12px 0 6px;
@@ -88,6 +104,85 @@
   margin-top: 24px;
   padding-top: 20px;
   border-top: 1px solid var(--prep-line);
+}
+.economy-student-ledger {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid #d7c18d;
+  border-radius: 12px;
+  background: #fffdf5;
+}
+.economy-student-ledger-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.economy-student-ledger-heading > div {
+  min-width: 0;
+}
+.economy-student-ledger-heading > strong {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #f3ead1;
+  color: #6e5418;
+  font-size: 12px;
+}
+.economy-student-ledger ol {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.economy-student-ledger li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--prep-line);
+  border-radius: 10px;
+  background: var(--prep-paper);
+}
+.economy-student-ledger li[data-state='cancelled'] {
+  background: #f6f6f2;
+}
+.economy-student-ledger li > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.economy-student-ledger span,
+.economy-student-ledger small {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.economy-danger-link {
+  min-width: 96px;
+  min-height: 44px;
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border: 1px solid #a1483e;
+  border-radius: 8px;
+  background: transparent;
+  color: #8f342b;
+  cursor: pointer;
+  font: 700 13px var(--font-ui);
+}
+.economy-danger-link:hover {
+  background: #fff0ed;
+}
+.economy-cancelled-label {
+  flex: 0 0 auto;
+  font-weight: 700;
+}
+.economy-student-empty {
+  margin-bottom: 0 !important;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--prep-paper);
 }
 .economy-unit-grid {
   display: grid;
@@ -194,5 +289,16 @@
   .economy-unit-choice img {
     width: 72px;
     height: 84px;
+  }
+  .economy-student-ledger-heading,
+  .economy-student-ledger li {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .economy-student-ledger-heading > strong {
+    align-self: flex-start;
+  }
+  .economy-danger-link {
+    width: 100%;
   }
 }

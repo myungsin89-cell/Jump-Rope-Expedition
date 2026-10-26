@@ -52,6 +52,9 @@ export default function ExpeditionOverview({
   const seasonLocked = battles ? isSeasonBattleLocked(battles, seasonIndex) : false;
   const standings = battles ? expeditionStandings(battles) : [];
   const assigned = new Set(plan.teams.flatMap((team) => team.studentIds));
+  const reversedPurchaseIds = new Set(
+    economy?.reversals.map((reversal) => reversal.purchaseId) ?? [],
+  );
   return (
     <section aria-labelledby="operation-overview-heading">
       <div className="operation-season-banner">
@@ -136,6 +139,14 @@ export default function ExpeditionOverview({
             index,
             seasonIndex,
           );
+          const studentPurchaseCount =
+            economy?.purchases.filter(
+              (purchase) =>
+                purchase.teamKey === `team-${index}` &&
+                purchase.seasonIndex === seasonIndex &&
+                purchase.actor === 'student-board' &&
+                !reversedPurchaseIds.has(purchase.id),
+            ).length ?? 0;
           const heroRewards = heroes
             ? teamHeroRewards(heroes, index, seasonIndex).filter(
                 (reward) => reward.heroId,
@@ -207,10 +218,11 @@ export default function ExpeditionOverview({
                 disabled={!store || !medals || !economy || seasonLocked}
                 onClick={() => onEconomy(index)}
               >
-                팀 준비 · 잔액{' '}
+                포인트·구매 관리 · 잔액{' '}
                 {economySummary.balance === null
                   ? '확인 필요'
                   : `${economySummary.balance.toLocaleString()}P`}
+                {studentPurchaseCount > 0 ? ` · 학생 구매 ${studentPurchaseCount}건` : ''}
               </button>
               <button
                 type="button"

@@ -362,16 +362,16 @@ export function reversePurchase(
   const existing = store.reversals.find((entry) => entry.id === requestId);
   if (existing) {
     if (existing.purchaseId !== purchaseId || existing.reason !== cleanReason)
-      throw new Error('이미 사용한 복구 요청이에요. 준비 화면을 다시 열어 주세요.');
+      throw new Error('이미 사용한 구매 취소 요청이에요. 준비 화면을 다시 열어 주세요.');
     return store;
   }
   if (!store.purchases.some((purchase) => purchase.id === purchaseId))
-    throw new Error('복구할 구매 기록을 찾지 못했어요.');
+    throw new Error('취소할 구매 기록을 찾지 못했어요.');
   if (store.reversals.some((entry) => entry.purchaseId === purchaseId))
-    throw new Error('이미 복구한 구매예요.');
-  if (!requestId.trim()) throw new Error('복구 요청을 확인해 주세요.');
+    throw new Error('이미 취소한 구매예요.');
+  if (!requestId.trim()) throw new Error('구매 취소 요청을 확인해 주세요.');
   if (cleanReason.length < 3 || cleanReason.length > 200)
-    throw new Error('복구 사유를 3자 이상 200자 이내로 입력해 주세요.');
+    throw new Error('취소 사유를 3자 이상 200자 이내로 입력해 주세요.');
   return commit({
     ...store,
     reversals: [
