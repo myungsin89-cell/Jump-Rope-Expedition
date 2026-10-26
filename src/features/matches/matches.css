@@ -333,24 +333,34 @@
   padding-top: 14px;
   border-top: 1px solid var(--prep-line);
 }
-.match-growth {
-  min-height: 48px;
-  margin: 18px 0;
-  color: var(--sage-secondary);
-  font-size: 13px;
-  line-height: 1.7;
+.match-score-summary {
+  margin-top: 20px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--team-color) 30%, var(--prep-line));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--team-tint) 45%, var(--prep-paper));
 }
 .match-point-preview {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: 12px;
-  padding: 14px;
-  border-radius: 10px 8px 11px 9px;
+  padding: 14px 16px;
+  border-radius: 0;
   background: var(--team-tint);
   color: var(--team-color);
 }
-.match-point-preview > span {
+.match-point-preview > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.match-point-preview > div > small {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+.match-point-preview > div > span {
   font-size: 13px;
   font-weight: 700;
 }
@@ -364,11 +374,62 @@
   font-size: 22px;
 }
 .match-point-breakdown {
-  margin: 12px 0 0;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 12px;
+}
+.match-result .match-point-breakdown > div {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 11px 10px;
+  border: 1px solid var(--prep-line);
+  border-radius: 9px;
+  background: var(--prep-paper);
+}
+.match-point-breakdown dt {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+.match-point-breakdown dd {
+  color: var(--team-color);
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.match-point-breakdown small {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.match-point-equation {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 5px 8px;
+  margin: 0;
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--prep-line);
   color: var(--text-muted);
   font-size: 13px;
-  line-height: 1.7;
+  font-variant-numeric: tabular-nums;
   text-align: center;
+}
+.match-point-equation b {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+.match-point-equation strong {
+  color: var(--team-color);
+  font-size: 16px;
 }
 .match-history {
   margin-top: 32px;
@@ -588,6 +649,22 @@
   .match-result-rank {
     display: flex;
     font-size: 40px;
+  }
+}
+@media (max-width: 480px) {
+  .match-point-breakdown {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .match-result .match-point-breakdown > div {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  .match-point-breakdown dd {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .match-point-breakdown small {
+    grid-column: 1 / -1;
   }
 }
 .match-team-grid[data-count='2'],

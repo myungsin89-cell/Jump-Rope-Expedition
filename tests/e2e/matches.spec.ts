@@ -52,8 +52,16 @@ test('confirms official results, posts points once, and preserves a cancellation
   await expect(cards.nth(1).locator('.match-result-rank')).toContainText('공동 1위');
   await expect(cards.nth(2).locator('.match-result-rank')).toContainText('3위');
   await expect(cards.nth(0).locator('.match-point-preview strong')).toHaveText('45P');
-  await expect(cards.nth(0).locator('.match-growth')).toContainText(
+  await expect(cards.nth(0).locator('[data-point="participation"] dd')).toHaveText(
+    '+20P',
+  );
+  await expect(cards.nth(0).locator('[data-point="ranking"] dd')).toHaveText('+15P');
+  await expect(cards.nth(0).locator('[data-point="growth"] dd')).toHaveText('+10P');
+  await expect(cards.nth(0).locator('[data-point="growth"]')).toContainText(
     '이번 시즌 기준 기록',
+  );
+  await expect(cards.nth(0).locator('.match-point-equation')).toHaveText(
+    '20P+15P+10P=45P',
   );
   await page.getByRole('button', { name: '경기 결과 확정하기', exact: true }).click();
   await expect(page.getByText('경기 기록 장부 1개')).toBeVisible();
@@ -62,6 +70,16 @@ test('confirms official results, posts points once, and preserves a cancellation
     path: 'artifacts/official-match-confirmed-desktop.png',
     fullPage: true,
   });
+  await page.setViewportSize({ width: 375, height: 812 });
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+  ).toBe(true);
+  await expect(cards.nth(0).locator('.match-point-breakdown')).toBeVisible();
+  await page.screenshot({
+    path: 'artifacts/official-match-confirmed-mobile.png',
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 1280, height: 720 });
   const stored = await page.evaluate((classId) => {
     const value = JSON.parse(localStorage.getItem(`jre.practice-matches.v1.${classId}`)!);
     return {
@@ -92,9 +110,9 @@ test('confirms official results, posts points once, and preserves a cancellation
   }
   await page.getByRole('button', { name: '순위·포인트 미리보기' }).click();
   await expect(cards.nth(0).locator('.match-point-preview strong')).toHaveText('40P');
-  await expect(cards.nth(0).locator('.match-point-breakdown')).toContainText('성장 10');
-  await expect(cards.nth(1).locator('.match-point-breakdown')).toContainText('성장 10');
-  await expect(cards.nth(2).locator('.match-point-breakdown')).toContainText('성장 10');
+  await expect(cards.nth(0).locator('[data-point="growth"] dd')).toHaveText('+10P');
+  await expect(cards.nth(1).locator('[data-point="growth"] dd')).toHaveText('+10P');
+  await expect(cards.nth(2).locator('[data-point="growth"] dd')).toHaveText('+10P');
 });
 
 test('requires prepared teams and seasons and stays usable at mobile width', async ({

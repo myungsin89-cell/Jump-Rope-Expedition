@@ -44,17 +44,16 @@ const PHASE_TITLES: Record<Phase, string> = {
   saved: '공식 경기 결과를 확정했어요',
 };
 const formatCount = (value: number) => value.toLocaleString('ko-KR');
-const growthMessage = (result: MatchPreview) => {
+const growthPointReason = (result: MatchPreview) => {
   if (result.growthKind === 'baseline')
-    return `이번 시즌 기준 기록 ${formatCount(result.rawCount)}개 · 기준 보너스`;
+    return `${formatCount(result.rawCount)}개 · 이번 시즌 기준 기록`;
   const best = formatCount(result.seasonBestRawCount ?? 0);
   if (result.growthKind === 'breakthrough')
-    return `시즌 최고 ${best}개 → ${formatCount(result.rawCount)}개 · 5% 이상 크게 성장`;
+    return `${best}개 → ${formatCount(result.rawCount)}개 · 5% 이상 성장`;
   if (result.growthKind === 'improved')
-    return `시즌 최고 ${best}개 → ${formatCount(result.rawCount)}개 · 최고 기록 경신`;
-  if (result.growthKind === 'maintained')
-    return `시즌 최고 ${best}개의 95% 이상 유지 · 꾸준함 보너스`;
-  return `시즌 최고 ${best}개 → ${formatCount(result.rawCount)}개 · 다음 성장에 도전`;
+    return `${best}개 → ${formatCount(result.rawCount)}개 · 최고 기록 경신`;
+  if (result.growthKind === 'maintained') return `최고 ${best}개의 95% 이상 유지`;
+  return `최고 ${best}개 · 성장 조건 미달`;
 };
 const testBypass =
   import.meta.env.DEV && import.meta.env.VITE_AUTH_TEST_BYPASS === 'true';
@@ -137,24 +136,61 @@ function Results({
               <dd>{formatCount(result.rankingCount)}개</dd>
             </div>
           </dl>
-          <p className="match-growth">{growthMessage(result)}</p>
-          <div className="match-point-preview">
-            <span>
-              {voided
-                ? '회수된 팀 포인트'
-                : confirmed
-                  ? '지급 팀 포인트'
-                  : '확정 예정 포인트'}
-            </span>
-            <strong>
-              {result.estimatedPoints}
-              <small>P</small>
-            </strong>
-          </div>
-          <p className="match-point-breakdown">
-            참가 {result.participationPoints} + 순위 {result.rankingPoints} + 성장{' '}
-            {result.growthPoints}
-          </p>
+          <section
+            className="match-score-summary"
+            aria-label={`${draft.teams[index].name} 포인트 계산`}
+          >
+            <div className="match-point-preview">
+              <div>
+                <small>{status}</small>
+                <span>
+                  {voided
+                    ? '회수된 최종 포인트'
+                    : confirmed
+                      ? '이번 경기 최종 포인트'
+                      : '확정 예정 최종 포인트'}
+                </span>
+              </div>
+              <strong>
+                {result.estimatedPoints}
+                <small>P</small>
+              </strong>
+            </div>
+            <dl className="match-point-breakdown" aria-label="포인트 구성">
+              <div data-point="participation">
+                <dt>참가 포인트</dt>
+                <dd>+{result.participationPoints}P</dd>
+                <small>경기 참여</small>
+              </div>
+              <div data-point="ranking">
+                <dt>등수 포인트</dt>
+                <dd>+{result.rankingPoints}P</dd>
+                <small>
+                  {results.filter((other) => other.rank === result.rank).length > 1
+                    ? '공동 '
+                    : ''}
+                  {result.rank}위
+                </small>
+              </div>
+              <div data-point="growth">
+                <dt>성장 포인트</dt>
+                <dd>+{result.growthPoints}P</dd>
+                <small>{growthPointReason(result)}</small>
+              </div>
+            </dl>
+            <p
+              className="match-point-equation"
+              aria-label={`참가 ${result.participationPoints}포인트 더하기 등수 ${result.rankingPoints}포인트 더하기 성장 ${result.growthPoints}포인트는 최종 ${result.estimatedPoints}포인트`}
+            >
+              <span>{result.participationPoints}P</span>
+              <b aria-hidden="true">+</b>
+              <span>{result.rankingPoints}P</span>
+              <b aria-hidden="true">+</b>
+              <span>{result.growthPoints}P</span>
+              <b aria-hidden="true">=</b>
+              <strong>{result.estimatedPoints}P</strong>
+            </p>
+          </section>
         </section>
       ))}
     </div>
@@ -257,10 +293,7 @@ function MatchBoard({ plan }: { plan: Preparation }) {
       setPhase('records');
     } else if (phase === 'records') setPhase('review');
     else if (phase === 'review') {
-      const preview = calculateMatchPreview(
-        practiceInputs(draft),
-        seasonBests,
-      );
+      const preview = calculateMatchPreview(practiceInputs(draft), seasonBests);
       setWorking(true);
       try {
         if (!testBypass) await saveTeacherBackup(plan);
@@ -294,10 +327,7 @@ function MatchBoard({ plan }: { plan: Preparation }) {
   const currentSaved = store?.history.find((entry) => entry.id === draft?.id);
   const results =
     draft && (phase === 'review' || phase === 'saved')
-      ? calculateMatchPreview(
-          practiceInputs(draft),
-          seasonBests,
-        )
+      ? calculateMatchPreview(practiceInputs(draft), seasonBests)
       : null;
   const newPractice = () => {
     if (!draft) return;
