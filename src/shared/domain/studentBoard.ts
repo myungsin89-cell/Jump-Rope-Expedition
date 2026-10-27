@@ -2,10 +2,28 @@ import type { Preparation } from '../../features/preparation/model';
 import type { MedalStore, MedalSymbol } from '../../features/medals/model';
 import type { PracticeStore } from '../../features/matches/practiceModel';
 import type { EconomyStore } from '../../features/economy/model';
+
+export const STUDENT_HERO_MISSION_NAMES = {
+  FIVE_STEPS: '다섯 계단',
+  SHINING_CHALLENGE: '빛나는 도전',
+  SHINING_COMPANIONS: '빛나는 동료들',
+  STEADY_STEPS: '꾸준한 발걸음',
+  COMEBACK: '다시 일어선 원정대',
+  FOUR_FORCES: '네 가지 힘',
+} as const;
+
+export type StudentHeroMissionId = keyof typeof STUDENT_HERO_MISSION_NAMES;
+
+export const studentHeroMissionName = (value: unknown): string | undefined =>
+  typeof value === 'string' && value in STUDENT_HERO_MISSION_NAMES
+    ? STUDENT_HERO_MISSION_NAMES[value as StudentHeroMissionId]
+    : undefined;
+
 export interface StudentHeroSlot {
   slot: number;
   revealed: boolean;
   heroId?: string;
+  missionName?: string;
 }
 
 export interface StudentHeroRevealEvent {
@@ -13,6 +31,14 @@ export interface StudentHeroRevealEvent {
   slot: number;
   heroId: string;
   startedAt: string;
+  missionName?: string;
+}
+
+export interface StudentBoardEvent {
+  id: string;
+  type: 'hero';
+  missionName: string;
+  occurredAt: string;
 }
 
 export interface StudentHeroSource {
@@ -22,6 +48,8 @@ export interface StudentHeroSource {
     teamIndex: number;
     seasonIndex: number;
     heroId: string | null;
+    missionId?: StudentHeroMissionId;
+    achievedAt?: string;
     revealedAt?: string;
   }[];
 }
@@ -81,6 +109,7 @@ export interface StudentBoardData {
   members: StudentBoardMember[];
   teams: StudentBoardTeam[];
   heroes: StudentHeroSlot[];
+  events: StudentBoardEvent[];
   economy?: StudentBoardEconomy;
   heroReveal?: StudentHeroRevealEvent;
 }
@@ -340,6 +369,25 @@ export function studentBoardData(
     .sort((left, right) =>
       String(right.reward.revealedAt).localeCompare(String(left.reward.revealedAt)),
     )[0];
+  const events = teamRewards
+    .flatMap((reward, index) => {
+      const missionName = reward.missionId
+        ? STUDENT_HERO_MISSION_NAMES[reward.missionId]
+        : undefined;
+      const occurredAt = reward.achievedAt ?? reward.revealedAt;
+      return missionName && occurredAt
+        ? [
+            {
+              id: reward.id ?? `${teamIndex}:${index + 1}:${occurredAt}`,
+              type: 'hero' as const,
+              missionName,
+              occurredAt,
+            },
+          ]
+        : [];
+    })
+    .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt))
+    .slice(0, 12);
   const seasonIndex = plan.currentSeasonIndex ?? 0;
   const teamKey = `team-${teamIndex}`;
   const matchPoints =
@@ -463,7 +511,11 @@ export function studentBoardData(
       slot: index + 1,
       revealed: Boolean(reward.revealedAt),
       ...(reward.revealedAt && reward.heroId ? { heroId: reward.heroId } : {}),
+      ...(reward.missionId
+        ? { missionName: STUDENT_HERO_MISSION_NAMES[reward.missionId] }
+        : {}),
     })),
+    events,
     ...(economy ? { economy } : {}),
     ...(latestReveal?.reward.heroId && latestReveal.reward.revealedAt
       ? {
@@ -474,6 +526,11 @@ export function studentBoardData(
             slot: latestReveal.slot,
             heroId: latestReveal.reward.heroId,
             startedAt: latestReveal.reward.revealedAt,
+            ...(latestReveal.reward.missionId
+              ? {
+                  missionName: STUDENT_HERO_MISSION_NAMES[latestReveal.reward.missionId],
+                }
+              : {}),
           },
         }
       : {}),
@@ -504,9 +561,17 @@ export function parseStudentHeroSource(
         reward.heroId === null ||
         (typeof reward.heroId === 'string' && /^H(0[1-9]|1[0-5])$/.test(reward.heroId))
       ) ||
+      !(
+        reward.missionId === undefined ||
+        (typeof reward.missionId === 'string' &&
+          reward.missionId in STUDENT_HERO_MISSION_NAMES)
+      ) ||
       (reward.revealedAt !== undefined &&
         (typeof reward.revealedAt !== 'string' ||
-          !Number.isFinite(Date.parse(reward.revealedAt))))
+          !Number.isFinite(Date.parse(reward.revealedAt)))) ||
+      (reward.achievedAt !== undefined &&
+        (typeof reward.achievedAt !== 'string' ||
+          !Number.isFinite(Date.parse(reward.achievedAt))))
     )
       throw new Error('영웅 게시 자료를 확인해 주세요.');
     return {
@@ -514,6 +579,10 @@ export function parseStudentHeroSource(
       teamIndex: reward.teamIndex,
       seasonIndex: reward.seasonIndex,
       heroId: reward.heroId,
+      ...(typeof reward.missionId === 'string'
+        ? { missionId: reward.missionId as StudentHeroMissionId }
+        : {}),
+      ...(typeof reward.achievedAt === 'string' ? { achievedAt: reward.achievedAt } : {}),
       ...(typeof reward.revealedAt === 'string' ? { revealedAt: reward.revealedAt } : {}),
     };
   });
@@ -532,7 +601,9 @@ export function parseStudentBoard(value: unknown): StudentBoardData {
     !Array.isArray(value.members) ||
     value.members.length > 200 ||
     (value.heroes !== undefined &&
-      (!Array.isArray(value.heroes) || value.heroes.length > 15))
+      (!Array.isArray(value.heroes) || value.heroes.length > 15)) ||
+    (value.events !== undefined &&
+      (!Array.isArray(value.events) || value.events.length > 30))
   )
     throw new Error('학생 화면 자료를 확인해 주세요.');
   const parseMember = (member: unknown): StudentBoardMember => {
@@ -670,17 +741,46 @@ export function parseStudentBoard(value: unknown): StudentBoardData {
       typeof hero.revealed !== 'boolean' ||
       (hero.revealed
         ? typeof hero.heroId !== 'string' || !/^H(0[1-9]|1[0-5])$/.test(hero.heroId)
-        : hero.heroId !== undefined)
+        : hero.heroId !== undefined) ||
+      !(
+        hero.missionName === undefined ||
+        (typeof hero.missionName === 'string' && name(hero.missionName, 40))
+      )
     )
       throw new Error('영웅 공개 자료를 확인해 주세요.');
     return {
       slot: hero.slot,
       revealed: hero.revealed,
       ...(hero.revealed ? { heroId: hero.heroId as string } : {}),
+      ...(typeof hero.missionName === 'string' ? { missionName: hero.missionName } : {}),
     };
   });
   if (new Set(heroes.map((hero) => hero.slot)).size !== heroes.length)
     throw new Error('영웅 카드 위치를 확인해 주세요.');
+  const events = (value.events ?? []).map((event) => {
+    if (
+      !obj(event) ||
+      typeof event.id !== 'string' ||
+      !event.id.length ||
+      event.id.length > 320 ||
+      event.type !== 'hero' ||
+      !name(event.missionName, 40) ||
+      typeof event.occurredAt !== 'string' ||
+      !Number.isFinite(Date.parse(event.occurredAt))
+    )
+      throw new Error('원정대 소식 자료를 확인해 주세요.');
+    return {
+      id: event.id,
+      type: 'hero' as const,
+      missionName: event.missionName,
+      occurredAt: event.occurredAt,
+    };
+  });
+  if (
+    events.length > 30 ||
+    new Set(events.map((event) => event.id)).size !== events.length
+  )
+    throw new Error('원정대 소식 자료를 확인해 주세요.');
   let heroReveal: StudentHeroRevealEvent | undefined;
   if (value.heroReveal !== undefined) {
     const reveal = value.heroReveal;
@@ -694,6 +794,10 @@ export function parseStudentBoard(value: unknown): StudentBoardData {
       !/^H(0[1-9]|1[0-5])$/.test(reveal.heroId) ||
       typeof reveal.startedAt !== 'string' ||
       !Number.isFinite(Date.parse(reveal.startedAt)) ||
+      !(
+        reveal.missionName === undefined ||
+        (typeof reveal.missionName === 'string' && name(reveal.missionName, 40))
+      ) ||
       !heroes.some(
         (hero) =>
           hero.slot === reveal.slot && hero.revealed && hero.heroId === reveal.heroId,
@@ -705,6 +809,9 @@ export function parseStudentBoard(value: unknown): StudentBoardData {
       slot: reveal.slot,
       heroId: reveal.heroId,
       startedAt: reveal.startedAt,
+      ...(typeof reveal.missionName === 'string'
+        ? { missionName: reveal.missionName }
+        : {}),
     };
   }
   return {
@@ -717,6 +824,7 @@ export function parseStudentBoard(value: unknown): StudentBoardData {
     members,
     teams,
     heroes,
+    events,
     ...(economy ? { economy } : {}),
     ...(heroReveal ? { heroReveal } : {}),
   };

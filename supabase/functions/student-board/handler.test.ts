@@ -209,7 +209,7 @@ describe('student sharing API boundary', () => {
       const body = JSON.parse(String(init?.body));
       expect(body.p_boards[0].heroes).toEqual([
         { slot: 1, revealed: false },
-        { slot: 2, revealed: true, heroId: 'H02' },
+        { slot: 2, revealed: true, heroId: 'H02', missionName: '네 가지 힘' },
       ]);
       expect(JSON.stringify(body.p_boards[0])).not.toContain('H01');
       expect(body.p_boards[0].heroReveal).toEqual({
@@ -217,7 +217,16 @@ describe('student sharing API boundary', () => {
         slot: 2,
         heroId: 'H02',
         startedAt: '2026-10-22T00:00:00.000Z',
+        missionName: '네 가지 힘',
       });
+      expect(body.p_boards[0].events).toEqual([
+        {
+          id: 'reward-visible',
+          type: 'hero',
+          missionName: '네 가지 힘',
+          occurredAt: '2026-10-22T00:00:00.000Z',
+        },
+      ]);
       expect(body.p_boards[1].heroes).toEqual([]);
       return json(
         body.p_boards.map((payload: unknown, team_index: number) => ({
@@ -243,6 +252,7 @@ describe('student sharing API boundary', () => {
               teamIndex: 0,
               seasonIndex: 0,
               heroId: 'H02',
+              missionId: 'FOUR_FORCES',
               revealedAt: '2026-10-22T00:00:00.000Z',
             },
           ],

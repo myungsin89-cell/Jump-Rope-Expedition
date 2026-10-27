@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import HeroCard from '../card-ui/HeroCard';
+import HeroTreasureChest from '../card-ui/HeroTreasureChest';
 import { HEROES_CATALOG, RARITY_LABELS } from '../card-ui/catalog';
 import OperationModal from '../expedition/OperationModal';
 import { currentSeasonIndex } from '../expedition/operations';
@@ -8,10 +9,10 @@ import { HERO_MISSIONS, heroMissionIds, teamHeroRewards } from './model';
 import type { HeroReward, HeroStore } from './model';
 import './heroes.css';
 
-function contributorLabel(reward: HeroReward): string {
-  return reward.contributorNames.length
-    ? `함께 만든 기록: ${reward.contributorNames.join(', ')}`
-    : '원정대가 함께 만든 기록';
+function missionAchievementCopy(missionName: string): string {
+  const last = missionName.charCodeAt(missionName.length - 1);
+  const hasFinalConsonant = last >= 0xac00 && last <= 0xd7a3 && (last - 0xac00) % 28 > 0;
+  return `${missionName}${hasFinalConsonant ? '을' : '를'} 달성해서 영웅을 획득했습니다.`;
 }
 
 export default function HeroVaultModal({
@@ -123,13 +124,26 @@ export default function HeroVaultModal({
           aria-label="새 영웅 공개"
         >
           <div className="hero-reveal-light" aria-hidden="true" />
-          <p>새로운 영웅이 원정대에 합류했습니다</p>
+          <div className="hero-reveal-stars" aria-hidden="true">
+            <i>✦</i>
+            <i>★</i>
+            <i>✧</i>
+            <i>✦</i>
+          </div>
+          <p>새로운 동료 발견</p>
+          <h3>영웅 등장!</h3>
           <HeroCard hero={revealedHero} state="revealed" className="hero-reveal-card" />
-          <strong>
-            {RARITY_LABELS[revealedHero.rarity]} 영웅 ·{' '}
-            {HERO_MISSIONS[revealedReward.missionId].name}
-          </strong>
-          <span>{contributorLabel(revealedReward)}</span>
+          <strong>{revealedHero.name}</strong>
+          <span className="hero-reveal-rarity">
+            {RARITY_LABELS[revealedHero.rarity]} 영웅
+          </span>
+          <div className="hero-reveal-ability">
+            <small>영웅 능력</small>
+            <p>{revealedHero.effect}</p>
+          </div>
+          <span className="hero-reveal-achievement">
+            {missionAchievementCopy(HERO_MISSIONS[revealedReward.missionId].name)}
+          </span>
           <button
             type="button"
             className="preparation-primary"
@@ -212,7 +226,11 @@ export default function HeroVaultModal({
 
           {pending && (
             <section className="hero-reveal-confirm" aria-labelledby="hero-confirm-title">
-              <HeroCard state="sealed" />
+              <div className="hero-confirm-treasure">
+                <HeroTreasureChest />
+                <strong>비밀 영웅 카드</strong>
+                <span>보물상자를 열 준비가 되었어요</span>
+              </div>
               <div>
                 <h3 id="hero-confirm-title">팀원들이 모두 함께 보고 있나요?</h3>
                 <p>
@@ -249,13 +267,16 @@ export default function HeroVaultModal({
             {sealed.length ? (
               <ul className="hero-sealed-list">
                 {sealed.map((reward) => (
-                  <li key={reward.id}>
-                    <div>
-                      <strong>{HERO_MISSIONS[reward.missionId].name}</strong>
-                      <span>시즌 {reward.seasonIndex + 1} 임무 달성</span>
-                      <small>{contributorLabel(reward)}</small>
+                  <li className="hero-sealed-reward" key={reward.id}>
+                    <HeroTreasureChest />
+                    <div className="hero-sealed-copy">
+                      <span>비밀 보상 발견</span>
+                      <strong>비밀 영웅 카드 획득!</strong>
+                      <p>
+                        {missionAchievementCopy(HERO_MISSIONS[reward.missionId].name)}
+                      </p>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div className="hero-sealed-actions">
                       <button
                         type="button"
                         className="preparation-primary"
@@ -265,7 +286,7 @@ export default function HeroVaultModal({
                           setError('');
                         }}
                       >
-                        팀원과 공개하기
+                        보물상자 열기
                       </button>
                       {onRevoke && (
                         <button
@@ -371,7 +392,6 @@ export default function HeroVaultModal({
                 <li key={missionId}>
                   <div>
                     <strong>{HERO_MISSIONS[missionId].name}</strong>
-                    <span>{HERO_MISSIONS[missionId].description}</span>
                   </div>
                   <b>{achievementCounts[missionId]}회</b>
                 </li>

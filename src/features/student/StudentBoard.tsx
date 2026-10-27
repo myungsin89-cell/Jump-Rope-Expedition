@@ -8,7 +8,8 @@ import type {
 } from '../../shared/domain/studentBoard';
 import UnitCard from '../card-ui/UnitCard';
 import HeroCard from '../card-ui/HeroCard';
-import { HEROES_CATALOG, UNITS_CATALOG } from '../card-ui/catalog';
+import HeroTreasureChest from '../card-ui/HeroTreasureChest';
+import { HEROES_CATALOG, RARITY_LABELS, UNITS_CATALOG } from '../card-ui/catalog';
 import { readHeroes } from '../heroes/model';
 import { readMedals } from '../medals/model';
 import { readPracticeStore } from '../matches/practiceModel';
@@ -18,6 +19,13 @@ import MedalIcon from '../medals/MedalIcon';
 import { purchaseStudentItem, revealStudentHero } from './studentBoardClient';
 import forest from '../../../assets/illustrations/title-screen-cover-v1.png';
 import './student.css';
+
+function missionAchievementCopy(missionName?: string): string {
+  if (!missionName) return '특별 임무를 달성해서 영웅을 획득했습니다.';
+  const last = missionName.charCodeAt(missionName.length - 1);
+  const hasFinalConsonant = last >= 0xac00 && last <= 0xd7a3 && (last - 0xac00) % 28 > 0;
+  return `${missionName}${hasFinalConsonant ? '을' : '를'} 달성해서 영웅을 획득했습니다.`;
+}
 
 function MemberMedals({ member }: { member: StudentBoardMember }) {
   if (!member.medals.length) return null;
@@ -204,6 +212,7 @@ export default function StudentBoard({ route }: { route: string }) {
   const revealSlot = data?.heroReveal?.slot;
   const revealHeroId = data?.heroReveal?.heroId;
   const revealStartedAt = data?.heroReveal?.startedAt;
+  const revealMissionName = data?.heroReveal?.missionName;
   useEffect(() => {
     if (
       preview ||
@@ -218,6 +227,7 @@ export default function StudentBoard({ route }: { route: string }) {
       slot: revealSlot,
       heroId: revealHeroId,
       startedAt: revealStartedAt,
+      ...(revealMissionName ? { missionName: revealMissionName } : {}),
     };
     const seenKey = `jre.student-reveal-seen.${route.slice('/team/'.length)}`;
     if (localStorage.getItem(seenKey) === reveal.eventId) {
@@ -230,21 +240,24 @@ export default function StudentBoard({ route }: { route: string }) {
       queueMicrotask(() => setUnlockedRevealId(reveal.eventId));
       return;
     }
-    let clearTimer = 0;
     const startTimer = window.setTimeout(
       () => {
         localStorage.setItem(seenKey, reveal.eventId);
         setUnlockedRevealId(reveal.eventId);
         setActiveReveal(reveal);
-        clearTimer = window.setTimeout(() => setActiveReveal(null), 8_000);
       },
       Math.max(0, delay),
     );
-    return () => {
-      window.clearTimeout(startTimer);
-      window.clearTimeout(clearTimer);
-    };
-  }, [preview, revealEventId, revealHeroId, revealSlot, revealStartedAt, route]);
+    return () => window.clearTimeout(startTimer);
+  }, [
+    preview,
+    revealEventId,
+    revealHeroId,
+    revealMissionName,
+    revealSlot,
+    revealStartedAt,
+    route,
+  ]);
   useEffect(() => {
     if (!data || focusedTitle.current) return;
     focusedTitle.current = true;
@@ -304,17 +317,48 @@ export default function StudentBoard({ route }: { route: string }) {
     { id: 'shop', name: '상점' },
     { id: 'forces', name: '원정대 병력' },
   ] as const;
+  const activeRevealHero = activeReveal
+    ? HEROES_CATALOG.find((item) => item.id === activeReveal.heroId)
+    : null;
   return (
     <main className="student-board">
-      {activeReveal && (
-        <section className="student-live-reveal" aria-live="assertive">
+      {activeReveal && activeRevealHero && (
+        <section
+          className={`student-live-reveal rarity-${activeRevealHero.rarity}`}
+          aria-live="assertive"
+          aria-label={`${activeRevealHero.name} 영웅 공개`}
+        >
           <div className="student-live-reveal-glow" aria-hidden="true" />
-          <p>우리 원정대의 새 영웅</p>
-          {(() => {
-            const hero = HEROES_CATALOG.find((item) => item.id === activeReveal.heroId);
-            return hero ? <HeroCard hero={hero} state="revealed" /> : null;
-          })()}
-          <strong>새로운 영웅이 합류했습니다!</strong>
+          <div className="student-live-reveal-stars" aria-hidden="true">
+            <i>✦</i>
+            <i>✧</i>
+            <i>★</i>
+            <i>✦</i>
+            <i>✧</i>
+          </div>
+          <p className="student-live-reveal-kicker">새로운 동료 발견</p>
+          <h2>영웅 등장!</h2>
+          <div className="student-live-reveal-content">
+            <HeroCard
+              hero={activeRevealHero}
+              state="revealed"
+              className="student-live-reveal-card"
+            />
+            <div className="student-live-reveal-info">
+              <span>{RARITY_LABELS[activeRevealHero.rarity]} 영웅</span>
+              <strong>{activeRevealHero.name}</strong>
+              <div className="student-live-reveal-ability">
+                <small>영웅 능력</small>
+                <p>{activeRevealHero.effect}</p>
+              </div>
+              <p className="student-live-reveal-achievement">
+                {missionAchievementCopy(activeReveal.missionName)}
+              </p>
+              <button type="button" onClick={() => setActiveReveal(null)}>
+                원정대에 합류하기
+              </button>
+            </div>
+          </div>
         </section>
       )}
       <header className="student-top">
@@ -495,6 +539,33 @@ export default function StudentBoard({ route }: { route: string }) {
                     );
                   })}
                 </div>
+                {data.events.length > 0 && (
+                  <section
+                    className="student-event-log"
+                    aria-labelledby="student-event-title"
+                  >
+                    <div>
+                      <span aria-hidden="true">✦</span>
+                      <div>
+                        <h3 id="student-event-title">우리 원정대 최근 소식</h3>
+                        <p>임무 이름을 보고 우리가 무엇을 해냈는지 추리해 보세요.</p>
+                      </div>
+                    </div>
+                    <ol>
+                      {data.events.map((event) => (
+                        <li key={event.id}>
+                          <span className="student-event-chest" aria-hidden="true">
+                            <i />
+                          </span>
+                          <strong>{missionAchievementCopy(event.missionName)}</strong>
+                          <time dateTime={event.occurredAt}>
+                            {new Date(event.occurredAt).toLocaleDateString('ko-KR')}
+                          </time>
+                        </li>
+                      ))}
+                    </ol>
+                  </section>
+                )}
                 <p className="student-help">
                   학생 이름을 누르면 받은 훈장과 성장 기록을 볼 수 있어요.
                 </p>
@@ -692,12 +763,16 @@ export default function StudentBoard({ route }: { route: string }) {
                           disabled={revealingSlot !== null || waitingForScheduledReveal}
                           onClick={() => void openSealedHero(slot.slot)}
                         >
-                          <span>?</span>
-                          <strong>미개봉 영웅 카드</strong>
+                          <HeroTreasureChest />
+                          <span className="student-secret-reward">비밀 보상 발견</span>
+                          <strong>비밀 영웅 카드 획득!</strong>
+                          {slot.missionName && (
+                            <p>{missionAchievementCopy(slot.missionName)}</p>
+                          )}
                           <small>
                             {revealingSlot === slot.slot || waitingForScheduledReveal
                               ? '개봉 준비 중…'
-                              : '눌러서 함께 개봉해요'}
+                              : '보물상자를 눌러 함께 열어요'}
                           </small>
                         </button>
                       );

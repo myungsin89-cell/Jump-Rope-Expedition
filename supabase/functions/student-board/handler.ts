@@ -6,6 +6,7 @@ import {
   parseStudentMedalSource,
   parseStudentPracticeSource,
   parseTeacherPreparation,
+  studentHeroMissionName,
   studentBoardData,
 } from '../../../src/shared/domain/studentBoard.ts';
 
@@ -105,7 +106,7 @@ export function createBoardHandler(env: Environment, fetcher: typeof fetch = fet
         const boardTeam = rows[0].team_index;
         const seasonIndex = board.seasonNumber - 1;
         const rewards = await rest(
-          `hero_reward_tokens?owner_id=eq.${boardOwner}&expedition_id=eq.${publicationId}&team_index=eq.${boardTeam}&season_index=eq.${seasonIndex}&select=reward_id,hero_id,revealed_at,achieved_at&order=achieved_at.asc,reward_id.asc`,
+          `hero_reward_tokens?owner_id=eq.${boardOwner}&expedition_id=eq.${publicationId}&team_index=eq.${boardTeam}&season_index=eq.${seasonIndex}&select=reward_id,mission_id,hero_id,revealed_at,achieved_at&order=achieved_at.asc,reward_id.asc`,
         );
         if (!rewards.ok) return respond({ error: 'Hero read unavailable' }, 503);
         const rewardRows: unknown = await rewards.json();
@@ -146,6 +147,9 @@ export function createBoardHandler(env: Environment, fetcher: typeof fetch = fet
                   rewardId: typeof reward.reward_id === 'string' ? reward.reward_id : '',
                   revealedAt:
                     typeof reward.revealed_at === 'string' ? reward.revealed_at : '',
+                  missionName: studentHeroMissionName(reward.mission_id),
+                  achievedAt:
+                    typeof reward.achieved_at === 'string' ? reward.achieved_at : '',
                 },
               ]
             : [],
@@ -153,6 +157,21 @@ export function createBoardHandler(env: Environment, fetcher: typeof fetch = fet
         const latestReveal = heroes
           .filter((hero) => hero.revealed && hero.rewardId && hero.revealedAt)
           .sort((left, right) => right.revealedAt.localeCompare(left.revealedAt))[0];
+        const heroEvents = heroes
+          .flatMap((hero) =>
+            hero.rewardId && hero.missionName && hero.achievedAt
+              ? [
+                  {
+                    id: hero.rewardId,
+                    type: 'hero' as const,
+                    missionName: hero.missionName,
+                    occurredAt: hero.achievedAt,
+                  },
+                ]
+              : [],
+          )
+          .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt))
+          .slice(0, 12);
         const accountResponse = await rest(
           `student_team_accounts?owner_id=eq.${boardOwner}&expedition_id=eq.${publicationId}&team_index=eq.${boardTeam}&season_index=eq.${seasonIndex}&select=earned_points,teacher_spent_points,base_inventory,base_hint_purchased,hint_text&limit=1`,
         );
@@ -233,11 +252,13 @@ export function createBoardHandler(env: Environment, fetcher: typeof fetch = fet
         return respond(
           parseStudentBoard({
             ...board,
-            heroes: heroes.map(({ slot, revealed, heroId }) => ({
+            heroes: heroes.map(({ slot, revealed, heroId, missionName }) => ({
               slot,
               revealed,
               ...(revealed && heroId ? { heroId } : {}),
+              ...(missionName ? { missionName } : {}),
             })),
+            events: heroEvents,
             ...(latestReveal?.heroId
               ? {
                   heroReveal: {
@@ -245,6 +266,9 @@ export function createBoardHandler(env: Environment, fetcher: typeof fetch = fet
                     slot: latestReveal.slot,
                     heroId: latestReveal.heroId,
                     startedAt: latestReveal.revealedAt,
+                    ...(latestReveal.missionName
+                      ? { missionName: latestReveal.missionName }
+                      : {}),
                   },
                 }
               : { heroReveal: undefined }),

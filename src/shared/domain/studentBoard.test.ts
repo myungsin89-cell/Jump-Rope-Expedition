@@ -119,6 +119,7 @@ describe('student-only preparation snapshot', () => {
             teamIndex: 0,
             seasonIndex: 0,
             heroId: 'H02',
+            missionId: 'FOUR_FORCES',
             revealedAt: '2026-10-22T00:00:00.000Z',
           },
           {
@@ -132,14 +133,23 @@ describe('student-only preparation snapshot', () => {
     });
     expect(board.heroes).toEqual([
       { slot: 1, revealed: false },
-      { slot: 2, revealed: true, heroId: 'H02' },
+      { slot: 2, revealed: true, heroId: 'H02', missionName: '네 가지 힘' },
     ]);
     expect(board.heroReveal).toEqual({
       eventId: 'reveal-2',
       slot: 2,
       heroId: 'H02',
       startedAt: '2026-10-22T00:00:00.000Z',
+      missionName: '네 가지 힘',
     });
+    expect(board.events).toEqual([
+      {
+        id: 'reveal-2',
+        type: 'hero',
+        missionName: '네 가지 힘',
+        occurredAt: '2026-10-22T00:00:00.000Z',
+      },
+    ]);
     expect(JSON.stringify(board)).not.toContain('H01');
     expect(JSON.stringify(board)).not.toContain('H15');
     expect(parseStudentBoard(board)).toEqual(board);
