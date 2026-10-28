@@ -4,6 +4,7 @@ import { PageFrame, ErrorSummary } from '../preparation/PreparationUI';
 import {
   saveGamePreparation,
   validatePreparation,
+  validateJumpers,
   validateSeason,
 } from '../preparation/model';
 import type {
@@ -405,6 +406,7 @@ export default function ExpeditionBoard({
       return;
     }
     const teamErrors = validatePreparation(plan, 'teams');
+    const jumperErrors = validateJumpers(plan);
     const seasonErrors = validateSeason(plan, currentSeasonIndex(plan));
     if (battles.store && isSeasonBattleLocked(battles.store, currentSeasonIndex(plan))) {
       setNotice('최종 대전 계산이 끝난 시즌에는 새 경기를 기록할 수 없어요.');
@@ -412,7 +414,12 @@ export default function ExpeditionBoard({
     }
     if (Object.keys(teamErrors).length) {
       setNotice('명단에서 각 원정대에 대원을 배정해 주세요.');
-      if (initialPanel !== 'roster') navigate('roster');
+      return;
+    }
+    if (Object.keys(jumperErrors).length) {
+      setNotice(
+        `${Object.values(jumperErrors)[0]} 기록판에서는 명단에 설정한 도전점퍼를 그대로 사용해요.`,
+      );
       return;
     }
     if (Object.keys(seasonErrors).length) {

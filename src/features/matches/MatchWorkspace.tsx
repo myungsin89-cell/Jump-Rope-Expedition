@@ -886,9 +886,11 @@ export default function MatchWorkspace({ classId }: { classId: string }) {
     }
   });
   const plan = loaded.plan;
+  const jumperError = plan ? Object.values(validateJumpers(plan))[0] : '';
   const ready =
     plan &&
     !Object.keys(validatePreparation(plan, 'teams')).length &&
+    !jumperError &&
     readySeasonIndices(plan).includes(currentSeasonIndex(plan)) &&
     !loaded.locked;
   if (!ready || !plan)
@@ -899,19 +901,28 @@ export default function MatchWorkspace({ classId }: { classId: string }) {
             {loaded.error ||
               (loaded.locked
                 ? '최종 대전 계산이 끝난 시즌이에요'
-                : plan
-                  ? '팀과 시즌을 먼저 확인해 주세요'
-                  : '등록한 학급을 찾을 수 없어요')}
+                : jumperError
+                  ? '도전점퍼 설정을 먼저 확인해 주세요'
+                  : plan
+                    ? '팀과 시즌을 먼저 확인해 주세요'
+                    : '등록한 학급을 찾을 수 없어요')}
           </h1>
           <p>
-            게임 준비에서 세 팀에 팀원을 배정하고, 기록할 시즌 하나의 보스와 기간만 정해
-            주세요. 나머지 시즌은 나중에 준비해도 돼요.
+            {jumperError
+              ? `${jumperError} 기록판은 명단에서 설정한 도전점퍼를 그대로 불러와요.`
+              : '게임 준비에서 세 팀에 팀원을 배정하고, 기록할 시즌 하나의 보스와 기간만 정해 주세요. 나머지 시즌은 나중에 준비해도 돼요.'}
           </p>
           <a
             className="preparation-primary"
-            href={plan ? `#/preparations/${plan.id}` : '#/preparations'}
+            href={
+              plan && jumperError
+                ? `#/preparations/${plan.id}/roster`
+                : plan
+                  ? `#/preparations/${plan.id}`
+                  : '#/preparations'
+            }
           >
-            게임 준비로 돌아가기
+            {jumperError ? '명단에서 도전점퍼 설정하기' : '게임 준비로 돌아가기'}
           </a>
         </div>
       </MatchFrame>

@@ -1,5 +1,9 @@
 import type { Preparation, StudentPlan } from '../preparation/model';
-import { readySeasonIndices, validatePreparation } from '../preparation/model';
+import {
+  readySeasonIndices,
+  validateJumpers,
+  validatePreparation,
+} from '../preparation/model';
 import type { PracticeStore } from '../matches/practiceModel';
 import { currentSeasonIndex, operationHref, previewHistory } from './operations';
 import TeamMembers, { RosterLegend } from './TeamMembers';
@@ -40,7 +44,9 @@ export default function ExpeditionOverview({
   const seasonIndex = currentSeasonIndex(plan);
   const season = plan.seasons[seasonIndex];
   const ready = readySeasonIndices(plan).includes(seasonIndex);
-  const rosterReady = !Object.keys(validatePreparation(plan, 'teams')).length;
+  const rosterReady =
+    !Object.keys(validatePreparation(plan, 'teams')).length &&
+    !Object.keys(validateJumpers(plan)).length;
   const summary = previewHistory(store?.history ?? [], seasonIndex);
   const activeBattle = battles ? seasonBattle(battles, seasonIndex) : null;
   const seasonLocked = battles ? isSeasonBattleLocked(battles, seasonIndex) : false;
@@ -100,12 +106,12 @@ export default function ExpeditionOverview({
             {seasonLocked
               ? '이 시즌은 전투 계산이 끝나 새 경기를 기록할 수 없어요.'
               : !rosterReady
-                ? '먼저 명단에서 각 원정대에 대원을 배정해 주세요.'
+                ? '먼저 명단에서 원정대별 도전점퍼를 1~2명 정해 주세요.'
                 : !ready
                   ? '먼저 이번 시즌의 기간과 보스를 정해 주세요.'
                   : store?.draft
                     ? '작성 중인 입력은 이어서 열려요.'
-                    : '기록판에서 도전점퍼를 정한 뒤 개수를 입력해요.'}
+                    : '설정한 도전점퍼로 바로 개수를 입력해요.'}
           </span>
         </div>
       </div>
