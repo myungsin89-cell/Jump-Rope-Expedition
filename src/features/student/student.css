@@ -671,7 +671,7 @@
   justify-items: stretch;
   margin-bottom: 34px;
 }
-.student-sealed-hero {
+.student-board .student-sealed-hero {
   display: grid;
   place-items: center;
   align-content: center;
@@ -689,13 +689,13 @@
     transform 160ms ease,
     box-shadow 160ms ease;
 }
-.student-sealed-hero:hover:not(:disabled) {
+.student-board .student-sealed-hero:hover:not(:disabled) {
   transform: translateY(-5px);
   box-shadow:
     0 16px 34px rgba(15, 52, 36, 0.3),
     0 0 0 2px rgba(245, 211, 108, 0.24);
 }
-.student-sealed-hero:disabled {
+.student-board .student-sealed-hero:disabled {
   cursor: wait;
   opacity: 0.82;
 }

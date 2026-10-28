@@ -225,7 +225,10 @@ export default function HeroVaultModal({
           )}
 
           {pending && (
-            <section className="hero-reveal-confirm" aria-labelledby="hero-confirm-title">
+            <section
+              className="hero-reveal-confirm hero-reveal-confirm-treasure"
+              aria-labelledby="hero-confirm-title"
+            >
               <div className="hero-confirm-treasure">
                 <HeroTreasureChest />
                 <strong>비밀 영웅 카드</strong>

@@ -89,12 +89,14 @@
   overflow: hidden;
   margin-bottom: 14px;
   padding: 18px;
-  border: 1px solid #c9ad5a;
+  border: 1px solid #c9a847;
   border-radius: 16px;
   background:
-    radial-gradient(circle at 13% 45%, #ffe8a059, transparent 22%),
-    linear-gradient(145deg, #fffdf4, #f7efd4);
-  box-shadow: 0 8px 24px #5b45131a;
+    radial-gradient(circle at 13% 45%, #f5d66a42, transparent 24%),
+    linear-gradient(145deg, #214b36, #0b281c 74%);
+  box-shadow:
+    0 12px 28px #15332638,
+    inset 0 1px #ffffff1f;
 }
 
 .hero-sealed-list li:last-child {
@@ -111,20 +113,22 @@
 }
 
 .hero-sealed-copy > span {
-  color: #8c6d18;
+  color: #f4d978;
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.08em;
+  text-shadow: 0 1px 4px #071a12;
 }
 
 .hero-sealed-copy > strong {
-  color: #2c422f;
+  color: #fff8dc;
   font: 24px/1.25 var(--font-display);
+  text-shadow: 0 2px 8px #0617108c;
 }
 
 .hero-sealed-copy > p {
   margin: 2px 0 0;
-  color: #6b6042;
+  color: #e2eee7;
   font-size: 14px;
   line-height: 1.5;
   word-break: keep-all;
@@ -135,6 +139,21 @@
   justify-items: stretch;
   gap: 8px;
   min-width: 132px;
+}
+
+.hero-sealed-actions .preparation-primary {
+  border-color: #f4d978;
+  background: #f4d978;
+  color: #173425;
+  box-shadow: 0 7px 18px #06171052;
+}
+
+.hero-sealed-actions .preparation-primary:hover:not(:disabled) {
+  background: #ffecad;
+}
+
+.hero-sealed-actions .operation-text-link {
+  color: #d6e4dc;
 }
 
 .hero-confirm-treasure {
@@ -156,6 +175,39 @@
 .hero-confirm-treasure > span {
   color: #7b704f;
   font-size: 12px;
+}
+
+.hero-reveal-confirm-treasure {
+  border-color: #c9a847;
+  background:
+    radial-gradient(circle at 18% 44%, #f5d66a42, transparent 26%),
+    linear-gradient(145deg, #214b36, #0b281c 74%);
+  box-shadow: 0 12px 28px #15332638;
+}
+
+.hero-reveal-confirm-treasure .hero-confirm-treasure {
+  color: #fff8dc;
+}
+
+.hero-reveal-confirm-treasure .hero-confirm-treasure > span,
+.hero-reveal-confirm-treasure p {
+  color: #dce9e1;
+}
+
+.hero-reveal-confirm-treasure h3 {
+  color: #fff8dc;
+}
+
+.hero-reveal-confirm-treasure .preparation-secondary {
+  border-color: #9eb7aa;
+  background: #f5faf7;
+  color: #204431;
+}
+
+.hero-reveal-confirm-treasure .preparation-primary {
+  border-color: #f4d978;
+  background: #f4d978;
+  color: #173425;
 }
 
 .hero-empty {

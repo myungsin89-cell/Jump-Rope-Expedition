@@ -4,7 +4,6 @@ import { PageFrame, ErrorSummary } from '../preparation/PreparationUI';
 import {
   saveGamePreparation,
   validatePreparation,
-  validateJumpers,
   validateSeason,
 } from '../preparation/model';
 import type {
@@ -29,10 +28,7 @@ import StudentSharing from '../student/StudentSharing';
 import { mergeStudentBoardPurchases, readEconomy } from '../economy/model';
 import type { EconomyStore } from '../economy/model';
 import TeamEconomyModal from '../economy/TeamEconomyModal';
-import {
-  isTeacherBackupConfigured,
-  saveTeacherBackup,
-} from '../backup/teacherBackup';
+import { isTeacherBackupConfigured, saveTeacherBackup } from '../backup/teacherBackup';
 import TeacherServerModal from '../backup/TeacherServerModal';
 import { readHeroes, reconcileHeroRewards, revokeHeroReward } from '../heroes/model';
 import { recordOfficialHeroCorrection } from '../heroes/officialHeroes';
@@ -388,7 +384,10 @@ export default function ExpeditionBoard({
       setStorageError('');
       setErrors({});
       if (!serverConfigured)
-        setServerStatus({ tone: 'local', message: '이 브라우저에 저장됨 · 서버 연결 전' });
+        setServerStatus({
+          tone: 'local',
+          message: '이 브라우저에 저장됨 · 서버 연결 전',
+        });
       return true;
     } catch {
       setStorageError(
@@ -406,14 +405,13 @@ export default function ExpeditionBoard({
       return;
     }
     const teamErrors = validatePreparation(plan, 'teams');
-    const jumperErrors = validateJumpers(plan);
     const seasonErrors = validateSeason(plan, currentSeasonIndex(plan));
     if (battles.store && isSeasonBattleLocked(battles.store, currentSeasonIndex(plan))) {
       setNotice('최종 대전 계산이 끝난 시즌에는 새 경기를 기록할 수 없어요.');
       return;
     }
-    if (Object.keys(teamErrors).length || Object.keys(jumperErrors).length) {
-      setNotice('명단에서 각 원정대에 대원을 배정하고 도전점퍼를 1~2명씩 정해 주세요.');
+    if (Object.keys(teamErrors).length) {
+      setNotice('명단에서 각 원정대에 대원을 배정해 주세요.');
       if (initialPanel !== 'roster') navigate('roster');
       return;
     }
