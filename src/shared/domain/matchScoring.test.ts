@@ -29,6 +29,13 @@ describe('경기 예상 계산', () => {
     ];
     expect(calculateMatchPreview(teams)[0].rankingCount).toBe(550);
   });
+  it('uses the raw team count when a team has no challenge jumper', () => {
+    const teams = records();
+    teams[0].jumpers = [];
+    const result = calculateMatchPreview(teams)[0];
+    expect(result.extraCount).toBe(0);
+    expect(result.rankingCount).toBe(500);
+  });
   it('uses competition ranks for ties without awarding victory points', () => {
     const result = calculateMatchPreview(records([500, 500, 300]));
     expect(result.map((team) => team.rank)).toEqual([1, 1, 3]);

@@ -530,18 +530,27 @@ function MatchBoard({ plan }: { plan: Preparation }) {
                           <select
                             id={`jumper-count-${teamIndex}`}
                             value={team.jumpers.length}
-                            onChange={(event) =>
+                            onChange={(event) => {
+                              const count = Number(event.target.value);
+                              const emptyJumper: PracticeJumper = {
+                                studentId: '',
+                                multiplier: 1,
+                                actual: '',
+                              };
                               updateTeam(teamIndex, {
                                 jumpers:
-                                  Number(event.target.value) === 1
-                                    ? team.jumpers.slice(0, 1)
-                                    : [
-                                        ...team.jumpers.slice(0, 1),
-                                        { studentId: '', multiplier: 1, actual: '' },
-                                      ],
-                              })
-                            }
+                                  count === 0
+                                    ? []
+                                    : count === 1
+                                      ? [team.jumpers[0] ?? emptyJumper]
+                                      : [
+                                          team.jumpers[0] ?? emptyJumper,
+                                          team.jumpers[1] ?? { ...emptyJumper },
+                                        ],
+                              });
+                            }}
                           >
+                            <option value="0">0명 (없음)</option>
                             <option value="1">1명</option>
                             <option value="2" disabled={team.members.length < 2}>
                               2명

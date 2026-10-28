@@ -115,9 +115,8 @@ export function validateJumpers(plan: Preparation): FieldErrors {
   const errors: FieldErrors = {};
   plan.teams.forEach((team, teamIndex) => {
     const jumpers = plan.jumpers?.[teamIndex] ?? [];
-    if (jumpers.length < 1 || jumpers.length > 2)
-      errors[`jumper-count-${teamIndex}`] =
-        `${team.name}의 도전점퍼를 1명 또는 2명 정해 주세요.`;
+    if (jumpers.length > 2)
+      errors[`jumper-count-${teamIndex}`] = `${team.name}의 도전점퍼는 최대 2명이에요.`;
     jumpers.forEach((jumper, index) => {
       if (!team.studentIds.includes(jumper.studentId))
         errors[`jumper-${teamIndex}-${index}`] =

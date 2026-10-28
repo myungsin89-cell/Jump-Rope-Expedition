@@ -42,12 +42,7 @@ export function calculateMatchPreview(
   }
   const allStudents = new Set<string>();
   const counts = inputs.map((team) => {
-    if (
-      !team.teamKey ||
-      !isCount(team.rawCount) ||
-      team.jumpers.length < 1 ||
-      team.jumpers.length > 2
-    ) {
+    if (!team.teamKey || !isCount(team.rawCount) || team.jumpers.length > 2) {
       throw new Error('팀 원기록과 도전점퍼를 확인해 주세요.');
     }
     let extraCount = 0;
@@ -85,7 +80,8 @@ export function calculateMatchPreview(
       growthKind = 'baseline';
     } else if (team.rawCount > seasonBestRawCount) {
       const breakthrough =
-        seasonBestRawCount === 0 || reachesPercent(team.rawCount, seasonBestRawCount, 105);
+        seasonBestRawCount === 0 ||
+        reachesPercent(team.rawCount, seasonBestRawCount, 105);
       growthPoints = breakthrough ? 30 : 20;
       growthKind = breakthrough ? 'breakthrough' : 'improved';
     } else if (reachesPercent(team.rawCount, seasonBestRawCount, 95)) {

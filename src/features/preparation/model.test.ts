@@ -91,6 +91,12 @@ describe('게임 화면에서 팀과 시즌 준비', () => {
     const moved = assignStudents(plan, [plan.students[0].id], 1);
     expect(moved.jumpers![0]).toEqual([]);
     expect(moved.jumpers![1]).toEqual(plan.jumpers[1]);
+    expect(validateJumpers(moved)).toEqual({});
+    moved.jumpers![0] = [
+      { studentId: moved.teams[0].studentIds[0], multiplier: 1 },
+      { studentId: moved.teams[0].studentIds[0], multiplier: 2 },
+      { studentId: moved.teams[0].studentIds[0], multiplier: 3 },
+    ];
     expect(validateJumpers(moved)['jumper-count-0']).toBeTruthy();
     saveGamePreparation(plan);
     expect(readPreparations()[0].jumpers).toEqual(plan.jumpers);

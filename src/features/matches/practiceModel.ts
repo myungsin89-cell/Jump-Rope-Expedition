@@ -68,7 +68,7 @@ export function createPractice(
         return { ...plan.students[number], number: number + 1 };
       }),
       jumpers: presetReady
-        ? plan.jumpers![index].map((jumper) => ({ ...jumper, actual: '' }))
+        ? (plan.jumpers?.[index] ?? []).map((jumper) => ({ ...jumper, actual: '' }))
         : [{ studentId: '', multiplier: 1, actual: '' }],
     })),
   };
@@ -83,8 +83,8 @@ export function parseCount(value: string): number | null {
 export function validatePractice(draft: PracticeDraft, records = false): FieldErrors {
   const errors: FieldErrors = {};
   draft.teams.forEach((team, teamIndex) => {
-    if (team.jumpers.length < 1 || team.jumpers.length > 2)
-      errors[`jumper-count-${teamIndex}`] = '도전점퍼는 1명 또는 2명을 정해 주세요.';
+    if (team.jumpers.length > 2)
+      errors[`jumper-count-${teamIndex}`] = '도전점퍼는 최대 2명까지 정할 수 있어요.';
     team.jumpers.forEach((jumper, index) => {
       const field = `jumper-${teamIndex}-${index}`;
       if (!team.members.some((student) => student.id === jumper.studentId))

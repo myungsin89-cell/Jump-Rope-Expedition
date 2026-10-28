@@ -63,14 +63,28 @@ describe('연습 기록판 입력과 저장', () => {
     value.teams[0].jumpers[0].multiplier = 3;
     expect(plan.jumpers[0][0].multiplier).toBe(2);
   });
+  it('opens directly on counts and keeps an empty jumper list for teams without one', () => {
+    const plan = createPreparation();
+    plan.students = [1, 2, 3].map((id) => ({ id: `s-${id}`, name: `학생${id}` }));
+    plan.teams.forEach((team, index) => {
+      team.studentIds = [plan.students[index].id];
+    });
+    plan.jumpers = [[], [{ studentId: 's-2', multiplier: 2 }], []];
+    const value = createPractice(plan);
+    expect(value.locked).toBe(true);
+    expect(value.teams.map((team) => team.jumpers.length)).toEqual([0, 1, 0]);
+    expect(validatePractice(value)).toEqual({});
+  });
   it('does not silently turn a blank, decimal, negative, or unsafe input into a count', () => {
     for (const input of ['', ' ', '-1', '1.5', '1e3', '9007199254740992'])
       expect(parseCount(input)).toBeNull();
     expect(parseCount('0')).toBe(0);
     expect(parseCount('150')).toBe(150);
   });
-  it('requires one or two distinct jumpers who belong to the team', () => {
+  it('allows no jumper and validates up to two distinct jumpers who belong to the team', () => {
     const value = draft();
+    expect(validatePractice(value)['jumper-count-0']).toBeUndefined();
+    value.teams[0].jumpers = [{ studentId: '', multiplier: 1, actual: '' }];
     expect(validatePractice(value)['jumper-0-0']).toBeTruthy();
     value.teams[0].jumpers = [
       { studentId: 's-1', multiplier: 1, actual: '' },
