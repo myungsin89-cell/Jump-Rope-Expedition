@@ -74,6 +74,8 @@ describe('연습 기록판 입력과 저장', () => {
     expect(value.locked).toBe(true);
     expect(value.teams.map((team) => team.jumpers.length)).toEqual([0, 1, 0]);
     expect(validatePractice(value)).toEqual({});
+    writePracticeDraft(value);
+    expect(readPracticeStore(plan.id).draft).toEqual(value);
   });
   it('does not silently turn a blank, decimal, negative, or unsafe input into a count', () => {
     for (const input of ['', ' ', '-1', '1.5', '1e3', '9007199254740992'])

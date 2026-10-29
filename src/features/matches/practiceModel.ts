@@ -188,7 +188,6 @@ function isDraft(value: unknown, classId: string): value is PracticeDraft {
             Number(member.number) > 0,
         ) &&
         Array.isArray(team.jumpers) &&
-        team.jumpers.length >= 1 &&
         team.jumpers.length <= 2 &&
         team.jumpers.every(
           (jumper) =>
