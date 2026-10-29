@@ -405,11 +405,7 @@ export function acceptAuthorityBattleResult(
   const pending = seasonBattle(store, result.seasonIndex);
   if (!pending) throw new Error('서버 결과를 연결할 시즌 종료 기록이 없어요.');
   if (pending.status !== 'closing') return store;
-  if (
-    pending.bossId !== result.bossId ||
-    pending.matchCount !== result.matchCount ||
-    pending.ruleVersion !== result.ruleVersion
-  )
+  if (pending.bossId !== result.bossId || pending.ruleVersion !== result.ruleVersion)
     throw new Error('서버 결과와 시즌 종료 입력이 일치하지 않아요.');
   return commit({
     ...store,
@@ -418,6 +414,7 @@ export function acceptAuthorityBattleResult(
         ? {
             ...battle,
             status: 'calculated',
+            matchCount: result.matchCount,
             calculatedAt: result.calculatedAt,
             bossHp: result.bossHp,
             cooperationDamage: result.cooperationDamage,

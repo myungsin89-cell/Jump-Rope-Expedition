@@ -3,10 +3,13 @@ import type { EconomyStore } from '../economy/model';
 import type { HeroStore } from '../heroes/model';
 import type { PracticeStore, SavedPractice } from '../matches/practiceModel';
 import { createPreparation } from '../preparation/model';
+import { calculateBattleAuthority } from '../../shared/domain/battleAuthority';
 import {
+  acceptAuthorityBattleResult,
   beginSeasonClose,
   calculateSeasonBattle,
   cancelSeasonClose,
+  createBattleAuthorityInput,
   expeditionStandings,
   finishSeasonBattle,
   parseBattleStore,
@@ -158,6 +161,24 @@ describe('final battle model', () => {
       calculateSeasonBattle(plan, practice, { ...economy, purchases: [] }, heroes),
     ).toEqual(first);
     expect(() => cancelSeasonClose(plan.id, 0)).toThrow('다시 열 수 없어요');
+  });
+
+  it('accepts the server official-match count as authoritative', () => {
+    const { plan, practice, economy, heroes } = fixture();
+    const closing = beginSeasonClose(plan, practice, '2026-10-20T00:00:00.000Z');
+    const pending = seasonBattle(closing, 0)!;
+    const input = createBattleAuthorityInput(plan, practice, economy, heroes, 0, pending);
+    const result = calculateBattleAuthority(
+      { ...input, matchCount: 2 },
+      '2026-10-20T01:00:00.000Z',
+    );
+
+    const accepted = acceptAuthorityBattleResult(plan.id, result);
+
+    expect(seasonBattle(accepted, 0)).toMatchObject({
+      status: 'calculated',
+      matchCount: 2,
+    });
   });
 
   it('keeps ties as shared first place and adds cumulative standings after finish', () => {
