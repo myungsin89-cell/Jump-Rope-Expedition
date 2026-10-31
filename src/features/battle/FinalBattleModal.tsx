@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BOSSES_CATALOG } from '../card-ui/boss-catalog';
-import { HEROES_CATALOG, UNITS_CATALOG } from '../card-ui/catalog';
+import { HEROES_CATALOG } from '../card-ui/catalog';
 import type { EconomyStore } from '../economy/model';
 import type { HeroStore } from '../heroes/model';
 import type { PracticeStore } from '../matches/practiceModel';
@@ -13,13 +13,14 @@ import {
   finishSeasonBattle,
   seasonBattle,
 } from './model';
-import type { BattleEvent, BattleInventory, BattleStore, SeasonBattle } from './model';
+import type { BattleStore, SeasonBattle } from './model';
 import {
   calculateBattleWithAuthority,
   finishBattleWithAuthority,
   revealSeasonHeroesWithAuthority,
   syncHeroRewardsWithAuthority,
 } from '../../shared/lib/gameAuthorityClient';
+import BattlePlayback from './BattlePlayback';
 import './battle.css';
 
 type BattleView = 'closing' | 'ready' | 'playing' | 'result';
@@ -28,19 +29,6 @@ function viewFor(battle: SeasonBattle): BattleView {
   if (battle.status === 'closing') return 'closing';
   if (battle.status === 'finished') return 'result';
   return 'ready';
-}
-
-function eventMessage(event: BattleEvent | undefined, battle: SeasonBattle) {
-  if (!event) return '최종 대전을 준비하고 있어요.';
-  const team = battle.teams?.find((item) => item.teamIndex === event.teamIndex);
-  if (event.type === 'boss-reveal') return '비밀 보스가 모습을 드러냈습니다!';
-  if (event.type === 'boss-attack')
-    return `${team?.teamName ?? '원정대'}가 보스의 공격을 막아냅니다.`;
-  if (event.type === 'team-attack')
-    return `${team?.teamName ?? '원정대'} 공격 · ${event.amount?.toLocaleString() ?? 0} 피해`;
-  if (event.type === 'cooperation')
-    return '모든 원정대가 힘을 모아 마지막 일격을 준비합니다!';
-  return '보스를 쓰러뜨렸습니다! 최종 결과를 공개합니다.';
 }
 
 export default function FinalBattleModal({
@@ -70,46 +58,12 @@ export default function FinalBattleModal({
   if (!initial) throw new Error('열어 볼 최종 대전을 찾지 못했어요.');
   const [battle, setBattle] = useState(initial);
   const [view, setView] = useState<BattleView>(() => viewFor(initial));
-  const [eventIndex, setEventIndex] = useState(0);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const title = useRef<HTMLHeadingElement>(null);
   const boss = BOSSES_CATALOG.find((item) => item.id === battle.bossId);
-  const reducedMotion = useMemo(
-    () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
-    [],
-  );
-  const currentEvent = battle.events?.[eventIndex];
-  const damageSoFar =
-    battle.events
-      ?.slice(0, eventIndex + 1)
-      .reduce(
-        (sum, event) =>
-          sum +
-          (event.type === 'team-attack' || event.type === 'cooperation'
-            ? (event.amount ?? 0)
-            : 0),
-        0,
-      ) ?? 0;
-  const remainingHp = Math.max(0, (battle.bossHp ?? 0) - damageSoFar);
 
   useEffect(() => title.current?.focus({ preventScroll: true }), [view]);
-
-  useEffect(() => {
-    if (view !== 'playing' || !battle.events?.length) return;
-    if (eventIndex >= battle.events.length - 1) {
-      const timeout = window.setTimeout(
-        () => setView('result'),
-        reducedMotion ? 250 : 1_600,
-      );
-      return () => window.clearTimeout(timeout);
-    }
-    const timeout = window.setTimeout(
-      () => setEventIndex((index) => index + 1),
-      reducedMotion ? 250 : currentEvent?.type === 'boss-reveal' ? 2_000 : 1_350,
-    );
-    return () => window.clearTimeout(timeout);
-  }, [battle.events, currentEvent?.type, eventIndex, reducedMotion, view]);
 
   const calculate = async () => {
     if (busy) return;
@@ -167,7 +121,6 @@ export default function FinalBattleModal({
   };
 
   const play = () => {
-    setEventIndex(0);
     setView('playing');
   };
 
@@ -205,7 +158,10 @@ export default function FinalBattleModal({
         className={`battle-modal battle-view-${view}`}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="battle-title"
+        aria-labelledby={view === 'playing' ? undefined : 'battle-title'}
+        aria-label={
+          view === 'playing' ? `시즌 ${seasonIndex + 1} 최종 대전 재생` : undefined
+        }
       >
         {view !== 'playing' && (
           <button
@@ -305,66 +261,13 @@ export default function FinalBattleModal({
         )}
 
         {view === 'playing' && (
-          <div className={`battle-arena event-${currentEvent?.type ?? 'waiting'}`}>
-            <header className="battle-arena-header">
-              <div>
-                <span>시즌 {seasonIndex + 1} 최종 대전</span>
-                <strong>{boss?.name ?? '비밀 보스'}</strong>
-              </div>
-              <button type="button" onClick={() => setView('result')}>
-                건너뛰기
-              </button>
-            </header>
-            <div className="battle-hp" aria-label={`보스 체력 ${remainingHp}`}>
-              <span
-                style={{
-                  width: `${battle.bossHp ? (remainingHp / battle.bossHp) * 100 : 0}%`,
-                }}
-              />
-              <strong>
-                {remainingHp.toLocaleString()} / {(battle.bossHp ?? 0).toLocaleString()}
-              </strong>
-            </div>
-            <div className="battle-field">
-              <div className="battle-party-line">
-                {battle.teams?.map((team) => (
-                  <article
-                    key={team.teamIndex}
-                    className={
-                      currentEvent?.teamIndex === team.teamIndex ? 'is-active' : undefined
-                    }
-                  >
-                    <strong>{team.teamName}</strong>
-                    <div className="battle-unit-line" aria-label="참여 병력">
-                      {UNITS_CATALOG.map((unit) => {
-                        const count = team.inventory[unit.id as keyof BattleInventory];
-                        return count ? (
-                          <span key={unit.id} title={`${unit.name} ${count}명`}>
-                            <img src={unit.imageSrc} alt="" />
-                            <b>{count}</b>
-                          </span>
-                        ) : null;
-                      })}
-                    </div>
-                    <small>
-                      영웅 {team.heroIds.length}명 · 누적 피해{' '}
-                      {currentEvent?.teamIndex === team.teamIndex &&
-                      currentEvent.type === 'team-attack'
-                        ? team.actualDamage.toLocaleString()
-                        : '—'}
-                    </small>
-                  </article>
-                ))}
-              </div>
-              <div className="battle-boss-stage">
-                {boss && <img src={boss.imageSrc} alt={boss.name} />}
-                <span className="battle-impact" aria-hidden="true" />
-              </div>
-            </div>
-            <p className="battle-announcement" aria-live="polite">
-              {eventMessage(currentEvent, battle)}
-            </p>
-          </div>
+          <BattlePlayback
+            battle={battle}
+            boss={boss}
+            onComplete={() => setView('result')}
+            onSkip={() => setView('result')}
+            seasonIndex={seasonIndex}
+          />
         )}
 
         {view === 'result' && (
