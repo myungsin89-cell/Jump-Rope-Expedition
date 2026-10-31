@@ -123,7 +123,16 @@ test('closes a season, freezes the final battle, replays it and preserves the re
   ).toBe(true);
 
   await dialog.getByRole('button', { name: '최종 대전 재생' }).click();
-  await expect(dialog.locator('.battle-arena')).toBeVisible();
+  const arena = dialog.locator('.battle-arena');
+  await expect(arena).toBeVisible();
+  const modalBox = await dialog.boundingBox();
+  const viewport = page.viewportSize();
+  expect(modalBox?.width).toBeGreaterThanOrEqual((viewport?.width ?? 0) - 1);
+  expect(modalBox?.height).toBeGreaterThanOrEqual((viewport?.height ?? 0) - 1);
+  const fullscreenButton = dialog.getByRole('button', {
+    name: /전체화면( 종료)?/,
+  });
+  if (await fullscreenButton.count()) await expect(fullscreenButton).toBeVisible();
   await dialog.locator('.battle-intro-video').evaluate((el: HTMLVideoElement) => {
     el.playbackRate = 8;
   });

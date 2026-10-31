@@ -113,14 +113,20 @@ export default function BattlePlayback({
   battle,
   boss,
   seasonIndex,
+  fullscreenActive = false,
+  fullscreenAvailable = false,
   onComplete,
   onSkip,
+  onToggleFullscreen = () => {},
 }: {
   battle: SeasonBattle;
   boss?: BossDefinition;
   seasonIndex: number;
+  fullscreenActive?: boolean;
+  fullscreenAvailable?: boolean;
   onComplete: () => void;
   onSkip: () => void;
+  onToggleFullscreen?: () => void;
 }) {
   const cues = useMemo(() => buildBattlePresentation(battle), [battle]);
   const [cueIndex, setCueIndex] = useState(0);
@@ -423,6 +429,15 @@ export default function BattlePlayback({
           <strong>{boss?.name ?? '비밀 보스'}</strong>
         </div>
         <div className="battle-playback-controls">
+          {fullscreenAvailable && (
+            <button
+              aria-pressed={fullscreenActive}
+              type="button"
+              onClick={onToggleFullscreen}
+            >
+              {fullscreenActive ? '전체화면 종료' : '전체화면'}
+            </button>
+          )}
           <button
             aria-label={`재생 속도 ${playbackRate}배속`}
             type="button"

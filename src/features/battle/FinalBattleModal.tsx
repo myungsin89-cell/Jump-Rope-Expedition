@@ -60,10 +60,60 @@ export default function FinalBattleModal({
   const [view, setView] = useState<BattleView>(() => viewFor(initial));
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [fullscreenActive, setFullscreenActive] = useState(false);
   const title = useRef<HTMLHeadingElement>(null);
+  const battleSurface = useRef<HTMLElement>(null);
   const boss = BOSSES_CATALOG.find((item) => item.id === battle.bossId);
 
   useEffect(() => title.current?.focus({ preventScroll: true }), [view]);
+
+  useEffect(() => {
+    if (view !== 'playing') return;
+    const rootOverflow = document.documentElement.style.overflow;
+    const rootScrollbarGutter =
+      document.documentElement.style.getPropertyValue('scrollbar-gutter');
+    const bodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.setProperty('scrollbar-gutter', 'auto');
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.documentElement.style.overflow = rootOverflow;
+      document.documentElement.style.setProperty(
+        'scrollbar-gutter',
+        rootScrollbarGutter,
+      );
+      document.body.style.overflow = bodyOverflow;
+    };
+  }, [view]);
+
+  useEffect(() => {
+    const syncFullscreen = () => {
+      setFullscreenActive(document.fullscreenElement === battleSurface.current);
+    };
+    document.addEventListener('fullscreenchange', syncFullscreen);
+    return () => document.removeEventListener('fullscreenchange', syncFullscreen);
+  }, []);
+
+  const requestBattleFullscreen = () => {
+    const surface = battleSurface.current;
+    if (!surface?.requestFullscreen || document.fullscreenElement) return;
+    void surface.requestFullscreen().catch(() => {
+      // The viewport-filling CSS remains active when a browser blocks fullscreen.
+    });
+  };
+
+  const exitBattleFullscreen = () => {
+    if (document.fullscreenElement !== battleSurface.current) return;
+    void document.exitFullscreen().catch(() => {});
+  };
+
+  const toggleBattleFullscreen = () => {
+    if (document.fullscreenElement === battleSurface.current) {
+      exitBattleFullscreen();
+      return;
+    }
+    requestBattleFullscreen();
+  };
 
   const calculate = async () => {
     if (busy) return;
@@ -122,6 +172,12 @@ export default function FinalBattleModal({
 
   const play = () => {
     setView('playing');
+    requestBattleFullscreen();
+  };
+
+  const showResult = () => {
+    exitBattleFullscreen();
+    setView('result');
   };
 
   const finish = async () => {
@@ -153,9 +209,13 @@ export default function FinalBattleModal({
   };
 
   return (
-    <div className="battle-overlay" role="presentation">
+    <div
+      className={`battle-overlay ${view === 'playing' ? 'is-playing' : ''}`}
+      role="presentation"
+    >
       <section
         className={`battle-modal battle-view-${view}`}
+        ref={battleSurface}
         role="dialog"
         aria-modal="true"
         aria-labelledby={view === 'playing' ? undefined : 'battle-title'}
@@ -264,8 +324,11 @@ export default function FinalBattleModal({
           <BattlePlayback
             battle={battle}
             boss={boss}
-            onComplete={() => setView('result')}
-            onSkip={() => setView('result')}
+            fullscreenActive={fullscreenActive}
+            fullscreenAvailable={Boolean(document.fullscreenEnabled)}
+            onComplete={showResult}
+            onSkip={showResult}
+            onToggleFullscreen={toggleBattleFullscreen}
             seasonIndex={seasonIndex}
           />
         )}
