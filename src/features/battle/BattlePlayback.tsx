@@ -132,6 +132,7 @@ export default function BattlePlayback({
   const [cueIndex, setCueIndex] = useState(0);
   const [soundOn, setSoundOn] = useState(true);
   const [playbackRate, setPlaybackRate] = useState<1 | 1.5>(1);
+  const [motionMode, setMotionMode] = useState<'full' | 'reduced'>('full');
   const [resolvedCueId, setResolvedCueId] = useState<string | null>(null);
   const [defenseState, setDefenseState] = useState<{
     id: string;
@@ -141,10 +142,7 @@ export default function BattlePlayback({
   const videoRef = useRef<HTMLVideoElement>(null);
   const bgmRef = useRef<HTMLAudioElement>(null);
   const cue = cues[cueIndex];
-  const reducedMotion = useMemo(
-    () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
-    [],
-  );
+  const reducedMotion = motionMode === 'reduced';
   const bossPresentation = BOSS_PRESENTATIONS[battle.bossId];
   const introVideo = bossPresentation?.introVideo;
   const showIntroVideo =
@@ -386,6 +384,7 @@ export default function BattlePlayback({
       className={`battle-arena cue-${cue.type} ${playbackRate === 1.5 ? 'is-fast' : ''}`}
       data-cue={cue.type}
       data-boss={battle.bossId}
+      data-motion={motionMode}
       data-phase={cueResolved ? 'impact' : 'prepare'}
       data-defense-phase={cue.type === 'defense' ? defensePhase : undefined}
       style={
@@ -438,6 +437,16 @@ export default function BattlePlayback({
               {fullscreenActive ? '전체화면 종료' : '전체화면'}
             </button>
           )}
+          <button
+            aria-label={`전투 연출 ${reducedMotion ? '간단' : '전체'}`}
+            aria-pressed={!reducedMotion}
+            type="button"
+            onClick={() =>
+              setMotionMode((current) => (current === 'full' ? 'reduced' : 'full'))
+            }
+          >
+            {reducedMotion ? '간단 연출' : '전체 연출'}
+          </button>
           <button
             aria-label={`재생 속도 ${playbackRate}배속`}
             type="button"

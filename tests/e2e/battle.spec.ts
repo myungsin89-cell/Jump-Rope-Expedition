@@ -95,6 +95,7 @@ async function seedBattle(page: Page, seasonCount = 1) {
 test('closes a season, freezes the final battle, replays it and preserves the result', async ({
   page,
 }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   const id = await seedBattle(page);
 
   await page.getByRole('button', { name: '시즌 종료 · 최종 대전' }).click();
@@ -125,6 +126,9 @@ test('closes a season, freezes the final battle, replays it and preserves the re
   await dialog.getByRole('button', { name: '최종 대전 재생' }).click();
   const arena = dialog.locator('.battle-arena');
   await expect(arena).toBeVisible();
+  await expect(arena).toHaveAttribute('data-motion', 'full');
+  await expect(dialog.getByRole('button', { name: '전투 연출 전체' })).toBeVisible();
+  await expect(dialog.locator('.battle-intro-video')).toBeVisible();
   const modalBox = await dialog.boundingBox();
   const viewport = page.viewportSize();
   expect(modalBox?.width).toBeGreaterThanOrEqual((viewport?.width ?? 0) - 1);

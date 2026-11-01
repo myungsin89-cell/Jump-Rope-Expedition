@@ -2121,29 +2121,27 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .battle-hp span,
-  .battle-squad,
-  .battle-squad-state,
-  .battle-boss-stage img,
-  .battle-impact,
-  .battle-action-callout,
-  .battle-live-ranking li,
-  .battle-live-ranking li i::after,
-  .battle-attack-lane,
-  .battle-guard-effect,
-  .battle-boss-attack-signal,
-  .battle-projectile,
-  .battle-hero-cutin,
-  .battle-hero-cutin::before,
-  .battle-hero-cutin figure,
-  .battle-damage-number,
-  .battle-cooperation-flags::before,
-  .battle-cooperation-flags .battle-flag-mark,
-  .battle-intro-fallback img {
-    animation: none !important;
-    transition: none !important;
-  }
+.battle-arena[data-motion='reduced'] .battle-hp span,
+.battle-arena[data-motion='reduced'] .battle-squad,
+.battle-arena[data-motion='reduced'] .battle-squad-state,
+.battle-arena[data-motion='reduced'] .battle-boss-stage img,
+.battle-arena[data-motion='reduced'] .battle-impact,
+.battle-arena[data-motion='reduced'] .battle-action-callout,
+.battle-arena[data-motion='reduced'] .battle-live-ranking li,
+.battle-arena[data-motion='reduced'] .battle-live-ranking li i::after,
+.battle-arena[data-motion='reduced'] .battle-attack-lane,
+.battle-arena[data-motion='reduced'] .battle-guard-effect,
+.battle-arena[data-motion='reduced'] .battle-boss-attack-signal,
+.battle-arena[data-motion='reduced'] .battle-projectile,
+.battle-arena[data-motion='reduced'] .battle-hero-cutin,
+.battle-arena[data-motion='reduced'] .battle-hero-cutin::before,
+.battle-arena[data-motion='reduced'] .battle-hero-cutin figure,
+.battle-arena[data-motion='reduced'] .battle-damage-number,
+.battle-arena[data-motion='reduced'] .battle-cooperation-flags::before,
+.battle-arena[data-motion='reduced'] .battle-cooperation-flags .battle-flag-mark,
+.battle-arena[data-motion='reduced'] .battle-intro-fallback img {
+  animation: none !important;
+  transition: none !important;
 }
 
 /* Battle stage v2: characters fight in the arena instead of moving as cards. */
@@ -3204,11 +3202,9 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .battle-action-unit,
-  .battle-cooperation-lineup figure {
-    animation: none !important;
-  }
+.battle-arena[data-motion='reduced'] .battle-action-unit,
+.battle-arena[data-motion='reduced'] .battle-cooperation-lineup figure {
+  animation: none !important;
 }
 
 .battle-unit-sprite {
@@ -3355,11 +3351,9 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .battle-unit-sprite.is-animated {
-    animation: none;
-    background-position: 0 0;
-  }
+.battle-arena[data-motion='reduced'] .battle-unit-sprite.is-animated {
+  animation: none;
+  background-position: 0 0;
 }
 
 /* Scoreboard has its own space, so combat never dims or covers the numbers. */
@@ -3953,20 +3947,19 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .battle-flight,
-  .battle-rock-shape,
-  .battle-boss-warning,
-  .battle-hit-burst,
-  .battle-hit-flare,
-  .battle-hit-burst > i,
-  .battle-hammer-arc,
-  .battle-scoreboard-total > em {
-    animation: none !important;
-  }
-  .battle-scoreboard-bar::after {
-    transition: none;
-  }
+.battle-arena[data-motion='reduced'] .battle-flight,
+.battle-arena[data-motion='reduced'] .battle-rock-shape,
+.battle-arena[data-motion='reduced'] .battle-boss-warning,
+.battle-arena[data-motion='reduced'] .battle-hit-burst,
+.battle-arena[data-motion='reduced'] .battle-hit-flare,
+.battle-arena[data-motion='reduced'] .battle-hit-burst > i,
+.battle-arena[data-motion='reduced'] .battle-hammer-arc,
+.battle-arena[data-motion='reduced'] .battle-scoreboard-total > em {
+  animation: none !important;
+}
+
+.battle-arena[data-motion='reduced'] .battle-scoreboard-bar::after {
+  transition: none;
 }
 
 /* Defenders react after launch; their entry starts when the guard phase mounts. */
@@ -4701,8 +4694,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .battle-squad.is-hit {
-    animation: none !important;
-  }
+.battle-arena[data-motion='reduced'] .battle-squad.is-hit {
+  animation: none !important;
 }
