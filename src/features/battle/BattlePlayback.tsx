@@ -381,7 +381,7 @@ export default function BattlePlayback({
 
   return (
     <div
-      className={`battle-arena cue-${cue.type} ${playbackRate === 1.5 ? 'is-fast' : ''}`}
+      className={`battle-arena cue-${cue.type} ${reducedMotion ? '' : 'allow-motion'} ${playbackRate === 1.5 ? 'is-fast' : ''}`}
       data-cue={cue.type}
       data-boss={battle.bossId}
       data-motion={motionMode}

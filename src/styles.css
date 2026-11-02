@@ -917,9 +917,9 @@ a:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *:not(.allow-motion, .allow-motion *),
+  *:not(.allow-motion, .allow-motion *)::before,
+  *:not(.allow-motion, .allow-motion *)::after {
     scroll-behavior: auto !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

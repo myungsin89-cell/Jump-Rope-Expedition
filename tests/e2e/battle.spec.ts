@@ -151,6 +151,12 @@ test('closes a season, freezes the final battle, replays it and preserves the re
     'unit-attack',
     { timeout: 6_000 },
   );
+  const actionDuration = await dialog
+    .locator('.battle-action-unit')
+    .evaluate((element) =>
+      Number.parseFloat(getComputedStyle(element).animationDuration),
+    );
+  expect(actionDuration).toBeGreaterThan(1);
   await expect(dialog.locator('.battle-damage-number')).toContainText('-');
   await page.screenshot({ path: 'artifacts/final-battle-arena.png', fullPage: false });
   await dialog.getByRole('button', { name: '건너뛰기' }).click();
